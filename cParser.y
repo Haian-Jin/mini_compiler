@@ -1,19 +1,22 @@
 %{
+#include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
 #include"./cCompilerCommon.h"
 %}
-%token ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE SL SR INC DEC IDENTIFIER NUMBER STRING
+%token ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING
 %token FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN
-%token STRUCT INT DOUBLE CHAR PTR 
+%token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
+
+%start cCode
 %%
 
 /* Always start from declaration of a variable or a function*/
 /* Generally, there are two types of C code lines: declarations(along with the initializations) and (what we called)statements */
 
 cCode :
-        globalDeclaration
-    |   cCode globalDeclaration
+        globalDeclaration 
+    |   cCode globalDeclaration 
     ;
 
 /* A declaration declares a variable, constant, or a function, and their values. */
@@ -26,12 +29,12 @@ globalDeclaration :
 
 /* In C, a declaration is part from statement, treated specially */
 /* ...because a declaration can be outside any function, but statement must be in a function */
-
+/*
 declarations :  
         declaration
     |   declarations declaration
     ;
-
+*/
 declaration :
         type initializations ';'
     ;
@@ -81,7 +84,7 @@ initializations :
 
 initialization :
         variable                        /* int a; */
-    |   variable '=' initializeValue    /* int a=10; */
+    |   variable '=' initialValue    /* int a=10; */
     ;
 
 variable :
@@ -91,9 +94,9 @@ variable :
 
 pointerSpecifier :
         '*' /* a simple pointer */
-    |   pointer '*' /* a pointer to another pointer variable */
+    |   pointerSpecifier '*' /* a pointer to another pointer variable */
     |   '*' CONST /* a pointer to a const variable */
-    |   pointer '*' CONST /* a pointer to another pointer which is a pointer to a const value */
+    |   pointerSpecifier '*' CONST /* a pointer to another pointer which is a pointer to a const value */
     ;
 
 variableName :
@@ -130,14 +133,14 @@ variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
     |   '(' paramTypes ')'  /* a function taking another function as param... */
     ;
 
-initializeValue :
+initialValue :
         '{' initialValues '}'           /* int a[10]={1}; */
-    |   assignmentExpression;           /* int a=5+6; int b=a=3; */
+    |   assignmentExpression           /* int a=5+6; int b=a=3; */
     ;
 
 initialValues :
-        initializeValue                 
-        initializeValues ',' initializeValue /* int a[10]={1,2,3} */
+        initialValue                 
+    |   initialValues ',' initialValue /* int a[10]={1,2,3} */
     ;
 
 /*
@@ -323,9 +326,9 @@ arithmeticAddExpression :
 
 arithmeticMulExpression :
         unaryExpression
-    |   arithmeticMulExpression '*' unaryExpression
-    |   arithmeticMulExpression '/' unaryExpression
-    |   arithmeticMulExpression '%' unaryExpression
+    |   arithmeticMulExpression '*' castedExpression
+    |   arithmeticMulExpression '/' castedExpression
+    |   arithmeticMulExpression '%' castedExpression
     ;
 
 /* PRIORITY 2: typecasting */
@@ -343,20 +346,22 @@ unaryExpression :
     ;
 
 prefixUnaryExpression :
-        INC postfixExpression /* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-    |   DEC postfixExpression /* --a, the same as ++a[i] */
-    |   '!' postfixExpression /* logical NOT */
-    |   '~' postfixExpression /* bitwise NOT */
-    |   '-' postfixExpression /* negative */
+        INC postfixUnaryExpression /* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
+    |   DEC postfixUnaryExpression /* --a, the same as ++a[i] */
+    |   '!' postfixUnaryExpression /* logical NOT */
+    |   '~' postfixUnaryExpression /* bitwise NOT */
+    |   '-' postfixUnaryExpression /* negative */
     ;
 
 postfixUnaryExpression :
-        postfixExpression INC /* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-    |   postfixExpression DEC /* a-- */
-    |   postfixExpression '[' expression ']' /* array a[10], corresponding to prefix ++ */
-    |   postfixExpression '(' paramList ')' /* function, f()[i], f[i](), f[i]()[j] are all allowed */
-    |   postfixExpression '.' IDENTIFIER    /* struct's member (a.val)*/
-    |   postfixExpression PTR IDENTIFIER    /* struct's member, pointer (a->val) */
+        atomicExpression
+    |   postfixUnaryExpression INC /* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
+    |   postfixUnaryExpression DEC /* a-- */
+    |   postfixUnaryExpression '[' expression ']' /* array a[10], corresponding to prefix ++ */
+    |   postfixUnaryExpression '(' paramList ')' /* function, f()[i], f[i](), f[i]()[j] are all allowed */
+    |   postfixUnaryExpression '(' ')'           /* function with no params. */
+    |   postfixUnaryExpression '.' IDENTIFIER    /* struct's member (a.val)*/
+    |   postfixUnaryExpression PTR IDENTIFIER    /* struct's member, pointer (a->val) */
     ;
 
 paramList :
@@ -376,3 +381,11 @@ atomicExpression :
 /* --------------The formula expressions---------------- */
 
 
+%%
+int yyerror(char *s){
+    printf("%s\n",s);
+    return 0;
+}
+int main(){
+    yyparse();
+}
