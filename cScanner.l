@@ -1,5 +1,5 @@
 %{
-
+#include"./cCompilerCommon.h"
 %}
 
 intNumber [0-9][0-9]*
@@ -21,11 +21,17 @@ while {return WHILE;}
 continue {return CONTINUE;}
 break {return BREAK;}
 switch {return SWITCH;}
-case {return CASE};
+case {return CASE;}
+default {return DEFAULT;}
 if {return IF;}
 else {return ELSE;}
 return {return RETURN;}
 struct {return STRUCT;}
+unsigned {return UNSIGNED;}
+const {return CONST;}
+static {return STATIC;}
+
+
 
 {intNumber} {return NUMBER;}
 {doubleNumber} {return NUMBER;}
@@ -41,6 +47,7 @@ struct {return STRUCT;}
 \>\> {return SR;}
 \+\+ {return INC;}
 \-\- {return DEC;}
+\-\> {return PTR;}
 
 {identifier} {return IDENTIFIER;}
 {string} {return STRING;}
