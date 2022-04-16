@@ -1,18 +1,21 @@
 %{
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
 #include"./cCompilerCommon.h"
 %}
-%token ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING
+%token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING
 %token FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN
 %token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
+
+/* TODO: give nonterminals a type. */
 
 %start cCode
 %%
 
 /* Always start from declaration of a variable or a function*/
 /* Generally, there are two types of C code lines: declarations(along with the initializations) and (what we called)statements */
+
+cCode0 :
+        cCode
+    ;
 
 cCode :
         globalDeclaration 
@@ -37,6 +40,7 @@ declarations :
 */
 declaration :
         type initializations ';'
+    |   STRUCT IDENTIFIER '{' structMemberDeclarations '}'
     ;
 
 type :
@@ -103,8 +107,8 @@ variableName :
         IDENTIFIER  
     |   variableName '[' NUMBER ']'     /* int a[10][10]; only constant int number is allowed */
     |   '(' variable ')'                /* used for pointer to an multi-div array, a function, etc. */
-    |   variableName '(' ')'            /* declaration of a function, but no implementation yet. */
-    |   variableName '(' paramTypes ')'     /* declaration of a function having parameters, not implementint yet*/
+    |   IDENTIFIER '(' ')'            /* declaration of a function, but no implementation yet. */
+    |   IDENTIFIER '(' paramTypes ')'     /* declaration of a function having parameters, not implementint yet*/
     ;
 
 paramTypes :    /* param can have no name, so I have to rewrite it to distinguish it from others. Really dull yeah? */
@@ -223,6 +227,7 @@ jumpStatement :
     |   RETURN expression ';'
     |   CONTINUE ';'
     |   BREAK ';'
+    |   GOTO IDENTIFIER ';'
     ;
 
 
