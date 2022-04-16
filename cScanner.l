@@ -1,14 +1,16 @@
 %{
 #include"./cCompilerCommon.h"
 #include "./y.tab.h"
-#include <stdio.h>
+
 void echo();
 void errecho();
+extern YYSTYPE yylval;
+static YYSTYPE tempYylval;
 %}
 
-intNumber [0-9][0-9]*
+intNumber ([1-9][0-9]*)|[0-9]
 identifier [a-zA-Z_][a-zA-Z0-9_]*
-doubleNumber {intNumber}.{intNumber}
+doubleNumber {intNumber}\.{intNumber}
 emptyChar [ \t\n]
 char \'.\'|\'\\.\'
 string \"[^\"]*\"
@@ -39,6 +41,7 @@ unsigned {echo();return UNSIGNED;}
 const {echo();return CONST;}
 static {echo();return STATIC;}
 void {echo();return VOID;}
+goto {echo();return GOTO;}
 
 
 
@@ -64,6 +67,10 @@ void {echo();return VOID;}
 
 {identifier} {echo();return IDENTIFIER;}
 {string} {echo();return STRING;}
+[\-\^\+\*\/\=\)\(\&\%\!\?\/\'\"\:\;\|\]\[\}\{\~\,\.] {
+    echo();
+    return yytext[0];
+}
 . {
     errecho();
     return yytext[0];
