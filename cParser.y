@@ -1,5 +1,7 @@
 %{
-#include"./cCompilerCommon.h"
+#include"./cCompilerCommon.hpp"
+extern int yylex();
+int yyerror(char*);
 %}
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING
 %token FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN
@@ -7,7 +9,7 @@
 
 /* TODO: give nonterminals a type. */
 
-%start cCode
+%start cCode0
 %%
 
 /* Always start from declaration of a variable or a function*/
