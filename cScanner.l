@@ -1,12 +1,14 @@
 %{
-#include"./cCompilerCommon.h"
-#include "./y.tab.h"
+#include"./cCompilerCommon.hpp"
+#include "./cParser.hpp"
 
 void echo();
 void errecho();
 extern YYSTYPE yylval;
 static YYSTYPE tempYylval;
 %}
+
+%option noyywrap
 
 intNumber ([1-9][0-9]*)|[0-9]
 identifier [a-zA-Z_][a-zA-Z0-9_]*
