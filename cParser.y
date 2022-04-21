@@ -11,6 +11,7 @@ void error_missingInitializations();
 void error_wrongStatement();
 void error_wrongExpression();
 void error_missingRightBrancket();
+void error_missingRightBrancket2();
 void error_elseWithNoIf();
 void eatToNewLine();
 %}
@@ -358,6 +359,10 @@ statementBlock :
     |   '{' localDeclarations statements '}' { /* our C only supports declarations before all statements */
             $$ = new Node(nameCounter.getNumberedName("statementBlock"), 4, $1, $2, $3, $4);
         }
+    |   '{' localDeclarations statements error '}' {
+            yyerror("Declaration after statements");
+            //printf("Our language doesn't support statements")
+        }
     ;
 
 localDeclarations :
@@ -399,9 +404,9 @@ statement :     /* a single statement, ended with (or block without) a ';'*/
     |   error ';' {
         error_wrongStatement();
     }
-    |   error '}' {
+    /*|   error '}' {
         error_wrongStatement();
-    }
+    }*/
     ;
 
 expressionStatement :
@@ -441,9 +446,9 @@ branchStatement :
             $$ = new Node(nameCounter.getNumberedName("branchStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
         }
     |   SWITCH '(' expression ')' caseBlock
-    |   error { error_elseWithNoIf(); } ELSE statement {
-
-    }
+    |   error  ELSE statement {
+            { error_elseWithNoIf(); }
+        }
     ;   /* too complex, SWITCH is not supported yet */
 
 caseBlock :
@@ -625,6 +630,9 @@ postfixUnaryExpression :
     |   postfixUnaryExpression '(' ')'           /* function with no params. */
     |   postfixUnaryExpression '.' IDENTIFIER    /* struct's member (a.val)*/
     |   postfixUnaryExpression PTR IDENTIFIER    /* struct's member, pointer (a->val) */
+    |   postfixUnaryExpression '[' expression error  {
+            error_missingRightBrancket2();
+        }
     ;
 
 paramList :
@@ -655,21 +663,26 @@ int yyerror(std::string s){
     //return 0;
 }
 void error_missingSemicolon(){
-    printf("Missing \';\' at line %d, after column %d\n", csLineCnt, csColumnCnt-1);
-    eatToNewLine();
+    printf("Missing \';\' at line %d, after column %d\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    //eatToNewLine();
 }
 void error_wrongStatement(){
-    printf("a statement near line %d is illeagal.\n", csLineCnt);
+    printf("a statement near line %d is illeagal. ", csLineCnt);
+    printf("maybe you\'re putting a declaration after a statement.\n");//'
 }
 void error_wrongExpression(){
     printf("an expression near line %d is illeagal.\n", csLineCnt);
 }
 void error_missingRightBrancket(){
-    printf("expect \')\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-1);
-    eatToNewLine();
+    printf("expect \')\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    //eatToNewLine();
+}
+void error_missingRightBrancket2(){
+    printf("expect \']\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    //eatToNewLine();
 }
 void error_elseWithNoIf(){
-    printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-1);
+    printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
 }
 void eatToNewLine(){
     std::cout<<"eating:\n";
@@ -677,7 +690,7 @@ void eatToNewLine(){
     while((c=getchar())!=EOF && c!='\n'){
         //std::cout<<c;
     }
-    std::cout<<"last eaten: "<<c<<std::endl;
+    std::cout<<"last eaten: \\"<<(int)c<<std::endl;
     if(c=='\n'){
         csLineCnt++;
         csColumnCnt=0;
