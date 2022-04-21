@@ -5,5 +5,5 @@ Final project for the course named Compilers Principle in Zhejiang University
 ```
 yacc -d cParser.y -o cParser.cpp
 flex -o cScanner.cpp cScanner.l
-cc cScanner.cpp cParser.cpp -o compiler -lm
+cc cScanner.cpp cParser.cpp cCompilerCommon.cpp -o compiler -lm -lstdc++
 ```
