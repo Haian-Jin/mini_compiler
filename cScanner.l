@@ -11,14 +11,14 @@ static YYSTYPE tempYylval;
 
 %option noyywrap
 
-intNumber ([1-9][0-9]*)|[0-9]
+intNumber (([1-9][0-9]*)|[0-9])|(0x[0-9a-fA-F]+)|(0[0-7]*)
 identifier [a-zA-Z_][a-zA-Z0-9_]*
 doubleNumber {intNumber}\.{intNumber}
 emptyChar [ \t\n]
 char \'.\'|\'\\.\'
 string \"[^\"]*\"
 
-commitLine \/\/.*\n
+commitLine (\/\/.*\n)|(\/\*(.|\n)*\*\/)
 
 %%
 {emptyChar} {
@@ -31,7 +31,8 @@ commitLine \/\/.*\n
 }
 {commitLine} {
     csColumnCnt=0;
-    csLineCnt++;
+    for(int i=0;yytext[i];i++)
+        csLineCnt+=(yytext[i]=='\n');
 }
 
 int {
@@ -252,7 +253,7 @@ goto {
 . {
     errecho();
     csColumnCnt+=strlen(yytext);
-    return yytext[0];
+    //return yytext[0];
 }
 
 %%
