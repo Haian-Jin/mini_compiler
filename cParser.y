@@ -234,10 +234,10 @@ variableName :
     |   '(' variable ')' {              /* used for pointer to an multi-div array, a function, etc. */
             $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
         }
-    |   IDENTIFIER '(' ')' {           /* declaration of a function, but no implementation yet. */
+    |   variableName '(' ')' {           /* declaration of a function, but no implementation yet. */
             $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
         }
-    |   IDENTIFIER '(' paramTypes ')' {    /* declaration of a function having parameters, not implementint yet*/
+    |   variableName '(' paramTypes ')' {    /* declaration of a function having parameters, not implementint yet*/
             $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
         }
     ;
@@ -480,9 +480,12 @@ jumpStatement :
 
 expression : 
         assignmentExpression {
+            //$$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
+            $1 = new Node(nameCounter.getNumberedName("assignmentExpression"));
             $$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
         }
     |   expression ',' assignmentExpression {
+            $3 = new Node(nameCounter.getNumberedName("assignmentExpression"));
             $$ = $1;
             $$->addChild($2);
             $$->addChild($3);
