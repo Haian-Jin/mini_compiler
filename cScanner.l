@@ -2,9 +2,9 @@
 #include"./cCompilerCommon.hpp"
 #include "./cParser.hpp"
 
-void echo();
+void echo(bool negligible=false);
 void errecho();
-inline void mkNode();
+inline void mkNode(bool negligible);
 extern YYSTYPE yylval;
 static YYSTYPE tempYylval;
 %}
@@ -245,11 +245,17 @@ goto {
     csColumnCnt+=strlen(yytext);
     return STRING;
 }
+[\)\(\;\]\[\}\{\,] {
+    echo(true);
+    csColumnCnt+=strlen(yytext);
+    return yytext[0];
+}
 [\-\^\+\*\/\=\)\(\&\%\!\?\/\'\"\:\;\|\]\[\}\{\~\,\.\<\>] {
     echo();
     csColumnCnt+=strlen(yytext);
     return yytext[0];
 }
+
 . {
     errecho();
     csColumnCnt+=strlen(yytext);
@@ -258,13 +264,13 @@ goto {
 
 %%
 
-void echo(){
-    mkNode();
+void echo(bool negligible){
+    mkNode(negligible);
     //printf("get: %s\n",yytext);
 }
 void errecho(){
     printf("ERROR at line %d, column %d: Unsupported Character, '%s' is not supported in our C-- language, scanner will treat it as an empty character.\n", csLineCnt, csColumnCnt-1, yytext);
 }
-inline void mkNode(){
-    yylval.nodePtr = new Node(std::string(yytext));
+inline void mkNode(bool negligible){
+    yylval.nodePtr = new Node(std::string(yytext), negligible);
 }
