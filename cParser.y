@@ -34,7 +34,7 @@ void eatToNewLine();
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
 %type<nodePtr> paramList atomicExpression relationComparisonExpression
-%type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!'
+%type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
 %start cCode0
 %%
 
@@ -485,12 +485,12 @@ jumpStatement :
 
 expression : 
         assignmentExpression {
-            //$$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
-            $1 = new Node(nameCounter.getNumberedName("assignmentExpression"));
             $$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
+            //$1 = new Node(nameCounter.getNumberedName("assignmentExpression"));
+            //$$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
         }
     |   expression ',' assignmentExpression {
-            $3 = new Node(nameCounter.getNumberedName("assignmentExpression"));
+            //$3 = new Node(nameCounter.getNumberedName("assignmentExpression"));
             $$ = $1;
             $$->addChild($2);
             $$->addChild($3);
@@ -503,12 +503,29 @@ expression :
 /* PRIORITY 14: "=, +=, -=, ..." assignment */
 
 assignmentExpression :
-        tenaryConditionExpression
-    |   unaryExpression '=' assignmentExpression
-    |   unaryExpression ADD_ASSIGN assignmentExpression
-    |   unaryExpression SUB_ASSIGN assignmentExpression
-    |   unaryExpression MUL_ASSIGN assignmentExpression
-    |   unaryExpression DIV_ASSIGN assignmentExpression
+        tenaryConditionExpression {
+            $$ = $1;
+        }
+    |   unaryExpression '=' assignmentExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   unaryExpression ADD_ASSIGN assignmentExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   unaryExpression SUB_ASSIGN assignmentExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   unaryExpression MUL_ASSIGN assignmentExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   unaryExpression DIV_ASSIGN assignmentExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     /*|   error ')' {
         error_wrongExpression();
     }*/
@@ -517,136 +534,274 @@ assignmentExpression :
 /* PRIORITY 13: "?:" tenary conditional operator */
 
 tenaryConditionExpression :
-        logicalOrExpression
-    |   logicalOrExpression '?' expression ':' tenaryConditionExpression /* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
+        logicalOrExpression {
+            $$ = $1;
+        }
+    |   logicalOrExpression '?' expression ':' tenaryConditionExpression {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
+            $$ = new Node({"?:"}, 3, $1, $3, $5);
+        }
     ;
 
 /* PRIORITY 12: "||" logical OR */
 
 logicalOrExpression :
-        logicalAndExpression
-    |   logicalOrExpression LOGICAL_OR logicalAndExpression
+        logicalAndExpression {
+            $$ = $1;
+        }
+    |   logicalOrExpression LOGICAL_OR logicalAndExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 11: "&&" logical AND */
 
 logicalAndExpression :
-        bitwiseOrExpression
-    |   logicalAndExpression LOGICAL_AND bitwiseOrExpression
+        bitwiseOrExpression {
+            $$ = $1;
+        }
+    |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 10: "|" bitwise OR */
 
 bitwiseOrExpression :
-        bitwiseExclusiveOrExpression
-    |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression
+        bitwiseExclusiveOrExpression {
+            $$ = $1;
+        }
+    |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 9: "^" bitwise EXCLUSIVE OR */
 
 bitwiseExclusiveOrExpression :
-        bitwiseAndExpression
-    |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression
+        bitwiseAndExpression {
+            $$ = $1;
+        }
+    |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 8: "&" bitwise AND */
 
 bitwiseAndExpression :
-        equalityComparisonExpression
-    |   bitwiseAndExpression '&' equalityComparisonExpression
+        equalityComparisonExpression {
+            $$ = $1;
+        }
+    |   bitwiseAndExpression '&' equalityComparisonExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 7: "==, !=" compare equality */
 
 equalityComparisonExpression :
-        relationComparisonExpression
-    |   equalityComparisonExpression EQ relationComparisonExpression
-    |   equalityComparisonExpression NE relationComparisonExpression
+        relationComparisonExpression {
+            $$ = $1;
+        }
+    |   equalityComparisonExpression EQ relationComparisonExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   equalityComparisonExpression NE relationComparisonExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 6: "<, >, <=, >=" compare relation */
 
 relationComparisonExpression :
-        shiftExpression
-    |   relationComparisonExpression '<' shiftExpression
-    |   relationComparisonExpression '>' shiftExpression
-    |   relationComparisonExpression LE shiftExpression /* neglecting signed/unsigned */
-    |   relationComparisonExpression GE shiftExpression /* neglecting signed/unsigned */
+        shiftExpression {
+            $$ = $1;
+        }
+    |   relationComparisonExpression '<' shiftExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   relationComparisonExpression '>' shiftExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   relationComparisonExpression LE shiftExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   relationComparisonExpression GE shiftExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 5: ">>, <<" shift operator */
 
 shiftExpression :
-        arithmeticAddExpression
-    |   shiftExpression SL arithmeticAddExpression
-    |   shiftExpression SR arithmeticAddExpression /* neglecting signed/unsigned*/
+        arithmeticAddExpression {
+            $$ = $1;
+        }
+    |   shiftExpression SL arithmeticAddExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   shiftExpression SR arithmeticAddExpression  {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 4: "+, -" arithmetic add */
 
 arithmeticAddExpression :
-        arithmeticMulExpression
-    |   arithmeticAddExpression '+' arithmeticMulExpression
-    |   arithmeticAddExpression '-' arithmeticMulExpression
+        arithmeticMulExpression {
+            $$ = $1;
+        }
+    |   arithmeticAddExpression '+' arithmeticMulExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   arithmeticAddExpression '-' arithmeticMulExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 3: "*, /, %" arithmetic mul */
 
 arithmeticMulExpression :
-        unaryExpression
-    |   arithmeticMulExpression '*' castedExpression
-    |   arithmeticMulExpression '/' castedExpression
-    |   arithmeticMulExpression '%' castedExpression
+        unaryExpression {
+            $$ = $1;
+        }
+    |   arithmeticMulExpression '*' castedExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   arithmeticMulExpression '/' castedExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
+    |   arithmeticMulExpression '%' castedExpression {
+            $2 = new Node($2->getName(), 2, $1, $3);
+            $$ = $2;
+        }
     ;
 
 /* PRIORITY 2: typecasting */
 
 castedExpression :
-       unaryExpression
-    |   '(' typeName ')' castedExpression
+       unaryExpression {
+            $$ = $1;
+        }
+    |   '(' type ')' castedExpression {
+            $$ = new Node("castedExpression", 2, $2, $4);
+        }
+    |   '(' type variableWithNoName ')' castedExpression {
+            $$ = new Node("castedExpression", 3, $2, $3, $5);
+        }
     ;
 
 /* PRIORITY 1: "++, --, !, ~" unary operator, and ". ->" */
 
 unaryExpression :
-        prefixUnaryExpression
-    |   postfixUnaryExpression
+        prefixUnaryExpression {
+            $$ = $1;
+        }
+    |   postfixUnaryExpression {
+            $$ = $1;
+        }
     ;
 
 prefixUnaryExpression :
-        INC postfixUnaryExpression /* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-    |   DEC postfixUnaryExpression /* --a, the same as ++a[i] */
-    |   '!' postfixUnaryExpression /* logical NOT */
-    |   '~' postfixUnaryExpression /* bitwise NOT */
-    |   '-' postfixUnaryExpression /* negative */
+        INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
+            $1 = new Node(std::string("pre")+$1->getName(), 1, $2);
+            $$ = $1;
+        }
+    |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
+            $1 = new Node(std::string("pre")+$1->getName(), 1, $2);
+            $$ = $1;
+        }
+    |   '!' postfixUnaryExpression {/* logical NOT */
+            $1 = new Node($1->getName(), 1, $2);
+            $$ = $1;
+        }
+    |   '~' postfixUnaryExpression {/* bitwise NOT */
+            $1 = new Node($1->getName(), 1, $2);
+            $$ = $1;
+        }
+    |   '-' postfixUnaryExpression {/* negative */
+            $1 = new Node($1->getName(), 1, $2);
+            $$ = $1;
+        }
     ;
 
 postfixUnaryExpression :
-        atomicExpression
-    |   postfixUnaryExpression INC /* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-    |   postfixUnaryExpression DEC /* a-- */
-    |   postfixUnaryExpression '[' expression ']' /* array a[10], corresponding to prefix ++ */
-    |   postfixUnaryExpression '(' paramList ')' /* function, f()[i], f[i](), f[i]()[j] are all allowed */
-    |   postfixUnaryExpression '(' ')'           /* function with no params. */
-    |   postfixUnaryExpression '.' IDENTIFIER    /* struct's member (a.val)*/
-    |   postfixUnaryExpression PTR IDENTIFIER    /* struct's member, pointer (a->val) */
+        atomicExpression {
+            $$ = $1;
+        }
+    |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
+            $2 = new Node(std::string("post")+$2->getName(), 1, $1);
+            $$ = $2;
+        }
+    |   postfixUnaryExpression DEC {/* a-- */
+            $2 = new Node(std::string("post")+$2->getName(), 1, $1);
+            $$ = $2;
+        }
+    |   postfixUnaryExpression '[' expression ']' {/* array a[10], corresponding to prefix ++ */
+            $$ = new Node({"[]"}, 2, $1, $3);
+        }
+    |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed */
+            $$ = new Node({"()"}, 2, $1, $3);
+        }
+    |   postfixUnaryExpression '(' ')'           {/* function with no params. */
+            $$ = new Node({"()"}, 1, $1);
+        }
+    |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val)*/
+            $2 = new Node($2->getName(), 1, $1);
+            $$ = $2;
+        }
+    |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) */
+            $2 = new Node($2->getName(), 1, $1);
+            $$ = $2;
+        }
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();
         }
     ;
 
 paramList :
-        assignmentExpression
-    |   paramList ',' assignmentExpression /* Don't mess up with "expression"!!! */
+        assignmentExpression {
+            $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
+        }
+    |   paramList ',' assignmentExpression {/* Don't mess up with "expression"!!! */
+            $$ = $1;
+            $$->addChild($2);
+            $$->addChild($3);
+        }
     ;
 
 /* PRIORITY 0: branckets*/
 
 atomicExpression :
-        IDENTIFIER
-    |   NUMBER
-    |   STRING
-    |   '(' expression ')'
+        IDENTIFIER {
+            $$ = $1;
+        }
+    |   NUMBER {
+            $$ = $1;
+        }
+    |   STRING {
+            $$ = $1;
+        }
+    |   '(' expression ')' {
+            $$ = $2;
+        }
     /*|   '(' expression error {
         error_missingRightBrancket();
     }*/
@@ -696,10 +851,22 @@ void eatToNewLine(){
         csColumnCnt=0;
     }
 }
+Node *makeParseTree(){
+    yyparse();
+    if(!noError){
+        std::cout<<"The compiling cannot continue due to errors above.";
+        return NULL;
+    }
+    return treeRoot;
+}
+/*
 int main(){
     yyparse();
-    if(noError){
-        std::cout<<"Parse complete, no error was found.\n";
-        treeRoot->printTree();
+    if(!noError){
+        std::cout<<"The compiling cannot continue due to errors above.";
+        return 0;
     }
+    std::cout<<"Parse complete, no error was found.\n";
+    //treeRoot->printTree();
 }
+*/
