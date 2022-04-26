@@ -14,6 +14,11 @@ void error_missingRightBrancket();
 void error_missingRightBrancket2();
 void error_elseWithNoIf();
 void eatToNewLine();
+void error_duplicatedVariable(Node*);
+void error_variableNotDeclared(std::string);
+void error_illegalArraySize(Node*);
+void error_expressionTypeError(Node*);
+void error_typeMismatch(Node*);
 %}
 %code requires {
 #include"./cCompilerCommon.hpp"
@@ -22,7 +27,6 @@ void eatToNewLine();
 %token FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN
 %token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 
-/* TODO: give nonterminals a type. */
 %union{
     Node* nodePtr;
 }
@@ -88,6 +92,17 @@ declarations :
 declaration :
         type initializations ';' {
             $$ = new Node(nameCounter.getNumberedName("declaration"), 3, $1, $2, $3);
+            for(int i=0;i<$2->getChildrenNumber();i++){
+                Node *child = $2->getChildrenById(i);
+                child->setType($1->getType());
+            }
+            for(int i=0;i<$2->getChildrenNumber();i++){
+                Node *child = $2->getChildrenById(i);
+                if(child->isTerminal() && child->getTokenValue().compare({","})==0)continue;
+                if(symbolTableStack->insert(new Attribute(child)) == false){// insert fault.
+                    error_duplicatedVariable(child);
+                }
+            }
         }
     |   STRUCT IDENTIFIER '{' structMemberDeclarations '}' ';' {
             $$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $3, $4, $5, $6);
@@ -103,7 +118,8 @@ declaration :
 
 type :
         typeName {           /* int */
-            $$ = new Node(nameCounter.getNumberedName("type"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("type"), 1, $1);
+            $$->copyFromChild();
         }
     |   CONST typeName {     /* const int */
             $$ = new Node(nameCounter.getNumberedName("type"), 2, $1, $2);
@@ -115,37 +131,71 @@ type :
 
 typeName :
         INT { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }               
     |   UNSIGNED INT { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 2, $1, $2);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 2, $1, $2);
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   CHAR { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_CHAR);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   FLOAT { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_FLOAT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   DOUBLE { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_DOUBLE);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   VOID { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_VOID);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   structTypeName { 
-            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$->setType(Node::TYPE_STRUCT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setStructTypeName($1->getStructTypeName());
+            $$->setPosition($1);
         }  
     ;
 
 structTypeName : 
         STRUCT IDENTIFIER '{' structMemberDeclarations '}' {
-            $$ = new Node(nameCounter.getNumberedName("structTypeName"), 5, $1, $2, $3, $4, $5);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("structTypeName"), 5, $1, $2, $3, $4, $5);
+            $$->setType(Node::TYPE_STRUCT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setStructTypeName(nameCounter.getNumberedName($2->getTokenValue()));
+            $$->setPosition($1);
         }
     |   STRUCT '{' structMemberDeclarations '}' {
             $$ = new Node(nameCounter.getNumberedName("structTypeName"), 4, $1, $2, $3, $4);
+            $$->setType(Node::TYPE_STRUCT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setStructTypeName(nameCounter.getNumberedName("Unamed_Structure"));
+            $$->setPosition($1);
         }
     |   STRUCT IDENTIFIER {
-            $$ = new Node(nameCounter.getNumberedName("structTypeName"), 2, $1, $2);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("structTypeName"), 2, $1, $2);
+            $$->setType(Node::TYPE_STRUCT);
+            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$->setStructTypeName(nameCounter.getNumberedName($2->getTokenValue()));
+            $$->setPosition($1);
         }
     ;
 
@@ -194,10 +244,14 @@ initializations :
 
 initialization :
         variable {                       /* int a; */
-            $$ = new Node(nameCounter.getNumberedName("initialization"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("initialization"), 1, $1);
+            $$->copyFromChild();
+            //std::cout<<"name: "<<$$->getVariableName()<<std::endl;
         }
     |   variable '=' initialValue {   /* int a=10; */
-            $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
+            $$->copyFromChild();
+            //std::cout<<"name: "<<$$->getVariableName()<<std::endl;
         }
     ;
 
@@ -206,7 +260,9 @@ variable :
             $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
         }
     |   variableName {
-            $$ = new Node(nameCounter.getNumberedName("variable"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("variable"), 1, $1);
+            $$->copyFromChild();
+            //std::cout<<"name: "<<$$->getVariableName()<<std::endl;
         }
     ;
 
@@ -227,19 +283,43 @@ pointerSpecifier :
 
 variableName :
         IDENTIFIER {
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 1, $1);
+            $$->setKind(Node::KIND_VARIABLE);
+            $$->setVariableName($1->getTokenValue());
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   variableName '[' NUMBER ']' {    /* int a[10][10]; only constant int number is allowed */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            if(!(checkType($2,Node::TYPE_INT) && checkKind($2,Node::KIND_CONSTANT))){
+                error_illegalArraySize($2);
+            }else{
+                $$->setKind(Node::KIND_VARIABLE);
+                $$->setVariableName($1->getVariableName());
+                std::vector<int> sizes = $1->getArraySizes();
+                int newSize;
+                sscanf($3->getTokenValue().c_str(),"%d",&newSize);
+                sizes.push_back(newSize);
+                $$->setArraySizes(sizes);
+                $$->setPosition($1);
+            }
+            
         }
     |   '(' variable ')' {              /* used for pointer to an multi-div array, a function, etc. */
             $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
         }
     |   variableName '(' ')' {           /* declaration of a function, but no implementation yet. */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
+            $$->setKind(Node::KIND_FUNCTION);
+            $$->setVariableName($1->getVariableName());
+            $$->setPosition($1);
         }
     |   variableName '(' paramTypes ')' {    /* declaration of a function having parameters, not implementint yet*/
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            $$->setKind(Node::KIND_FUNCTION);
+            $$->setVariableName($1->getVariableName());
+            $$->setPosition($1);
+            //$$->setArgList($3->getArgList());
+            /* TODO: Think about the argument list */
         }
     ;
 
@@ -338,15 +418,21 @@ paramDeclaration :
 */
 
 functionDeclaration :   /* rule above has something wrong, we can not recognize if a identifier is a function or a regular variable. Besides, it brings more conflicts */
-        type variable statementBlock {
+        type variable { 
+            $2->setType($1->getType());
+            symbolTableStack->insert(new Attribute($2));
+            symbolTableStack->push(new SymbolTable($2->getVariableName()));
+            } 
+            statementBlock {
             //std::cout<<"a function found\n";
-            $$ = new Node(nameCounter.getNumberedName("functionDeclaration"), 3, $1, $2, $3);
+            $$ = new Node(nameCounter.getNumberedName("functionDeclaration"), 3, $1, $2, $4);
+            symbolTableStack->pop();
         }
     ;
 
 /* a implementation of a function is a statement block. A statement block is {statements} */
 
-statementBlock :
+statementBlock : /* TODO: maintain the symbol table stack */
         '{' '}' { /* {} is supported. {;} is not necessary. */
             $$ = new Node(nameCounter.getNumberedName("statementBlock"), 2, $1, $2);
         }
@@ -392,8 +478,9 @@ statement :     /* a single statement, ended with (or block without) a ';'*/
     |   loopStatement {
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
-    |   statementBlock { /* nested blocks is supported. But we are not going to support a block that is not body of loop, branch or function. */
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+    |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { /* nested blocks is supported. But we are not going to support a block that is not body of loop, branch or function. */
+            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
+            symbolTableStack->pop();
         }    
     |   branchStatement {
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
@@ -494,6 +581,7 @@ expression :
             $$ = $1;
             $$->addChild($2);
             $$->addChild($3);
+            $$->copyFrom($$->getChildrenById($$->getChildrenNumber()-1));
         }
     /*|   error ',' {
         error_wrongExpression();
@@ -507,24 +595,59 @@ assignmentExpression :
             $$ = $1;
         }
     |   unaryExpression '=' assignmentExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            if(!(checkKind($1,Node::KIND_VARIABLE))){
+                error_expressionTypeError($1);
+            }
+            if(!typeMatch($1,$3)){
+                error_typeMismatch($1);
+            }
         }
     |   unaryExpression ADD_ASSIGN assignmentExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            if(!(checkKind($1,Node::KIND_VARIABLE))){
+                error_expressionTypeError($1);
+            }
+            if(!typeMatch($1,$3)){
+                error_typeMismatch($1);
+            }
         }
     |   unaryExpression SUB_ASSIGN assignmentExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            if(!(checkKind($1,Node::KIND_VARIABLE))){
+                error_expressionTypeError($1);
+            }
+            if(!typeMatch($1,$3)){
+                error_typeMismatch($1);
+            }
         }
     |   unaryExpression MUL_ASSIGN assignmentExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            if(!(checkKind($1,Node::KIND_VARIABLE))){
+                error_expressionTypeError($1);
+            }
+            if(!typeMatch($1,$3)){
+                error_typeMismatch($1);
+            }
         }
     |   unaryExpression DIV_ASSIGN assignmentExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            if(!(checkKind($1,Node::KIND_VARIABLE))){
+                error_expressionTypeError($1);
+            }
+            if(!typeMatch($1,$3)){
+                error_typeMismatch($1);
+            }
         }
     /*|   error ')' {
         error_wrongExpression();
@@ -538,7 +661,14 @@ tenaryConditionExpression :
             $$ = $1;
         }
     |   logicalOrExpression '?' expression ':' tenaryConditionExpression {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
-            $$ = new Node({"?:"}, 3, $1, $3, $5);
+            $$ = new AttributivedNode({"?:"}, 3, $1, $3, $5);
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            if($3->getType()==Node::TYPE_DOUBLE||$5->getType()==Node::TYPE_DOUBLE)$$->setType(Node::TYPE_DOUBLE);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -549,8 +679,14 @@ logicalOrExpression :
             $$ = $1;
         }
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -561,8 +697,14 @@ logicalAndExpression :
             $$ = $1;
         }
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -573,8 +715,14 @@ bitwiseOrExpression :
             $$ = $1;
         }
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -585,8 +733,14 @@ bitwiseExclusiveOrExpression :
             $$ = $1;
         }
     |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -597,8 +751,14 @@ bitwiseAndExpression :
             $$ = $1;
         }
     |   bitwiseAndExpression '&' equalityComparisonExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -609,36 +769,72 @@ equalityComparisonExpression :
             $$ = $1;
         }
     |   equalityComparisonExpression EQ relationComparisonExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     |   equalityComparisonExpression NE relationComparisonExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
 /* PRIORITY 6: "<, >, <=, >=" compare relation */
-
+/* TYPE_STRING,TYPE_VOID,TYPE_STRUCT */
 relationComparisonExpression :
         shiftExpression {
             $$ = $1;
         }
     |   relationComparisonExpression '<' shiftExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     |   relationComparisonExpression '>' shiftExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     |   relationComparisonExpression LE shiftExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     |   relationComparisonExpression GE shiftExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFromChild();
+            $$->setType(Node::TYPE_INT);
+            $$->setKind(Node::KIND_CONSTANT);
+            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -649,12 +845,20 @@ shiftExpression :
             $$ = $1;
         }
     |   shiftExpression SL arithmeticAddExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($1);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     |   shiftExpression SR arithmeticAddExpression  {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($1);
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -665,12 +869,32 @@ arithmeticAddExpression :
             $$ = $1;
         }
     |   arithmeticAddExpression '+' arithmeticMulExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
+                $$->setType(Node::TYPE_DOUBLE);
+            }
+            if($1->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($1);
+            }
+            if($3->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($3);
+            }
         }
     |   arithmeticAddExpression '-' arithmeticMulExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
+                $$->setType(Node::TYPE_DOUBLE);
+            }
+            if($1->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($1);
+            }
+            if($3->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($3);
+            }
         }
     ;
 
@@ -681,16 +905,46 @@ arithmeticMulExpression :
             $$ = $1;
         }
     |   arithmeticMulExpression '*' castedExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
+                $$->setType(Node::TYPE_DOUBLE);
+            }
+            if($1->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($1);
+            }
+            if($3->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($3);
+            }
         }
     |   arithmeticMulExpression '/' castedExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
+                $$->setType(Node::TYPE_DOUBLE);
+            }
+            if($1->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($1);
+            }
+            if($3->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($3);
+            }
         }
     |   arithmeticMulExpression '%' castedExpression {
-            $2 = new Node($2->getName(), 2, $1, $3);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
+                $$->setType(Node::TYPE_DOUBLE);
+            }
+            if($1->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($1);
+            }
+            if($3->getType()==Node::TYPE_STRUCT){
+                error_expressionTypeError($3);
+            }
         }
     ;
 
@@ -701,10 +955,10 @@ castedExpression :
             $$ = $1;
         }
     |   '(' type ')' castedExpression {
-            $$ = new Node("castedExpression", 2, $2, $4);
+            $$ = new AttributivedNode("castedExpression", 2, $2, $4);
         }
     |   '(' type variableWithNoName ')' castedExpression {
-            $$ = new Node("castedExpression", 3, $2, $3, $5);
+            $$ = new AttributivedNode("castedExpression", 3, $2, $3, $5);
         }
     ;
 
@@ -721,24 +975,43 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $1 = new Node(std::string("pre")+$1->getName(), 1, $2);
+            $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
+            $$->copyFromChild();
+            if(!checkKind($2, Node::KIND_VARIABLE)){
+                error_expressionTypeError($1);
+            }
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $1 = new Node(std::string("pre")+$1->getName(), 1, $2);
+            $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
+            $$->copyFromChild();
+            if(!checkKind($2, Node::KIND_VARIABLE)){
+                error_expressionTypeError($1);
+            }
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $1 = new Node($1->getName(), 1, $2);
+            $1 = new AttributivedNode($1->getName(), 1, $2);
             $$ = $1;
+            $$->copyFromChild();
+            if(checkType($2, Node::TYPE_STRUCT)){
+                error_expressionTypeError($1);
+            }
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $1 = new Node($1->getName(), 1, $2);
+            $1 = new AttributivedNode($1->getName(), 1, $2);
             $$ = $1;
+            $$->copyFromChild();
+            if(!checkType($2, Node::TYPE_INT)){
+                error_expressionTypeError($1);
+            }
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $1 = new Node($1->getName(), 1, $2);
+            $1 = new AttributivedNode($1->getName(), 1, $2);
             $$ = $1;
+            if(checkType($2, Node::TYPE_STRUCT)){
+                error_expressionTypeError($1);
+            }
         }
     ;
 
@@ -747,29 +1020,55 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $2 = new Node(std::string("post")+$2->getName(), 1, $1);
+            $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
+            $$->copyFromChild();
+            if(!checkKind($1, Node::KIND_VARIABLE)){
+                error_expressionTypeError($1);
+            }
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $2 = new Node(std::string("post")+$2->getName(), 1, $1);
+            $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
+            $$->copyFromChild();
+            if(!checkKind($1, Node::KIND_VARIABLE)){
+                error_expressionTypeError($1);
+            }
         }
     |   postfixUnaryExpression '[' expression ']' {/* array a[10], corresponding to prefix ++ */
-            $$ = new Node({"[]"}, 2, $1, $3);
+            $$ = new AttributivedNode({"[]"}, 2, $1, $3);
+            $$->copyFromChild();
+            if(!((checkKind($3, Node::KIND_VARIABLE) || checkKind($3, Node::KIND_CONSTANT)) && checkType($3, Node::TYPE_INT) && $1->isArray())){
+                error_expressionTypeError($1);
+            }
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed */
-            $$ = new Node({"()"}, 2, $1, $3);
+            $$ = new AttributivedNode({"()"}, 2, $1, $3);
+            $$->copyFromChild();
+            if(!(checkKind($1, Node::KIND_FUNCTION))){
+                error_expressionTypeError($1);
+            }
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
-            $$ = new Node({"()"}, 1, $1);
+            $$ = new AttributivedNode({"()"}, 1, $1);
+            $$->copyFromChild();
+            if(!(checkKind($1, Node::KIND_FUNCTION))){
+                error_expressionTypeError($1);
+            }
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val)*/
-            $2 = new Node($2->getName(), 1, $1);
+            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
+            $$->copyFrom($3);
+            if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT))){
+                error_expressionTypeError($1);
+            }
+            /* TODO: look up at the struct's symbol table */
         }
     |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) */
-            $2 = new Node($2->getName(), 1, $1);
+            $2 = new AttributivedNode($2->getName(), 1, $1);
             $$ = $2;
+
         }
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();
@@ -792,6 +1091,15 @@ paramList :
 atomicExpression :
         IDENTIFIER {
             $$ = $1;
+            
+            if(!symbolTableStack->lookUp($1->getTokenValue())){
+                error_variableNotDeclared($1->getTokenValue());
+                $$->setKind(Node::KIND_VARIABLE);
+                $$->setType(Node::TYPE_INT);
+            }else{
+                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()));
+                $$->setPosition(csLineCnt, csColumnCnt);
+            }
         }
     |   NUMBER {
             $$ = $1;
@@ -818,26 +1126,54 @@ int yyerror(std::string s){
     //return 0;
 }
 void error_missingSemicolon(){
+    std::cout<<"[ERROR] ";
     printf("Missing \';\' at line %d, after column %d\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
     //eatToNewLine();
 }
 void error_wrongStatement(){
+    std::cout<<"[ERROR] ";
     printf("a statement near line %d is illeagal. ", csLineCnt);
     printf("maybe you\'re putting a declaration after a statement.\n");//'
 }
 void error_wrongExpression(){
+    std::cout<<"[ERROR] ";
     printf("an expression near line %d is illeagal.\n", csLineCnt);
 }
 void error_missingRightBrancket(){
+    std::cout<<"[ERROR] ";
     printf("expect \')\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
     //eatToNewLine();
 }
 void error_missingRightBrancket2(){
+    std::cout<<"[ERROR] ";
     printf("expect \']\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
     //eatToNewLine();
 }
 void error_elseWithNoIf(){
+    std::cout<<"[ERROR] ";
     printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+}
+void error_duplicatedVariable(Node *c){
+    std::cout<<"[ERROR] ";
+    std::cout<<c->getVariableName()<<" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
+    std::cout<<"Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getVariableName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getVariableName())->columnNumber<<std::endl;
+}
+void error_variableNotDeclared(std::string name){
+    std::cout<<"[ERROR] ";
+    std::cout<<name<<" was not declared.\n";
+    std::cout<<"Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
+}
+void error_illegalArraySize(Node* c){
+    std::cout<<"[ERROR] ";
+    std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
+}
+void error_expressionTypeError(Node *c){
+    std::cout<<"[ERROR] ";
+    std::cout<<"Type error at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<"\n";
+}
+void error_typeMismatch(Node *c){
+    std::cout<<"[ERROR] ";
+    std::cout<<"Type mismatch at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<"\n";
 }
 void eatToNewLine(){
     std::cout<<"eating:\n";
