@@ -25,7 +25,14 @@ public:
 };
 
 class Node{
-private:
+public:
+    enum Type{
+        TYPE_INT,TYPE_FLOAT,TYPE_DOUBLE,TYPE_CHAR,TYPE_STRING,TYPE_VOID,TYPE_STRUCT
+    };
+    enum Kind{
+        KIND_FUNCTION,KIND_VARIABLE,KIND_ARGUMENT,KIND_ATTRIBUTE,KIND_CONSTANT
+    };
+protected:
     std::string mSymbolName;
     std::string mTokenValue; //(token string)
     bool mIsTerminal;
@@ -45,6 +52,12 @@ public:
     void addChild(Node *newChild){
         mChildren.push_back(newChild);
     }
+    Node* getChildrenById(int i){
+        return mChildren[i];
+    }
+    int getChildrenNumber(){
+        return mChildren.size();
+    }
     bool isTerminal()const{
         return mIsTerminal;
     }
@@ -54,7 +67,7 @@ public:
     std::string getSymbolName()const{
         return this->mSymbolName;
     }
-    std::string getTokenValue()const{
+    std::string getTokenValue(){
         if(!(this->mIsTerminal))throw("I am not a terminal.");
         return this->mTokenValue;
     }
@@ -83,13 +96,225 @@ public:
             child->simplify();
         }
     }
-    bool semanticCheck(){
+    
 
+public:
+    virtual void setType(Node::Type _type){}
+    virtual Node::Type getType(){}
+    virtual void setKind(Node::Kind _kind){}
+    virtual Node::Kind getKind(){}
+    virtual void setArgList(std::vector<Node::Type> _argList){}
+    virtual std::vector<Node::Type> getArgList(){}
+    virtual void setArraySizes(std::vector<int> _sizes){}
+    virtual std::vector<int> getArraySizes(){}
+    virtual bool isArray(){}
+    virtual int getArrayDimension(){}
+    virtual void setStructTypeName(std::string _name){}
+    virtual std::string getStructTypeName(){}
+    virtual void setVariableName(std::string _name){}
+    virtual std::string getVariableName(){}
+    virtual void setPosition(int l,int c){}
+    virtual void setPosition(Node*){}
+    virtual int getLineNumber(){std::cout<<"Wrong\n";}
+    virtual int getColumnNumber(){}
+    virtual void setAttribute(void *p);
+    virtual void copyFromChild(){
+        //std::cout<<"Wrong copy\n";
+        this->setType(mChildren[0]->getType());
+        this->setKind(mChildren[0]->getKind());
+        this->setArgList(mChildren[0]->getArgList());
+        this->setArraySizes(mChildren[0]->getArraySizes());
+        this->setStructTypeName(mChildren[0]->getStructTypeName());
+        this->setVariableName(mChildren[0]->getVariableName());
+        this->setPosition(mChildren[0]->getLineNumber(), mChildren[0]->getColumnNumber());
+    }
+    virtual void copyFrom(Node *c){
+        //std::cout<<"Wrong copy\n";
+        this->setType(c->getType());
+        this->setKind(c->getKind());
+        this->setArgList(c->getArgList());
+        this->setArraySizes(c->getArraySizes());
+        this->setStructTypeName(c->getStructTypeName());
+        this->setVariableName(c->getVariableName());
+        this->setPosition(c->getLineNumber(), c->getColumnNumber());
+    }
+};
+extern int cout;
+class AttributivedNode : public Node{
+
+private:
+    AttributivedNode::Type mTokenType;
+    AttributivedNode::Kind mTokenKind;
+    std::vector<AttributivedNode::Type> mTokenArgList;
+    std::vector<int> mArraySizes;
+    std::string mStructTypeName;
+    std::string mVariableName;
+    int mLineNumber;
+    int mColumnNumber;
+public:
+    AttributivedNode(std::string _symbolName, int childrenNumber, ...):Node(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    }
+    AttributivedNode(std::string _tokenValue, bool negligible=false):Node(_tokenValue,negligible){
+        
+    }
+    void setType(AttributivedNode::Type _type){
+        this->mTokenType = _type;
+    }
+    AttributivedNode::Type getType(){
+        return this->mTokenType;
+    }
+    void setKind(AttributivedNode::Kind _kind){
+        this->mTokenKind = _kind;
+    }
+    AttributivedNode::Kind getKind(){
+        return this->mTokenKind;
+    }
+    void setArgList(std::vector<AttributivedNode::Type> _argList){
+        mTokenArgList.assign(_argList.begin(),_argList.end());
+    }
+    std::vector<AttributivedNode::Type> getArgList(){
+        return this->mTokenArgList;
+    }
+    void setArraySizes(std::vector<int> _sizes){
+        mArraySizes.assign(_sizes.begin(),_sizes.end());
+    }
+    std::vector<int> getArraySizes(){
+        return mArraySizes;
+    }
+    bool isArray(){
+        return mArraySizes.size()>0;
+    }
+    int getArrayDimension(){
+        return mArraySizes.size();
+    }
+    /*void copyFromChild(){
+        std::cout<<"Right copy\n";
+        this->setType(mChildren[0]->getType());
+        this->setKind(mChildren[0]->getKind());
+        this->setArgList(mChildren[0]->getArgList());
+        this->setArraySizes(mChildren[0]->getArraySizes());
+        this->setStructTypeName(mChildren[0]->getStructTypeName());
+        this->setVariableName(mChildren[0]->getVariableName());
+    }*/
+    void setStructTypeName(std::string _name){
+        mStructTypeName = _name;
+    }
+    std::string getStructTypeName(){
+        return mStructTypeName;
+    }
+    void setVariableName(std::string _name){
+        this->mVariableName = _name;
+    }
+    std::string getVariableName(){
+        return mVariableName;
+    }
+    void setPosition(int l,int c){
+        mLineNumber = l;
+        mColumnNumber = c;
+    }
+    int getLineNumber(){
+        return mLineNumber;
+    }
+    int getColumnNumber(){
+        return mColumnNumber;
+    }
+    void setPosition(Node *c){
+        mLineNumber = c->getLineNumber();
+        mColumnNumber = c->getColumnNumber();
     }
 };
 
+struct Attribute{
+    std::string name;
+    Node::Type type;
+    Node::Kind kind;
+    std::vector<Node::Type> argList;
+    std::vector<int> arraySizes;
+    std::string structTypeName;
+    int lineNumber;
+    int columnNumber;
+    Attribute(std::string _name, Node::Type _type, Node::Kind _kind, std::vector<Node::Type> _argList, std::vector<int> _arraySizes, std::string _structTypeName, int l, int c)
+        : name(_name),type(_type),kind(_kind),argList(_argList),arraySizes(_arraySizes),structTypeName(_structTypeName),lineNumber(l),columnNumber(c){};
+    Attribute(){}
+    Attribute(Node *p)
+        : name(p->getVariableName()),type(p->getType()),kind(p->getKind()),argList(p->getArgList()),arraySizes(p->getArraySizes()),
+          structTypeName(p->getStructTypeName()),lineNumber(p->getLineNumber()),columnNumber(p->getColumnNumber()){};
+};
 
+class SymbolTable{
+private:
+    std::string mSymbolTableName;
+    std::map<std::string, Attribute*> map;
+    static std::map<std::string, SymbolTable*> set;
+public:
+    SymbolTable():mSymbolTableName({"Unamed Symbol Table"}){
+        set.insert({mSymbolTableName, this});
+    }
+    SymbolTable(std::string name):mSymbolTableName(name){
+        set.insert({mSymbolTableName, this});
+    }
+    bool insert(Attribute* t){
+        if(map.find(t->name)!=map.end()){
+            return false;
+        }else{
+            map.insert({t->name,t});
+            return true;
+        }
+    }
+    Attribute *lookUp(std::string name){
+        if(map.find(name)==map.end()){
+            return NULL;
+        }else{
+            return map[name];
+        }
+    }
+    static SymbolTable *getSymbolTableByName(std::string symbolTableName){
+        return set[symbolTableName];
+    }
+};
+
+class SymbolTableStack{
+private:
+    std::vector<SymbolTable*> stack;
+public:
+    SymbolTableStack(SymbolTable *globalSymbolTable){
+        stack.push_back(globalSymbolTable);
+    }
+    void push(SymbolTable* t){
+        stack.push_back(t);
+    }
+    void pop(){
+        if(stack.size()==1){
+            throw("You cannot pop the global symbol table.");
+        }
+        stack.pop_back();
+    }
+    Attribute *lookUp(std::string name){
+        for(int i=stack.size()-1;i>=0;i--){
+            if(stack[i]->lookUp(name)){
+                return stack[i]->lookUp(name);
+            }
+        }
+        return NULL;
+    }
+    bool insert(Attribute* t){
+        return stack[stack.size()-1]->insert(t);
+    }
+};
+
+//extern std::map<std::string, SymbolTable*> SymbolTable::set;
 extern int csLineCnt;
 extern int csColumnCnt;
+extern SymbolTableStack *symbolTableStack;
+
+bool checkType(Node *p, Node::Type type);
+bool checkKind(Node *p, Node::Kind kind);
+bool typeMatch(Node *a, Node *b);
 
 #endif
