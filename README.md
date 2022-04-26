@@ -9,5 +9,5 @@ cc cScanner.cpp cParser.cpp cCompilerCommon.cpp main.cpp -o compiler -lm -lstdc+
 ```
 使用方法（例）：
 ```
-./compiler < ./tests/test4.c >> parsetree.txt
+./compiler < ./tests/test4.c > parsetree.txt
 ```
