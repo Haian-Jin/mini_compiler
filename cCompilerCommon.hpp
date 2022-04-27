@@ -11,6 +11,8 @@
 #include<map>
 #include<cstdarg>
 
+struct Attribute;
+
 class NameCounter{
 private:
     std::map<std::string, int> map;
@@ -68,7 +70,11 @@ public:
         return this->mSymbolName;
     }
     std::string getTokenValue(){
-        if(!(this->mIsTerminal))throw("I am not a terminal.");
+        if(!(this->mIsTerminal)){
+            //std::cout<<"("<<mSymbolName<<") ";
+            //throw("I am not a terminal.");
+            return getSymbolName();
+        }
         return this->mTokenValue;
     }
     std::string getName()const{
@@ -100,7 +106,9 @@ public:
 
 public:
     virtual void setType(Node::Type _type){}
+    virtual void setType(Node* c){}
     virtual Node::Type getType(){}
+    virtual std::string getTypeString(){}
     virtual void setKind(Node::Kind _kind){}
     virtual Node::Kind getKind(){}
     virtual void setArgList(std::vector<Node::Type> _argList){}
@@ -130,7 +138,8 @@ public:
     }
     virtual void copyFrom(Node *c){
         //std::cout<<"Wrong copy\n";
-        this->setType(c->getType());
+        //this->setType(c->getType());
+        this->setType(c);
         this->setKind(c->getKind());
         this->setArgList(c->getArgList());
         this->setArraySizes(c->getArraySizes());
@@ -138,10 +147,11 @@ public:
         this->setVariableName(c->getVariableName());
         this->setPosition(c->getLineNumber(), c->getColumnNumber());
     }
+    virtual void copyFrom(Attribute *c);
 };
-extern int cout;
-class AttributivedNode : public Node{
+extern Node *cout;
 
+class AttributivedNode : public Node{
 private:
     AttributivedNode::Type mTokenType;
     AttributivedNode::Kind mTokenKind;
@@ -166,8 +176,26 @@ public:
     void setType(AttributivedNode::Type _type){
         this->mTokenType = _type;
     }
+    void setType(Node *c){
+        this->setType(c->getType());
+        if(c->getType()==Node::TYPE_STRUCT){
+            this->setStructTypeName(c->getStructTypeName());
+        }
+    }
     AttributivedNode::Type getType(){
         return this->mTokenType;
+    }
+    std::string getTypeString(){
+        switch(this->mTokenType){
+            case(Node::TYPE_DOUBLE):
+                return {"double"};
+            case(Node::TYPE_INT):
+                return {"int"};
+            case(Node::TYPE_STRUCT):
+                return std::string("struct ")+this->mStructTypeName;
+            default :
+                return std::to_string(this->mTokenType);
+        }
     }
     void setKind(AttributivedNode::Kind _kind){
         this->mTokenKind = _kind;
@@ -245,6 +273,68 @@ struct Attribute{
     Attribute(Node *p)
         : name(p->getVariableName()),type(p->getType()),kind(p->getKind()),argList(p->getArgList()),arraySizes(p->getArraySizes()),
           structTypeName(p->getStructTypeName()),lineNumber(p->getLineNumber()),columnNumber(p->getColumnNumber()){};
+    void print(){
+        std::cout<<name<<' ';
+        switch(type){
+            case Node::TYPE_INT:
+                std::cout<<"int ";
+                break;
+            case Node::TYPE_DOUBLE:
+                std::cout<<"double ";
+                break;
+            case Node::TYPE_STRUCT:
+                std::cout<<"struct "<<structTypeName<<' ';
+                break;
+            default:
+                std::cout<<type<<' ';
+        }
+        switch(kind){
+            case Node::KIND_ARGUMENT:
+                std::cout<<"augument ";
+                break;
+            case Node::KIND_ATTRIBUTE:
+                std::cout<<"attribute ";
+                break;
+            case Node::KIND_CONSTANT:
+                std::cout<<"constant ";
+                break;
+            case Node::KIND_FUNCTION:
+                std::cout<<"function ";
+                break;
+            case Node::KIND_VARIABLE:
+                std::cout<<"variable ";
+                break;
+            default:
+                std::cout<<kind<<' ';
+        }
+        if(kind==Node::KIND_FUNCTION){
+            std::cout<<'(';
+            for(auto string : argList){
+                //std::cout<<string<<',';
+                switch(string){
+                    case Node::TYPE_INT:
+                        std::cout<<"int,";
+                        break;
+                    case Node::TYPE_DOUBLE:
+                        std::cout<<"double,";
+                        break;
+                    case Node::TYPE_STRUCT:
+                        std::cout<<"struct "<<structTypeName<<',';
+                        break;
+                    default:
+                        std::cout<<type<<',';
+                }
+            }
+            std::cout<<") ";
+        }
+        if(arraySizes.size()>0){
+            for(auto size : arraySizes){
+                std::cout<<"["<<size<<"]";
+            }
+            std::cout<<' ';
+        }
+        printf(" --pos:l%dc%d\n", lineNumber, columnNumber);
+    }
 };
 
 class SymbolTable{
@@ -258,6 +348,9 @@ public:
     }
     SymbolTable(std::string name):mSymbolTableName(name){
         set.insert({mSymbolTableName, this});
+    }
+    std::string getName(){
+        return mSymbolTableName;
     }
     bool insert(Attribute* t){
         if(map.find(t->name)!=map.end()){
@@ -274,8 +367,26 @@ public:
             return map[name];
         }
     }
+    void print(){
+        std::cout<<"Symbol Table Name: "<<mSymbolTableName<<std::endl;
+        int i=1;
+        for(auto pair : map){
+            printf("No.%03d ",i++);
+            //std::cout<<pair.first<<' ';
+            pair.second->print();
+        }
+    }
     static SymbolTable *getSymbolTableByName(std::string symbolTableName){
         return set[symbolTableName];
+    }
+    static void viewAllSymbolTable(){
+        std::cout<<"Printing All Symbol Tables appended...\n";
+        for(auto pair : set){
+            //std::cout<<"Symbol Table Name: "<<pair.first()<<std::endl;
+            std::cout<<"----------------------------------------------\n";
+            pair.second->print();
+            std::cout<<"----------------------------------------------\n";
+        }
     }
 };
 
@@ -294,6 +405,9 @@ public:
             throw("You cannot pop the global symbol table.");
         }
         stack.pop_back();
+    }
+    SymbolTable *top(){
+        return stack[stack.size()-1];
     }
     Attribute *lookUp(std::string name){
         for(int i=stack.size()-1;i>=0;i--){
@@ -316,5 +430,5 @@ extern SymbolTableStack *symbolTableStack;
 bool checkType(Node *p, Node::Type type);
 bool checkKind(Node *p, Node::Kind kind);
 bool typeMatch(Node *a, Node *b);
-
+bool typeMatch(std::vector<Node::Type> a, std::vector<Node::Type> b);
 #endif
