@@ -380,7 +380,7 @@ public:
         return set[symbolTableName];
     }
     static void viewAllSymbolTable(){
-        std::cout<<"Printing All Symbol Tables appended...\n";
+        std::cout<<"Printing All Symbol Tables attended...\n";
         for(auto pair : set){
             //std::cout<<"Symbol Table Name: "<<pair.first()<<std::endl;
             std::cout<<"----------------------------------------------\n";
