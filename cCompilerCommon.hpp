@@ -113,6 +113,8 @@ public:
     virtual Node::Kind getKind(){}
     virtual void setArgList(std::vector<Node::Type> _argList){}
     virtual std::vector<Node::Type> getArgList(){}
+    virtual void setArgListStructName(std::vector<std::string> _structName){}
+    virtual std::vector<std::string> getArgListStructName(){}
     virtual void setArraySizes(std::vector<int> _sizes){}
     virtual std::vector<int> getArraySizes(){}
     virtual bool isArray(){}
@@ -131,6 +133,7 @@ public:
         this->setType(mChildren[0]->getType());
         this->setKind(mChildren[0]->getKind());
         this->setArgList(mChildren[0]->getArgList());
+        this->setArgListStructName(mChildren[0]->getArgListStructName());
         this->setArraySizes(mChildren[0]->getArraySizes());
         this->setStructTypeName(mChildren[0]->getStructTypeName());
         this->setVariableName(mChildren[0]->getVariableName());
@@ -142,6 +145,7 @@ public:
         this->setType(c);
         this->setKind(c->getKind());
         this->setArgList(c->getArgList());
+        this->setArgListStructName(c->getArgListStructName());
         this->setArraySizes(c->getArraySizes());
         this->setStructTypeName(c->getStructTypeName());
         this->setVariableName(c->getVariableName());
@@ -156,6 +160,7 @@ private:
     AttributivedNode::Type mTokenType;
     AttributivedNode::Kind mTokenKind;
     std::vector<AttributivedNode::Type> mTokenArgList;
+    std::vector<std::string> mTokenArgListStructTypeName;
     std::vector<int> mArraySizes;
     std::string mStructTypeName;
     std::string mVariableName;
@@ -186,16 +191,24 @@ public:
         return this->mTokenType;
     }
     std::string getTypeString(){
+        std::string string;
         switch(this->mTokenType){
             case(Node::TYPE_DOUBLE):
-                return {"double"};
+                string+={"double"};
+                break;
             case(Node::TYPE_INT):
-                return {"int"};
+                string+={"int"};
+                break;
             case(Node::TYPE_STRUCT):
-                return std::string("struct ")+this->mStructTypeName;
+                string+=(std::string("struct ")+this->mStructTypeName);
+                break;
             default :
-                return std::to_string(this->mTokenType);
+                string+=std::to_string(this->mTokenType);
         }
+        for(int i=0;i<this->mArraySizes.size();i++){
+            string+="[]";
+        }
+        return string;
     }
     void setKind(AttributivedNode::Kind _kind){
         this->mTokenKind = _kind;
@@ -208,6 +221,12 @@ public:
     }
     std::vector<AttributivedNode::Type> getArgList(){
         return this->mTokenArgList;
+    }
+    void setArgListStructName(std::vector<std::string> _structName){
+        mTokenArgListStructTypeName.assign(_structName.begin(), _structName.end());
+    }
+    std::vector<std::string> getArgListStructName(){
+        return mTokenArgListStructTypeName;
     }
     void setArraySizes(std::vector<int> _sizes){
         mArraySizes.assign(_sizes.begin(),_sizes.end());
@@ -263,16 +282,17 @@ struct Attribute{
     Node::Type type;
     Node::Kind kind;
     std::vector<Node::Type> argList;
+    std::vector<std::string> argListStructName;
     std::vector<int> arraySizes;
     std::string structTypeName;
     int lineNumber;
     int columnNumber;
-    Attribute(std::string _name, Node::Type _type, Node::Kind _kind, std::vector<Node::Type> _argList, std::vector<int> _arraySizes, std::string _structTypeName, int l, int c)
-        : name(_name),type(_type),kind(_kind),argList(_argList),arraySizes(_arraySizes),structTypeName(_structTypeName),lineNumber(l),columnNumber(c){};
+    Attribute(std::string _name, Node::Type _type, Node::Kind _kind, std::vector<Node::Type> _argList, std::vector<std::string> _argListStructName, std::vector<int> _arraySizes, std::string _structTypeName, int l, int c)
+        : name(_name),type(_type),kind(_kind),argList(_argList),arraySizes(_arraySizes),structTypeName(_structTypeName),lineNumber(l),columnNumber(c),argListStructName(_argListStructName){};
     Attribute(){}
     Attribute(Node *p)
         : name(p->getVariableName()),type(p->getType()),kind(p->getKind()),argList(p->getArgList()),arraySizes(p->getArraySizes()),
-          structTypeName(p->getStructTypeName()),lineNumber(p->getLineNumber()),columnNumber(p->getColumnNumber()){};
+          structTypeName(p->getStructTypeName()),lineNumber(p->getLineNumber()),columnNumber(p->getColumnNumber()),argListStructName(p->getArgListStructName()){};
     void print(){
         std::cout<<name<<' ';
         switch(type){
@@ -309,21 +329,22 @@ struct Attribute{
         }
         if(kind==Node::KIND_FUNCTION){
             std::cout<<'(';
-            for(auto string : argList){
-                //std::cout<<string<<',';
+            for(int i=0;i<argList.size();i++){
+                auto string = argList[i];
                 switch(string){
                     case Node::TYPE_INT:
-                        std::cout<<"int,";
+                        std::cout<<"int";
                         break;
                     case Node::TYPE_DOUBLE:
-                        std::cout<<"double,";
+                        std::cout<<"double";
                         break;
                     case Node::TYPE_STRUCT:
-                        std::cout<<"struct "<<structTypeName<<',';
+                        std::cout<<"struct "<<argListStructName[i];
                         break;
                     default:
-                        std::cout<<type<<',';
+                        std::cout<<type;
                 }
+                if(i!=argList.size()-1)std::cout<<",";
             }
             std::cout<<") ";
         }
@@ -431,4 +452,7 @@ bool checkType(Node *p, Node::Type type);
 bool checkKind(Node *p, Node::Kind kind);
 bool typeMatch(Node *a, Node *b);
 bool typeMatch(std::vector<Node::Type> a, std::vector<Node::Type> b);
+bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s);
+bool typeMatch(Attribute *a, Node* b);
+std::string type_to_string(Attribute *t);
 #endif
