@@ -22,8 +22,12 @@ void error_expressionTypeError(Node*,Node*);
 void error_typeMismatch(Node*);
 void error_variableNotDeclaredInStruct(Node*,Node*);
 void error_argumentNumberNotMatch(Node*,int);
-void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node*);
+void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node*,std::vector<std::string>&);
 void error_structNotDeclared(std::string);
+void error_notArray(Node*);
+void error_returnValueTypeMismatch(Attribute* need, Node::Type give);
+void error_returnValueTypeMismatch(Attribute* need, Node* give);
+void error_functionReturnsArray();
 %}
 %code requires {
 #include"./cCompilerCommon.hpp"
@@ -199,7 +203,7 @@ structTypeName :
         }*/ /* There is a conflict between this rule and the rule "declaration -> STRUCT IDENTIFIER '{' structMemberDeclarations '}' ", so our language will not support defining a struct and a variable of its type at the same time. */
     /*|*/   STRUCT '{' {
             std::string name = nameCounter.getNumberedName("`Unamed_Structure");
-            symbolTableStack->insert(new Attribute(name, Node::TYPE_STRUCT, Node::KIND_ATTRIBUTE, std::vector<Node::Type>(),
+            symbolTableStack->insert(new Attribute(name, Node::TYPE_STRUCT, Node::KIND_ATTRIBUTE, std::vector<Node::Type>(), std::vector<std::string>(), 
                                      std::vector<int>(), name, csLineCnt, csColumnCnt-1));
             symbolTableStack->push(new SymbolTable(name));
         } structMemberDeclarations '}' {
@@ -322,8 +326,8 @@ variableName :
         }
     |   variableName '[' NUMBER ']' {    /* int a[10][10]; only constant int number is allowed */
             $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
-            if(!(checkType($2,Node::TYPE_INT) && checkKind($2,Node::KIND_CONSTANT))){
-                error_illegalArraySize($2);
+            if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
+                error_illegalArraySize($3);
             }else{
                 $$->setKind(Node::KIND_VARIABLE);
                 $$->setVariableName($1->getVariableName());
@@ -350,12 +354,19 @@ variableName :
             $$->copyFrom($1);
             $$->setKind(Node::KIND_FUNCTION);
             std::vector<Node::Type> argList;
+            std::vector<std::string> argListStructName;
             for(int i=0;i<$3->getChildrenNumber();i++){
                 auto child = $3->getChildrenById(i);
                 if(child->isTerminal())continue;
                 argList.push_back(child->getType());
+                if(child->getType()==Node::TYPE_STRUCT){
+                    argListStructName.push_back(child->getStructTypeName());
+                }else{
+                    argListStructName.push_back({""});
+                }
             }
             $$->setArgList(argList);
+            $$->setArgListStructName(argListStructName);
             /* TODO: Think about the argument list */
         }
     ;
@@ -459,6 +470,9 @@ paramDeclaration :
 functionDeclaration :   /* rule above has something wrong, we can not recognize if a identifier is a function or a regular variable. Besides, it brings more conflicts */
         type variable { 
             $2->setType($1->getType());
+            if($2->isArray()){
+                error_functionReturnsArray();
+            }
             //$2->setKind(Node::KIND_FUNCTION);
             if(symbolTableStack->insert(new Attribute($2))==false){
                 error_duplicatedVariable($2);
@@ -606,9 +620,16 @@ caseStatements :
 jumpStatement :
         RETURN ';' {
             $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 2, $1, $2);
+            /* TODO: check if the type of return value matches the function */
+            if(symbolTableStack->lookUp(symbolTableStack->top()->getName())->type != Node::TYPE_VOID){
+                error_returnValueTypeMismatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), symbolTableStack->lookUp(symbolTableStack->top()->getName())->type);
+            }
         }
     |   RETURN expression ';' {
             $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 3, $1, $2, $3);
+            if(!typeMatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), $2)){
+                error_returnValueTypeMismatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), $2);
+            }
         }
     |   CONTINUE ';' {
             $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 2, $1, $2);
@@ -628,7 +649,8 @@ jumpStatement :
 
 expression : 
         assignmentExpression {
-            $$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
+            $$ = new AttributivedNode(nameCounter.getNumberedName("expression"), 1, $1);
+            $$->copyFrom($1);
         }
     |   expression ',' assignmentExpression {
             $$ = $1;
@@ -651,7 +673,7 @@ assignmentExpression :
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE))){
+            if(!(checkKind($1,Node::KIND_VARIABLE)) || $1->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
             if(!typeMatch($1,$3)){
@@ -722,6 +744,9 @@ tenaryConditionExpression :
             if(!(checkType($1,Node::TYPE_INT))){
                 error_expressionTypeError($1,$$);
             }
+            if($1->isArray()){
+                error_expressionTypeError($1,$$);
+            }
         }
     ;
 
@@ -737,7 +762,7 @@ logicalOrExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -755,7 +780,7 @@ logicalAndExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -773,7 +798,7 @@ bitwiseOrExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -791,7 +816,7 @@ bitwiseExclusiveOrExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -809,7 +834,7 @@ bitwiseAndExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -827,7 +852,10 @@ equalityComparisonExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+            /*if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1,$2,$3);
+            }*/
+            if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -837,7 +865,10 @@ equalityComparisonExpression :
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+            /*if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1,$2,$3);
+            }*/
+            if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -858,6 +889,9 @@ relationComparisonExpression :
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
                 error_expressionTypeError($1,$2,$3);
             }
+            if($1->isArray() || $3->isArray()){
+                error_expressionTypeError($1,$2,$3);
+            }
         }
     |   relationComparisonExpression '>' shiftExpression {
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
@@ -866,6 +900,9 @@ relationComparisonExpression :
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1,$2,$3);
+            }
+            if($1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -878,6 +915,9 @@ relationComparisonExpression :
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
                 error_expressionTypeError($1,$2,$3);
             }
+            if($1->isArray() || $3->isArray()){
+                error_expressionTypeError($1,$2,$3);
+            }
         }
     |   relationComparisonExpression GE shiftExpression {
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
@@ -886,6 +926,9 @@ relationComparisonExpression :
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
+                error_expressionTypeError($1,$2,$3);
+            }
+            if($1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -901,7 +944,7 @@ shiftExpression :
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($1);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -909,7 +952,7 @@ shiftExpression :
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($1);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT))){
+            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -928,10 +971,7 @@ arithmeticAddExpression :
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
                 $$->setType(Node::TYPE_DOUBLE);
             }
-            if($1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($3->getType()==Node::TYPE_STRUCT){
+            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -942,10 +982,7 @@ arithmeticAddExpression :
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
                 $$->setType(Node::TYPE_DOUBLE);
             }
-            if($1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($3->getType()==Node::TYPE_STRUCT){
+            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -964,10 +1001,7 @@ arithmeticMulExpression :
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
                 $$->setType(Node::TYPE_DOUBLE);
             }
-            if($1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($3->getType()==Node::TYPE_STRUCT){
+            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -978,10 +1012,7 @@ arithmeticMulExpression :
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
                 $$->setType(Node::TYPE_DOUBLE);
             }
-            if($1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($3->getType()==Node::TYPE_STRUCT){
+            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -992,10 +1023,7 @@ arithmeticMulExpression :
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
                 $$->setType(Node::TYPE_DOUBLE);
             }
-            if($1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($3->getType()==Node::TYPE_STRUCT){
+            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
@@ -1031,7 +1059,7 @@ prefixUnaryExpression :
             $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
-            if(!checkKind($2, Node::KIND_VARIABLE)){
+            if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
                 error_expressionTypeError($2,$1);
             }
         }
@@ -1039,7 +1067,7 @@ prefixUnaryExpression :
             $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
-            if(!checkKind($2, Node::KIND_VARIABLE)){
+            if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
                 error_expressionTypeError($2,$1);
             }
         }
@@ -1047,7 +1075,7 @@ prefixUnaryExpression :
             $1 = new AttributivedNode($1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
-            if(checkType($2, Node::TYPE_STRUCT)){
+            if(!checkType($2, Node::TYPE_INT)){
                 error_expressionTypeError($2,$1);
             }
         }
@@ -1076,7 +1104,7 @@ postfixUnaryExpression :
             $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
             $$->copyFromChild();
-            if(!checkKind($1, Node::KIND_VARIABLE)){
+            if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
                 error_expressionTypeError($1,$2);
             }
         }
@@ -1084,15 +1112,26 @@ postfixUnaryExpression :
             $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
             $$->copyFromChild();
-            if(!checkKind($1, Node::KIND_VARIABLE)){
+            if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
                 error_expressionTypeError($1,$2);
             }
         }
-    |   postfixUnaryExpression '[' expression ']' {/* array a[10], corresponding to prefix ++ */
+    |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
             $$ = new AttributivedNode({"[]"}, 2, $1, $3);
             $$->copyFromChild();
-            if(!((checkKind($3, Node::KIND_VARIABLE) || checkKind($3, Node::KIND_CONSTANT)) && checkType($3, Node::TYPE_INT) && $1->isArray())){
-                error_expressionTypeError($1,$$,$3);
+            if(!$1->isArray()){
+                error_notArray($1);
+            }else {
+                if(!checkType($3, Node::TYPE_INT)){
+                    error_expressionTypeError($3,$$);
+                }
+                /* minus a dimension */
+                auto arraySizes = $$->getArraySizes();
+                arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
+                $$->setArraySizes(arraySizes);
+                /*if(!((checkKind($3, Node::KIND_VARIABLE) || checkKind($3, Node::KIND_CONSTANT)) && checkType($3, Node::TYPE_INT) && $1->isArray() )){
+                    error_expressionTypeError($1,$$,$3);
+                }*/
             }
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed */
@@ -1102,17 +1141,23 @@ postfixUnaryExpression :
                 error_expressionTypeError($1,$2);
             }else{
                 std::vector<Node::Type> argList;
+                std::vector<std::string> argListStructName;
                 for(int i=0;i<$3->getChildrenNumber();i++){
                     auto child = $3->getChildrenById(i);
                     if(child->isTerminal() && child->getTokenValue().compare(",")==0)continue;
                     argList.push_back(child->getType());
+                    if(child->getType()==Node::TYPE_STRUCT){
+                        argListStructName.push_back(child->getStructTypeName());
+                    }else{
+                        argListStructName.push_back({""});
+                    }
                 }
                 if(argList.size()!=$1->getArgList().size()){
-                    std::cout<<"~";
+                    //std::cout<<"~";
                     error_argumentNumberNotMatch($1,argList.size());
                 }else{
-                    if(!typeMatch(argList,$1->getArgList())){
-                        error_argumentTypeNotMatch(argList,$1);
+                    if(!typeMatch(argList,$1,argListStructName)){
+                        error_argumentTypeNotMatch(argList,$1,argListStructName);
                     }
                 }
             }
@@ -1129,17 +1174,20 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val)*/
+            Node *t=$2;
             $2 = new AttributivedNode($2->getName(), 2, $1, $3);
             $$ = $2;
-            
-            if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)))
+            $2->setPosition(t);
+            if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)) || $1->isArray())
                 error_expressionTypeError($1,$2);
-            auto symbolTable = SymbolTable::getSymbolTableByName($1->getStructTypeName());
+            else {
+                auto symbolTable = SymbolTable::getSymbolTableByName($1->getStructTypeName());
             
-            if(symbolTable->lookUp($3->getTokenValue()) == NULL)
-                error_variableNotDeclaredInStruct($1,$3);
-            
-            $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
+                if(symbolTable->lookUp($3->getTokenValue()) == NULL)
+                    error_variableNotDeclaredInStruct($1,$3);
+                
+                $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
+            }
         }
     |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) */
             $2 = new AttributivedNode($2->getName(), 1, $1);
@@ -1167,7 +1215,6 @@ paramList :
 atomicExpression :
         IDENTIFIER {
             $$ = $1;
-            
             if(!symbolTableStack->lookUp($1->getTokenValue())){
                 error_variableNotDeclared($1->getTokenValue());
                 $$->setKind(Node::KIND_VARIABLE);
@@ -1241,7 +1288,7 @@ void error_variableNotDeclared(std::string name){
 }
 void error_structNotDeclared(std::string name){
     std::cout<<"[ERROR] ";
-    std::cout<<"struct \""<<name<<"\" was not declared.\n";
+    std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
     std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
 }
 void error_illegalArraySize(Node* c){
@@ -1261,6 +1308,7 @@ void error_expressionTypeError(Node *exp1, Node *op){
 void error_typeMismatch(Node *c){
     std::cout<<"[ERROR] ";
     std::cout<<"Type mismatch at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<"\n";
+    std::cout<<" Hint: are you putting an array at the left hand of \'=\', or using \'=\' to connect two mismatched type?\n";
 }
 void error_variableNotDeclaredInStruct(Node *v, Node *m){
     std::cout<<"[ERROR] variable \""<<v->getVariableName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
@@ -1273,21 +1321,36 @@ void error_argumentNumberNotMatch(Node *f,int an){
     std::cout<<"[ERROR] function's argument number not match at line "<<f->getLineNumber()<<" near column "<<f->getColumnNumber()<<"\n";//'
     std::cout<<" Hint: function \""<<f->getVariableName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
 }
-void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function){
+void error_notArray(Node *c){
+    std::cout<<"[ERROR] \""<<c->getVariableName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
+    std::cout<<" Hint: are you using too many \"[]\"\'s to access an array?\n";//'
+}
+void error_returnValueTypeMismatch(Attribute* need, Node::Type give){
+    std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
+    std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave nothing\n"; 
+}
+void error_returnValueTypeMismatch(Attribute* need, Node* give){
+    std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
+    std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave "<<give->getTypeString()<<std::endl;
+}
+void error_functionReturnsArray(){
+    std::cout<<"[ERROR] at line "<<csLineCnt<<": function cannot return an array\n";
+}
+void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function,std::vector<std::string>& structTypeName){
     std::cout<<"[ERROR] function's argument type not match at line "<<function->getLineNumber()<<" near column "<<function->getColumnNumber()<<"\n";//'
     std::cout<<" Hint: function \""<<function->getVariableName()<<"\" needs parameters of (";
     auto fa = function->getArgList();
     for(int i=0;i<fa.size();i++){
         switch(fa[i]){
             case Node::TYPE_INT:
-                std::cout<<"int ";
+                std::cout<<"int";
                 break;
             case Node::TYPE_DOUBLE:
-                std::cout<<"double ";
+                std::cout<<"double";
                 break;
-            /*case Node::TYPE_STRUCT:
-                std::cout<<"struct "<<structTypeName<<' ';
-                break;*/
+            case Node::TYPE_STRUCT:
+                std::cout<<"struct "<<function->getArgListStructName()[i];
+                break;
             default:
                 std::cout<<userGave[i]<<' ';
         }
@@ -1297,14 +1360,14 @@ void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function
     for(int i=0;i<userGave.size();i++){
         switch(userGave[i]){
             case Node::TYPE_INT:
-                std::cout<<"int ";
+                std::cout<<"int";
                 break;
             case Node::TYPE_DOUBLE:
-                std::cout<<"double ";
+                std::cout<<"double";
                 break;
-            /*case Node::TYPE_STRUCT:
-                std::cout<<"struct "<<structTypeName<<' ';
-                break;*/
+            case Node::TYPE_STRUCT:
+                std::cout<<"struct "<<structTypeName[i];
+                break;
             default:
                 std::cout<<userGave[i]<<' ';
         }
