@@ -1,6 +1,7 @@
 #include "./cCompilerCommon.hpp"
 extern Node *makeParseTree();
 int main(){
+    csLineCnt++;
     try{
     Node *treeRoot = makeParseTree();
     if(treeRoot){
