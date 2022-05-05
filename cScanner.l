@@ -18,24 +18,24 @@ intNumber (([1-9][0-9]*)|[0-9])|(0x[0-9a-fA-F]+)|(0[0-7]*)
 identifier [a-zA-Z_][a-zA-Z0-9_]*
 doubleNumber {intNumber}\.{intNumber}
 emptyChar [ \t\n]
-char \'.\'|\'\\.\'
+char \'.\'|\'\\.\' 
 string \"[^\"]*\"
 
-commitLine (\/\/.*\n)|(\/\*(.|\n)*\*\/)
+commentLine (\/\/.*\n)|(\/\*(.|\n)*\*\/)
 
 %%
 {emptyChar} {
-    if(yytext[0]=='\n'){
-        csColumnCnt=0;
+    if(yytext[0] == '\n'){
+        csColumnCnt = 0;
         csLineCnt++;
     }else{
         csColumnCnt++;
     }
 }
-{commitLine} {
+{commentLine} {
     csColumnCnt=0;
-    for(int i=0;yytext[i];i++)
-        csLineCnt+=(yytext[i]=='\n');
+    for(int i=0; yytext[i]; i++)
+        csLineCnt += (yytext[i]=='\n');
 }
 
 int {
@@ -45,7 +45,7 @@ int {
 }
 float {
     echo();
-    csColumnCnt+=5;
+    csColumnCnt += 5;
     return FLOAT;
 }
 double {

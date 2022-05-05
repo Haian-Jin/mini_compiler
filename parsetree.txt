@@ -1,0 +1,93 @@
+ERROR at line 3, column 11: Unsupported Character, '`' is not supported in our C-- language, scanner will treat it as an empty character.
+cCode[0]
+    globalDeclaration[0]
+        functionDeclaration[0]
+            type[0]
+                typeName[0]
+                    int
+            variable[0]
+                variableName[1]
+                    variableName[0]
+                        main
+                    (
+                    )
+            statementBlock[0]
+                {
+                localDeclarations[0]
+                    declaration[0]
+                        type[1]
+                            typeName[1]
+                                int
+                        initializations[0]
+                            initialization[0]
+                                variable[1]
+                                    variableName[2]
+                                        i
+                                =
+                                initialValue[0]
+                                    1
+                        ;
+                    declaration[1]
+                        type[2]
+                            typeName[2]
+                                int
+                        initializations[1]
+                            initialization[1]
+                                variable[2]
+                                    variableName[3]
+                                        j
+                                =
+                                initialValue[1]
+                                    1
+                        ;
+                }
+
+
+The simplified tree is:
+
+cCode[0]
+    globalDeclaration[0]
+        functionDeclaration[0]
+            type[0]
+                typeName[0]
+                    int
+            variable[0]
+                variableName[1]
+                    variableName[0]
+                        main
+            statementBlock[0]
+                localDeclarations[0]
+                    declaration[0]
+                        type[1]
+                            typeName[1]
+                                int
+                        initializations[0]
+                            initialization[0]
+                                variable[1]
+                                    variableName[2]
+                                        i
+                                =
+                                initialValue[0]
+                                    1
+                    declaration[1]
+                        type[2]
+                            typeName[2]
+                                int
+                        initializations[1]
+                            initialization[1]
+                                variable[2]
+                                    variableName[3]
+                                        j
+                                =
+                                initialValue[1]
+                                    1
+Printing All Symbol Tables attended...
+----------------------------------------------
+Symbol Table Name: Global_SymbolTable
+No.001 main int function ()  --pos:l1c8
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: main
+No.001 i int variable  --pos:l2c9
+No.002 j int variable  --pos:l3c9
+----------------------------------------------
