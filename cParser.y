@@ -82,7 +82,7 @@ globalDeclaration :
         }
     |   statement { /* 不允许在全局范围内出现不是定义的语句。 */
             yyerror("syntax error");
-            std::cout<<"C only supports statements within a function.\n";
+            std::cout<<"C-- only supports statements within a function.\n";
         }
     |   '}' {
             yyerror("syntax error");
@@ -94,12 +94,12 @@ globalDeclaration :
 declaration :
         type initializations ';' { /* 定义变量 */
             $$ = new Node(nameCounter.getNumberedName("declaration"), 3, $1, $2, $3);
-            for(int i=0;i<$2->getChildrenNumber();i++){
+            for(int i = 0; i < $2->getChildrenNumber(); i++){
                 Node *child = $2->getChildrenById(i);
                 //child->setType($1->getType());
                 child->setType($1);
             }
-            for(int i=0;i<$2->getChildrenNumber();i++){
+            for(int i = 0;i < $2->getChildrenNumber(); i++){
                 Node *child = $2->getChildrenById(i);
                 if(child->isTerminal() && child->getTokenValue().compare({","})==0)continue;
                 if(symbolTableStack->insert(new Attribute(child)) == false){// insert fault.

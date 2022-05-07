@@ -45,7 +45,7 @@ int {
 }
 float {
     echo();
-    csColumnCnt += 5;
+    csColumnCnt+=5;
     return FLOAT;
 }
 double {
@@ -60,7 +60,7 @@ char {
 }
 for {
     echo();
-    csColumnCnt+=4;
+    csColumnCnt+=3;
     return FOR;
 }
 do {
