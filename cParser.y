@@ -637,7 +637,7 @@ assignmentExpression :
             $$ = $1;
         }
     |   unaryExpression '=' assignmentExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             if(!(checkKind($1,Node::KIND_VARIABLE)) || $1->isArray()){
@@ -648,7 +648,7 @@ assignmentExpression :
             }
         }
     |   unaryExpression ADD_ASSIGN assignmentExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             if(!(checkKind($1,Node::KIND_VARIABLE))){
@@ -659,7 +659,7 @@ assignmentExpression :
             }
         }
     |   unaryExpression SUB_ASSIGN assignmentExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             if(!(checkKind($1,Node::KIND_VARIABLE))){
@@ -670,7 +670,7 @@ assignmentExpression :
             }
         }
     |   unaryExpression MUL_ASSIGN assignmentExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             if(!(checkKind($1,Node::KIND_VARIABLE))){
@@ -681,7 +681,7 @@ assignmentExpression :
             }
         }
     |   unaryExpression DIV_ASSIGN assignmentExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             if(!(checkKind($1,Node::KIND_VARIABLE))){
@@ -700,7 +700,7 @@ tenaryConditionExpression :
             $$ = $1;
         }
     |   logicalOrExpression '?' expression ':' tenaryConditionExpression {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
-            $$ = new AttributivedNode({"?:"}, 3, $1, $3, $5);
+            $$ = new TenaryOperatorNode({"?:"}, 3, $1, $3, $5);
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
             if($3->getType()==Node::TYPE_DOUBLE||$5->getType()==Node::TYPE_DOUBLE)$$->setType(Node::TYPE_DOUBLE);
@@ -721,7 +721,7 @@ logicalOrExpression :
             $$ = $1;
         }
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -739,7 +739,7 @@ logicalAndExpression :
             $$ = $1;
         }
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -757,7 +757,7 @@ bitwiseOrExpression :
             $$ = $1;
         }
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -775,7 +775,7 @@ bitwiseExclusiveOrExpression :
             $$ = $1;
         }
     |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -793,7 +793,7 @@ bitwiseAndExpression :
             $$ = $1;
         }
     |   bitwiseAndExpression '&' equalityComparisonExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -811,7 +811,7 @@ equalityComparisonExpression :
             $$ = $1;
         }
     |   equalityComparisonExpression EQ relationComparisonExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -824,7 +824,7 @@ equalityComparisonExpression :
             }
         }
     |   equalityComparisonExpression NE relationComparisonExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -842,7 +842,7 @@ relationComparisonExpression :
             $$ = $1;
         }
     |   relationComparisonExpression '<' shiftExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -855,7 +855,7 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression '>' shiftExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -868,7 +868,7 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression LE shiftExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -881,7 +881,7 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression GE shiftExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
             $$->setType(Node::TYPE_INT);
@@ -902,7 +902,7 @@ shiftExpression :
             $$ = $1;
         }
     |   shiftExpression SL arithmeticAddExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($1);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -910,7 +910,7 @@ shiftExpression :
             }
         }
     |   shiftExpression SR arithmeticAddExpression  {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($1);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -926,7 +926,7 @@ arithmeticAddExpression :
             $$ = $1;
         }
     |   arithmeticAddExpression '+' arithmeticMulExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($3);
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
@@ -937,7 +937,7 @@ arithmeticAddExpression :
             }
         }
     |   arithmeticAddExpression '-' arithmeticMulExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($3);
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
@@ -956,7 +956,7 @@ arithmeticMulExpression :
             $$ = $1;
         }
     |   arithmeticMulExpression '*' castedExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($3);
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
@@ -967,7 +967,7 @@ arithmeticMulExpression :
             }
         }
     |   arithmeticMulExpression '/' castedExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($3);
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
@@ -978,7 +978,7 @@ arithmeticMulExpression :
             }
         }
     |   arithmeticMulExpression '%' castedExpression {
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFrom($3);
             if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
@@ -996,13 +996,13 @@ arithmeticMulExpression :
 castedExpression :
        unaryExpression {
             $$ = $1;
-        }
+        }/*
     |   '(' type ')' castedExpression {
             $$ = new AttributivedNode("castedExpression", 2, $2, $4);
         }
     |   '(' type variableWithNoName ')' castedExpression {
             $$ = new AttributivedNode("castedExpression", 3, $2, $3, $5);
-        }
+        }*/
     ;
 
 /* PRIORITY 1: "++, --, !, ~" unary operator, and ". ->" */
@@ -1019,7 +1019,7 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
+            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
             if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
@@ -1027,7 +1027,7 @@ prefixUnaryExpression :
             }
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $1 = new AttributivedNode(std::string("pre")+$1->getName(), 1, $2);
+            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
             if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
@@ -1035,7 +1035,7 @@ prefixUnaryExpression :
             }
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $1 = new AttributivedNode($1->getName(), 1, $2);
+            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
             if(!checkType($2, Node::TYPE_INT)){
@@ -1043,7 +1043,7 @@ prefixUnaryExpression :
             }
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $1 = new AttributivedNode($1->getName(), 1, $2);
+            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
             $$ = $1;
             $$->copyFromChild();
             if(!checkType($2, Node::TYPE_INT)){
@@ -1051,7 +1051,7 @@ prefixUnaryExpression :
             }
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $1 = new AttributivedNode($1->getName(), 1, $2);
+            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
             $$ = $1;
             if(checkType($2, Node::TYPE_STRUCT)){
                 error_expressionTypeError($2,$1);
@@ -1064,7 +1064,7 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
+            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
             $$->copyFromChild();
             if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
@@ -1072,7 +1072,7 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $2 = new AttributivedNode(std::string("post")+$2->getName(), 1, $1);
+            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$ = $2;
             $$->copyFromChild();
             if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
@@ -1080,7 +1080,7 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
-            $$ = new AttributivedNode({"[]"}, 2, $1, $3);
+            $$ = new BinaryOperatorNode({"[]"}, 2, $1, $3);
             $$->copyFromChild();
             if(!$1->isArray()){
                 error_notArray($1);
@@ -1095,7 +1095,7 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
-            $$ = new AttributivedNode({"()"}, 2, $1, $3);
+            $$ = new FunctionCallNode({"()"}, 2, $1, $3);
             $$->copyFromChild();
             if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$2);
@@ -1111,6 +1111,7 @@ postfixUnaryExpression :
                     }else{
                         argListStructName.push_back({""});
                     }
+                    (dynamic_cast<FunctionCallNode*>($$))->addArgument(child);
                 }
                 if(argList.size()!=$1->getArgList().size()){
                     //std::cout<<"~";
@@ -1123,7 +1124,7 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
-            $$ = new AttributivedNode({"()"}, 1, $1);
+            $$ = new FunctionCallNode({"()"}, 1, $1);
             $$->copyFromChild();
             if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$$);
@@ -1135,7 +1136,7 @@ postfixUnaryExpression :
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             Node *t=$2;
-            $2 = new AttributivedNode($2->getName(), 2, $1, $3);
+            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $2->setPosition(t);
             if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)) || $1->isArray())
@@ -1148,12 +1149,13 @@ postfixUnaryExpression :
                 
                 $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
             }
-        }
-    |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) */
-            $2 = new AttributivedNode($2->getName(), 1, $1);
+        }/*
+    |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) *//*
+            $2 = new BinaryOperatorNode($2->getName(), 1, $1);
             $$ = $2;
 
-        }
+        } 
+    */
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();
         }

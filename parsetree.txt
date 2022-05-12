@@ -1,45 +1,532 @@
-ERROR at line 3, column 11: Unsupported Character, '`' is not supported in our C-- language, scanner will treat it as an empty character.
+[ERROR] return value type mismatch at line 4
+ Hint: the function returns int but you gave int[]
+[ERROR] variable "a" at line 6 near column 5 has been declared before.
+ Hint: first declaraed at line 1, near column 5
+[ERROR] variable "b" at line 12 near column 9 has been declared before.
+ Hint: first declaraed at line 11, near column 9
+[ERROR] variable "S" at line 15 near column 9 has been declared before.
+ Hint: first declaraed at line 7, near column 6
+[ERROR] struct type name "UT" was not declared.
+ Hint: first used at line 17, near column 10
+[ERROR] variable "fun" at line 18 near column 10 has been declared before.
+ Hint: first declaraed at line 3, near column 7
+[ERROR] return value type mismatch at line 19
+ Hint: the function returns double but you gave nothing
+[ERROR] return value type mismatch at line 22
+ Hint: the function returns void but you gave struct S
+[ERROR] return value type mismatch at line 26
+ Hint: the function returns double but you gave struct S
+[ERROR] variable "ut" was not declared.
+ Hint: first used at line 29, near column 10
+[ERROR] variable "ufun" was not declared.
+ Hint: first used at line 30, near column 8
+[ERROR] Type error at line 30 near column 4:
+ Type int is not supported for the operator "()"
+[ERROR] Type mismatch at line 31 near column 5
+ Hint: are you putting an array at the left hand of '=', or using '=' to connect two mismatched type?
+[ERROR] Type error at line 32 near column 7:
+ Type int and type int[] are not match for the operator "+"
+[ERROR] Type error at line 33 near column 7:
+ Type int[] and type double[] are not match for the operator "+"
+[ERROR] Type error at line 34 near column 7:
+ Type struct S and type struct S are not match for the operator "-"
+[ERROR] function's argument number not match at line 35 near column 7
+ Hint: function "fun" needs 2 arguments but you gave 1.
+[ERROR] function's argument number not match at line 36 near column 7
+ Hint: function "fun" needs 2 arguments but you gave 3.
+[ERROR] function's argument type not match at line 37 near column 7
+ Hint: function "fun" needs parameters of (int,double) but you gave (struct S,struct S)
+[ERROR] "a" at line 38 near column 5 is not an array.
+ Hint: are you using too many "[]"'s to access an array?
+[ERROR] "a" at line 39 near column 5 is not an array.
+ Hint: are you using too many "[]"'s to access an array?
+[ERROR] "a" at line 39 near column 5 is not an array.
+ Hint: are you using too many "[]"'s to access an array?
+[ERROR] "a" at line 39 near column 5 is not an array.
+ Hint: are you using too many "[]"'s to access an array?
+[ERROR] Type error at line 40 near column 5:
+ Type int is not supported for the operator "()"
+[ERROR] Type error at line 41 near column 5:
+ Type int is not supported for the operator "("
+[ERROR] Type error at line 42 near column 5:
+ Type double is not supported for the operator "[]"
+[ERROR] "c" at line 44 near column 5 is not an array.
+ Hint: are you using too many "[]"'s to access an array?
+[ERROR] Type error at line 45 near column 5:
+ Type int is not supported for the operator "."
+[ERROR] variable "s" dose not has member "sc"
+ Hint: you declared this variable at line 16 near column 9
+[ERROR] function's argument type not match at line 47 near column 13
+ Hint: function "funStruct" needs parameters of (struct S,struct T) but you gave (struct S,struct S)
 cCode[0]
     globalDeclaration[0]
-        functionDeclaration[0]
+        declaration[0]
             type[0]
                 typeName[0]
                     int
-            variable[0]
-                variableName[1]
-                    variableName[0]
-                        main
+            initializations[0]
+                initialization[0]
+                    variable[0]
+                        variableName[0]
+                            a
+                ,
+                initialization[1]
+                    variable[1]
+                        variableName[1]
+                            b
+                ,
+                initialization[2]
+                    variable[2]
+                        variableName[3]
+                            variableName[2]
+                                c
+                            [
+                            100
+                            ]
+            ;
+    globalDeclaration[1]
+        declaration[1]
+            type[1]
+                typeName[1]
+                    double
+            initializations[1]
+                initialization[3]
+                    variable[3]
+                        variableName[4]
+                            d
+                ,
+                initialization[4]
+                    variable[4]
+                        variableName[5]
+                            e
+                ,
+                initialization[5]
+                    variable[5]
+                        variableName[7]
+                            variableName[6]
+                                f
+                            [
+                            100
+                            ]
+            ;
+    globalDeclaration[2]
+        functionDeclaration[0]
+            type[2]
+                typeName[2]
+                    int
+            variable[8]
+                variableName[11]
+                    variableName[8]
+                        fun
                     (
+                    paramTypes[0]
+                        paramTypeName[0]
+                            type[3]
+                                typeName[3]
+                                    int
+                            variable[6]
+                                variableName[9]
+                                    a1
+                        ,
+                        paramTypeName[1]
+                            type[4]
+                                typeName[4]
+                                    double
+                            variable[7]
+                                variableName[10]
+                                    a2
                     )
             statementBlock[0]
                 {
-                localDeclarations[0]
-                    declaration[0]
-                        type[1]
-                            typeName[1]
-                                int
-                        initializations[0]
-                            initialization[0]
-                                variable[1]
-                                    variableName[2]
-                                        i
+                statements[0]
+                    statement[0]
+                        jumpStatement[0]
+                            return
+                            expression[0]
+                                c
+                            ;
+                }
+    globalDeclaration[3]
+        declaration[2]
+            type[5]
+                typeName[5]
+                    int
+            initializations[2]
+                initialization[6]
+                    variable[9]
+                        variableName[12]
+                            a
+            ;
+    globalDeclaration[4]
+        declaration[3]
+            struct
+            S
+            {
+            structMemberDeclarations[1]
+                structMemberDeclarations[0]
+                    type[6]
+                        typeName[6]
+                            int
+                    structMembers[0]
+                        variable[10]
+                            variableName[13]
+                                sa
+                        ,
+                        variable[11]
+                            variableName[14]
+                                sb
+                    ;
+            }
+            ;
+    globalDeclaration[5]
+        declaration[4]
+            struct
+            T
+            {
+            structMemberDeclarations[3]
+                structMemberDeclarations[2]
+                    type[7]
+                        typeName[7]
+                            int
+                    structMembers[1]
+                        variable[12]
+                            variableName[15]
+                                b
+                    ;
+                structMemberDeclarations[4]
+                    type[8]
+                        typeName[8]
+                            int
+                    structMembers[2]
+                        variable[13]
+                            variableName[16]
+                                b
+                    ;
+                structMemberDeclarations[5]
+                    type[9]
+                        typeName[9]
+                            int
+                    structMembers[3]
+                        variable[14]
+                            variableName[17]
+                                a
+                    ;
+            }
+            ;
+    globalDeclaration[6]
+        declaration[5]
+            type[10]
+                typeName[10]
+                    structTypeName[0]
+                        struct
+                        S
+            initializations[3]
+                initialization[7]
+                    variable[15]
+                        variableName[18]
+                            S
+            ;
+    globalDeclaration[7]
+        declaration[6]
+            type[11]
+                typeName[11]
+                    structTypeName[1]
+                        struct
+                        S
+            initializations[4]
+                initialization[8]
+                    variable[16]
+                        variableName[19]
+                            s
+                ,
+                initialization[9]
+                    variable[17]
+                        variableName[20]
+                            y
+            ;
+    globalDeclaration[8]
+        declaration[7]
+            type[12]
+                typeName[12]
+                    structTypeName[2]
+                        struct
+                        UT
+            initializations[5]
+                initialization[10]
+                    variable[18]
+                        variableName[21]
+                            o
+            ;
+    globalDeclaration[9]
+        functionDeclaration[1]
+            type[13]
+                typeName[13]
+                    double
+            variable[20]
+                variableName[24]
+                    variableName[22]
+                        fun
+                    (
+                    paramTypes[1]
+                        paramTypeName[2]
+                            type[14]
+                                typeName[14]
+                                    int
+                            variable[19]
+                                variableName[23]
+                                    a
+                    )
+            statementBlock[1]
+                {
+                statements[1]
+                    statement[1]
+                        jumpStatement[1]
+                            return
+                            ;
+                }
+    globalDeclaration[10]
+        functionDeclaration[2]
+            type[15]
+                typeName[15]
+                    void
+            variable[23]
+                variableName[28]
+                    variableName[25]
+                        funStruct
+                    (
+                    paramTypes[2]
+                        paramTypeName[3]
+                            type[16]
+                                typeName[16]
+                                    structTypeName[3]
+                                        struct
+                                        S
+                            variable[21]
+                                variableName[26]
+                                    a
+                        ,
+                        paramTypeName[4]
+                            type[17]
+                                typeName[17]
+                                    structTypeName[4]
+                                        struct
+                                        T
+                            variable[22]
+                                variableName[27]
+                                    b
+                    )
+            statementBlock[2]
+                {
+                statements[2]
+                    statement[2]
+                        jumpStatement[2]
+                            return
+                            expression[1]
+                                a
+                            ;
+                }
+    globalDeclaration[11]
+        functionDeclaration[3]
+            type[18]
+                typeName[18]
+                    double
+            variable[24]
+                variableName[30]
+                    variableName[29]
+                        returnmismatchfunction
+                    (
+                    )
+            statementBlock[3]
+                {
+                statements[3]
+                    statement[3]
+                        expressionStatement[0]
+                            expression[2]
+                                +
+                                    a
+                                    b
+                            ;
+                    statement[4]
+                        jumpStatement[3]
+                            return
+                            expression[3]
+                                s
+                            ;
+                }
+    globalDeclaration[12]
+        functionDeclaration[4]
+            type[19]
+                typeName[19]
+                    int
+            variable[25]
+                variableName[32]
+                    variableName[31]
+                        main
+                    (
+                    )
+            statementBlock[4]
+                {
+                statements[4]
+                    statement[5]
+                        expressionStatement[1]
+                            expression[4]
                                 =
-                                initialValue[0]
-                                    1
-                        ;
-                    declaration[1]
-                        type[2]
-                            typeName[2]
-                                int
-                        initializations[1]
-                            initialization[1]
-                                variable[2]
-                                    variableName[3]
-                                        j
+                                    a
+                                    +
+                                        b
+                                        ut
+                            ;
+                    statement[6]
+                        expressionStatement[2]
+                            expression[5]
+                                ()
+                                    ufun
+                            ;
+                    statement[7]
+                        expressionStatement[3]
+                            expression[6]
                                 =
-                                initialValue[1]
+                                    a
+                                    s
+                            ;
+                    statement[8]
+                        expressionStatement[4]
+                            expression[7]
+                                +
+                                    a
+                                    c
+                            ;
+                    statement[9]
+                        expressionStatement[5]
+                            expression[8]
+                                +
+                                    c
+                                    f
+                            ;
+                    statement[10]
+                        expressionStatement[6]
+                            expression[9]
+                                -
+                                    s
+                                    y
+                            ;
+                    statement[11]
+                        expressionStatement[7]
+                            expression[10]
+                                ()
+                                    fun
+                                    paramList[0]
+                                        a
+                            ;
+                    statement[12]
+                        expressionStatement[8]
+                            expression[11]
+                                ()
+                                    fun
+                                    paramList[1]
+                                        a
+                                        ,
+                                        a
+                                        ,
+                                        a
+                            ;
+                    statement[13]
+                        expressionStatement[9]
+                            expression[12]
+                                ()
+                                    fun
+                                    paramList[2]
+                                        s
+                                        ,
+                                        y
+                            ;
+                    statement[14]
+                        expressionStatement[10]
+                            expression[13]
+                                []
+                                    a
+                                    10
+                            ;
+                    statement[15]
+                        expressionStatement[11]
+                            expression[14]
+                                []
+                                    []
+                                        []
+                                            a
+                                            1
+                                        1
                                     1
-                        ;
+                            ;
+                    statement[16]
+                        expressionStatement[12]
+                            expression[15]
+                                ()
+                                    b
+                            ;
+                    statement[17]
+                        expressionStatement[13]
+                            expression[16]
+                                ()
+                                    b
+                                    paramList[3]
+                                        a
+                            ;
+                    statement[18]
+                        expressionStatement[14]
+                            expression[17]
+                                []
+                                    c
+                                    1.5
+                            ;
+                    statement[19]
+                        expressionStatement[15]
+                            expression[18]
+                                []
+                                    c
+                                    1
+                            ;
+                    statement[20]
+                        expressionStatement[16]
+                            expression[19]
+                                []
+                                    []
+                                        c
+                                        1
+                                    1
+                            ;
+                    statement[21]
+                        expressionStatement[17]
+                            expression[20]
+                                .
+                                    a
+                                    sa
+                            ;
+                    statement[22]
+                        expressionStatement[18]
+                            expression[21]
+                                .
+                                    s
+                                    sc
+                            ;
+                    statement[23]
+                        expressionStatement[19]
+                            expression[22]
+                                ()
+                                    funStruct
+                                    paramList[4]
+                                        s
+                                        ,
+                                        y
+                            ;
+                    statement[24]
+                        jumpStatement[4]
+                            return
+                            expression[23]
+                                +
+                                    a
+                                    b
+                            ;
                 }
 
 
@@ -47,47 +534,444 @@ The simplified tree is:
 
 cCode[0]
     globalDeclaration[0]
-        functionDeclaration[0]
+        declaration[0]
             type[0]
                 typeName[0]
                     int
-            variable[0]
-                variableName[1]
-                    variableName[0]
-                        main
+            initializations[0]
+                initialization[0]
+                    variable[0]
+                        variableName[0]
+                            a
+                initialization[1]
+                    variable[1]
+                        variableName[1]
+                            b
+                initialization[2]
+                    variable[2]
+                        variableName[3]
+                            variableName[2]
+                                c
+                            100
+    globalDeclaration[1]
+        declaration[1]
+            type[1]
+                typeName[1]
+                    double
+            initializations[1]
+                initialization[3]
+                    variable[3]
+                        variableName[4]
+                            d
+                initialization[4]
+                    variable[4]
+                        variableName[5]
+                            e
+                initialization[5]
+                    variable[5]
+                        variableName[7]
+                            variableName[6]
+                                f
+                            100
+    globalDeclaration[2]
+        functionDeclaration[0]
+            type[2]
+                typeName[2]
+                    int
+            variable[8]
+                variableName[11]
+                    variableName[8]
+                        fun
+                    paramTypes[0]
+                        paramTypeName[0]
+                            type[3]
+                                typeName[3]
+                                    int
+                            variable[6]
+                                variableName[9]
+                                    a1
+                        paramTypeName[1]
+                            type[4]
+                                typeName[4]
+                                    double
+                            variable[7]
+                                variableName[10]
+                                    a2
             statementBlock[0]
-                localDeclarations[0]
-                    declaration[0]
-                        type[1]
-                            typeName[1]
-                                int
-                        initializations[0]
-                            initialization[0]
-                                variable[1]
-                                    variableName[2]
-                                        i
+                statements[0]
+                    statement[0]
+                        jumpStatement[0]
+                            return
+                            expression[0]
+                                c
+    globalDeclaration[3]
+        declaration[2]
+            type[5]
+                typeName[5]
+                    int
+            initializations[2]
+                initialization[6]
+                    variable[9]
+                        variableName[12]
+                            a
+    globalDeclaration[4]
+        declaration[3]
+            struct
+            S
+            structMemberDeclarations[1]
+                structMemberDeclarations[0]
+                    type[6]
+                        typeName[6]
+                            int
+                    structMembers[0]
+                        variable[10]
+                            variableName[13]
+                                sa
+                        variable[11]
+                            variableName[14]
+                                sb
+    globalDeclaration[5]
+        declaration[4]
+            struct
+            T
+            structMemberDeclarations[3]
+                structMemberDeclarations[2]
+                    type[7]
+                        typeName[7]
+                            int
+                    structMembers[1]
+                        variable[12]
+                            variableName[15]
+                                b
+                structMemberDeclarations[4]
+                    type[8]
+                        typeName[8]
+                            int
+                    structMembers[2]
+                        variable[13]
+                            variableName[16]
+                                b
+                structMemberDeclarations[5]
+                    type[9]
+                        typeName[9]
+                            int
+                    structMembers[3]
+                        variable[14]
+                            variableName[17]
+                                a
+    globalDeclaration[6]
+        declaration[5]
+            type[10]
+                typeName[10]
+                    structTypeName[0]
+                        struct
+                        S
+            initializations[3]
+                initialization[7]
+                    variable[15]
+                        variableName[18]
+                            S
+    globalDeclaration[7]
+        declaration[6]
+            type[11]
+                typeName[11]
+                    structTypeName[1]
+                        struct
+                        S
+            initializations[4]
+                initialization[8]
+                    variable[16]
+                        variableName[19]
+                            s
+                initialization[9]
+                    variable[17]
+                        variableName[20]
+                            y
+    globalDeclaration[8]
+        declaration[7]
+            type[12]
+                typeName[12]
+                    structTypeName[2]
+                        struct
+                        UT
+            initializations[5]
+                initialization[10]
+                    variable[18]
+                        variableName[21]
+                            o
+    globalDeclaration[9]
+        functionDeclaration[1]
+            type[13]
+                typeName[13]
+                    double
+            variable[20]
+                variableName[24]
+                    variableName[22]
+                        fun
+                    paramTypes[1]
+                        paramTypeName[2]
+                            type[14]
+                                typeName[14]
+                                    int
+                            variable[19]
+                                variableName[23]
+                                    a
+            statementBlock[1]
+                statements[1]
+                    statement[1]
+                        jumpStatement[1]
+                            return
+    globalDeclaration[10]
+        functionDeclaration[2]
+            type[15]
+                typeName[15]
+                    void
+            variable[23]
+                variableName[28]
+                    variableName[25]
+                        funStruct
+                    paramTypes[2]
+                        paramTypeName[3]
+                            type[16]
+                                typeName[16]
+                                    structTypeName[3]
+                                        struct
+                                        S
+                            variable[21]
+                                variableName[26]
+                                    a
+                        paramTypeName[4]
+                            type[17]
+                                typeName[17]
+                                    structTypeName[4]
+                                        struct
+                                        T
+                            variable[22]
+                                variableName[27]
+                                    b
+            statementBlock[2]
+                statements[2]
+                    statement[2]
+                        jumpStatement[2]
+                            return
+                            expression[1]
+                                a
+    globalDeclaration[11]
+        functionDeclaration[3]
+            type[18]
+                typeName[18]
+                    double
+            variable[24]
+                variableName[30]
+                    variableName[29]
+                        returnmismatchfunction
+            statementBlock[3]
+                statements[3]
+                    statement[3]
+                        expressionStatement[0]
+                            expression[2]
+                                +
+                                    a
+                                    b
+                    statement[4]
+                        jumpStatement[3]
+                            return
+                            expression[3]
+                                s
+    globalDeclaration[12]
+        functionDeclaration[4]
+            type[19]
+                typeName[19]
+                    int
+            variable[25]
+                variableName[32]
+                    variableName[31]
+                        main
+            statementBlock[4]
+                statements[4]
+                    statement[5]
+                        expressionStatement[1]
+                            expression[4]
                                 =
-                                initialValue[0]
-                                    1
-                    declaration[1]
-                        type[2]
-                            typeName[2]
-                                int
-                        initializations[1]
-                            initialization[1]
-                                variable[2]
-                                    variableName[3]
-                                        j
+                                    a
+                                    +
+                                        b
+                                        ut
+                    statement[6]
+                        expressionStatement[2]
+                            expression[5]
+                                ()
+                                    ufun
+                    statement[7]
+                        expressionStatement[3]
+                            expression[6]
                                 =
-                                initialValue[1]
+                                    a
+                                    s
+                    statement[8]
+                        expressionStatement[4]
+                            expression[7]
+                                +
+                                    a
+                                    c
+                    statement[9]
+                        expressionStatement[5]
+                            expression[8]
+                                +
+                                    c
+                                    f
+                    statement[10]
+                        expressionStatement[6]
+                            expression[9]
+                                -
+                                    s
+                                    y
+                    statement[11]
+                        expressionStatement[7]
+                            expression[10]
+                                ()
+                                    fun
+                                    paramList[0]
+                                        a
+                    statement[12]
+                        expressionStatement[8]
+                            expression[11]
+                                ()
+                                    fun
+                                    paramList[1]
+                                        a
+                                        a
+                                        a
+                    statement[13]
+                        expressionStatement[9]
+                            expression[12]
+                                ()
+                                    fun
+                                    paramList[2]
+                                        s
+                                        y
+                    statement[14]
+                        expressionStatement[10]
+                            expression[13]
+                                []
+                                    a
+                                    10
+                    statement[15]
+                        expressionStatement[11]
+                            expression[14]
+                                []
+                                    []
+                                        []
+                                            a
+                                            1
+                                        1
                                     1
+                    statement[16]
+                        expressionStatement[12]
+                            expression[15]
+                                ()
+                                    b
+                    statement[17]
+                        expressionStatement[13]
+                            expression[16]
+                                ()
+                                    b
+                                    paramList[3]
+                                        a
+                    statement[18]
+                        expressionStatement[14]
+                            expression[17]
+                                []
+                                    c
+                                    1.5
+                    statement[19]
+                        expressionStatement[15]
+                            expression[18]
+                                []
+                                    c
+                                    1
+                    statement[20]
+                        expressionStatement[16]
+                            expression[19]
+                                []
+                                    []
+                                        c
+                                        1
+                                    1
+                    statement[21]
+                        expressionStatement[17]
+                            expression[20]
+                                .
+                                    a
+                                    sa
+                    statement[22]
+                        expressionStatement[18]
+                            expression[21]
+                                .
+                                    s
+                                    sc
+                    statement[23]
+                        expressionStatement[19]
+                            expression[22]
+                                ()
+                                    funStruct
+                                    paramList[4]
+                                        s
+                                        y
+                    statement[24]
+                        jumpStatement[4]
+                            return
+                            expression[23]
+                                +
+                                    a
+                                    b
 Printing All Symbol Tables attended...
 ----------------------------------------------
 Symbol Table Name: Global_SymbolTable
-No.001 main int function ()  --pos:l1c8
+No.001 S struct S attribute  --pos:l7c6
+No.002 T struct T attribute  --pos:l10c6
+No.003 a int variable  --pos:l1c5
+No.004 b int variable  --pos:l1c7
+No.005 c int variable [100]  --pos:l1c9
+No.006 d double variable  --pos:l2c8
+No.007 e double variable  --pos:l2c10
+No.008 f double variable [100]  --pos:l2c12
+No.009 fun int function (int,double)  --pos:l3c7
+No.010 funStruct 5 function (struct S,struct T)  --pos:l21c14
+No.011 fun[0] double function (int)  --pos:l18c10
+No.012 main int function ()  --pos:l28c8
+No.013 o struct UT variable  --pos:l17c10
+No.014 returnmismatchfunction double function ()  --pos:l24c29
+No.015 s struct S variable  --pos:l16c9
+No.016 y struct S variable  --pos:l16c11
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: S
+No.001 sa int variable  --pos:l8c10
+No.002 sb int variable  --pos:l8c13
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: T
+No.001 a int variable  --pos:l13c9
+No.002 b int variable  --pos:l11c9
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: fun
+No.001 a1 int variable  --pos:l3c14
+No.002 a2 double variable  --pos:l3c24
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: funStruct
+No.001 a struct S variable  --pos:l21c24
+No.002 b struct T variable  --pos:l21c35
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: fun[0]
+No.001 a int variable  --pos:l18c16
 ----------------------------------------------
 ----------------------------------------------
 Symbol Table Name: main
-No.001 i int variable  --pos:l2c9
-No.002 j int variable  --pos:l3c9
+----------------------------------------------
+----------------------------------------------
+Symbol Table Name: returnmismatchfunction
 ----------------------------------------------
