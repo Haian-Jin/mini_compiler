@@ -48,7 +48,10 @@ static void error_functionReturnsArray();
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
 %type<nodePtr> paramList atomicExpression relationComparisonExpression
 %type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
+
 %start cCode0
+
+
 %%
 
 /* Always start from declaration of a variable or a function */

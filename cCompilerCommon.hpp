@@ -9,6 +9,14 @@
 #include<map>
 #include<cstdarg>
 
+#include <llvm/IR/Value.h>
+#include <json/json.h>
+
+#include <memory>
+
+class CodeGenContext;
+
+
 struct Attribute;
 
 /*
@@ -52,6 +60,10 @@ public:
     // 建立一个终结符结点，用在 scanner 里面。
     Node(std::string _tokenValue, bool negligible=false):mIsNegligible(negligible),mSymbolName("I am a terminal, valued "+_tokenValue),mIsTerminal(true),mTokenValue(_tokenValue){}
     
+	virtual void print(std::string prefix) const{}
+	virtual llvm::Value *codeGen(CodeGenContext &context) { return (llvm::Value *)0; }
+	virtual Json::Value jsonGen() const { return Json::Value(); }
+
     // 添加一个孩子
     void addChild(Node *newChild);
 
@@ -82,7 +94,7 @@ public:
     // 删掉所有的不影响语法分析树关键信息的结点，以简化语法分析树。
     void simplify();
     
-public:
+
     // 设定节点的数据类型，不能自适应地一同取得结构体名。
     virtual void setType(Node::Type _type){}
 
