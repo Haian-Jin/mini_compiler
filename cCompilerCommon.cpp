@@ -11,7 +11,7 @@ std::map<std::string, SymbolTable*> SymbolTable::set;
 SymbolTableStack *symbolTableStack = new SymbolTableStack(new SymbolTable("Global_SymbolTable"));
 
 std::string NameCounter::getNumberedName(std::string name){
-    if(map.find(name)==map.end()){
+    if(map.find(name) == map.end()){
         map.insert({name,0});
     }
     return name+"["+std::to_string(map[name]++)+"]";
@@ -52,12 +52,12 @@ std::string Node::getName()const{
     return mIsTerminal?mTokenValue:mSymbolName;
 }
 void Node::printTree(int depth/*=0*/){
-    for(int i=0;i<depth;i++){
-        std::cout<<"    ";
+    for(int i=0; i < depth; i++){
+        std::cout<<"\t";
     }
-    std::cout<<this->getName()<<std::endl;
-    for(int i=0;i<mChildren.size();i++){
-        mChildren[i]->printTree(depth+1);
+    std::cout << this->getName() << std::endl;
+    for(int i=0; i<mChildren.size(); i++){
+        mChildren[i]->printTree(depth + 1);
     }
 }
 void Node::copyFromChild(){
@@ -71,7 +71,7 @@ void Node::copyFromChild(){
     this->setPosition(mChildren[0]->getLineNumber(), mChildren[0]->getColumnNumber());
 }
 void Node::copyFrom(Node *c){
-    this->setType(c);
+    this->setType(c); // setType() has been overloaded early. here is fine
     this->setKind(c->getKind());
     this->setArgList(c->getArgList());
     this->setArgListStructName(c->getArgListStructName());
@@ -81,8 +81,8 @@ void Node::copyFrom(Node *c){
     this->setPosition(c->getLineNumber(), c->getColumnNumber());
 }
 void Node::simplify(){
-    if(mIsTerminal)return;
-    for(int i=0;i<mChildren.size();i++){
+    if(mIsTerminal) return;
+    for(int i=0; i < mChildren.size(); i++){
         if(mChildren[i]->isNegligible()){
             delete mChildren[i];
             mChildren.erase(mChildren.begin()+i, mChildren.begin()+i+1);
@@ -97,10 +97,10 @@ void Node::simplify(){
 AttributivedNode::AttributivedNode(std::string _symbolName, int childrenNumber, ...):Node(_symbolName,0){
     va_list vl;
     va_start(vl, childrenNumber);
-    for(int i=0;i<childrenNumber;i++){
+    for(int i=0; i < childrenNumber; i++){
         mChildren.push_back(va_arg(vl,Node*));
     }
-    mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    mIsNegligible = (false), mSymbolName = (_symbolName), mIsTerminal = (false), mTokenValue=("I am not a terminal.");
 }
 void AttributivedNode::setType(Node::Type _type){
     this->mTokenType = _type;
@@ -129,7 +129,7 @@ std::string AttributivedNode::getTypeString(){
         default :
             string+=std::to_string(this->mTokenType);
     }
-    for(int i=0;i<this->mArraySizes.size();i++){
+    for(int i=0; i < this->mArraySizes.size(); i++){
         string+="[]";
     }
     return string;
@@ -159,7 +159,7 @@ std::vector<int> AttributivedNode::getArraySizes(){
     return mArraySizes;
 }
 bool AttributivedNode::isArray(){
-    return mArraySizes.size()>0;
+    return mArraySizes.size() > 0;
 }
 int AttributivedNode::getArrayDimension(){
     return mArraySizes.size();
@@ -176,7 +176,7 @@ void AttributivedNode::setVariableName(std::string _name){
 std::string AttributivedNode::getVariableName(){
     return mVariableName;
 }
-void AttributivedNode::setPosition(int l,int c){
+void AttributivedNode::setPosition(int l, int c) {
     mLineNumber = l;
     mColumnNumber = c;
 }
@@ -401,7 +401,7 @@ void Node::setAttribute(void *p){
 }
 
 void Node::copyFrom(Attribute *c){
-    if(!c)return;
+    if(!c) return;
     this->setType(c->type);
     this->setKind(c->kind);
     this->setArgList(c->argList);
