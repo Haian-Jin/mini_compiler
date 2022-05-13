@@ -8,6 +8,7 @@
 #include<vector>
 #include<map>
 #include<cstdarg>
+#include"noError.h"
 
 struct Attribute;
 
@@ -164,7 +165,7 @@ public:
 
 /* 语法分析树节点的属性文法版本。 */
 class AttributivedNode : public Node{
-private:
+protected:
     Node::Type mTokenType;// 节点的数据类型
     Node::Kind mTokenKind;// 节点的类别
     std::vector<Node::Type> mTokenArgList;// 参数列表的类型，只有函数能用到
@@ -242,6 +243,228 @@ public:
 
     // 取得列位置
     int getColumnNumber();
+};
+
+class ExpressionNode : public AttributivedNode{
+public:
+    ExpressionNode(std::string _symbolName, int childrenNumber, ...):AttributivedNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    }
+    ExpressionNode(std::string _tokenValue, bool negligible=false):AttributivedNode(_tokenValue,negligible){};
+    std::string getNodeTypeName(){
+        return "ExpressionNode";
+    }
+    Json::Value jsonGen(){
+        Json::Value r;
+        r["name"] = getNodeTypeName();
+        return r;
+    }
+};
+
+class NumberNode : public ExpressionNode{
+public:
+    NumberNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    }
+    NumberNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){
+        mIsInt = true;
+        for(char c:_tokenValue){
+            if(c=='.'){
+                mIsInt = false;
+                break;
+            }
+        }
+        if(mIsInt){
+            sscanf(_tokenValue.c_str(), "%d", &this->mIntValue);
+        }else{
+            sscanf(_tokenValue.c_str(), "%lf", &this->mDoubleValue);
+        }
+    };
+    std::string getNodeTypeName(){
+        return std::string("NumberNode")+(isInt()?" INT":" DOUBLE");
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+
+    bool isInt(){
+        return mIsInt;
+    }
+    int getIntValue(){
+        return mIsInt?mIntValue:mDoubleValue;
+    }
+    double getDoubleValue(){
+        return mIsInt?mIntValue:mDoubleValue;
+    }
+private:
+    int mIntValue;
+    double mDoubleValue;
+    bool mIsInt;
+};
+
+class IdentifierNode : public ExpressionNode{
+public:
+     IdentifierNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    }
+    IdentifierNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){
+        this->mName = _tokenValue;
+    };
+    bool isType(){
+        return AttributivedNode::mTokenKind == Node::KIND_ATTRIBUTE;
+    }
+    bool isArray(){ 
+        return AttributivedNode::isArray();
+    }
+
+    std::string getNodeTypeName(){
+        return std::string("IdentifierNode ")+(mName);
+    }
+    std::string getName(){
+        return mName;
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    std::string mName;
+    //bool mIsType;
+    //bool mIsArray;
+};
+
+class FunctionCallNode : public ExpressionNode{
+public:
+    FunctionCallNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mArguments = new std::vector<ExpressionNode*>();
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    }
+    FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+
+    std::string getNodeTypeName(){
+        return std::string("FunctionCallNode  ")+(mFunctionName->getName());
+    }
+    std::vector<ExpressionNode*> getArguments()const{
+        return *mArguments;
+    }
+    void addArgument(Node *c){
+        mArguments->push_back(dynamic_cast<ExpressionNode*>(c));
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    IdentifierNode *mFunctionName;
+    std::vector<ExpressionNode*> *mArguments;
+};
+
+class UnaryOperatorNode : public ExpressionNode{
+public:
+    UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        mHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
+        op = _symbolName;
+        if(mHandSide==NULL)throw("castfail");
+    }
+    UnaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    std::string getNodeTypeName(){
+        return std::string("UnaryOperatorNode  ")+(getVariableName());
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    std::string op;
+    ExpressionNode *mHandSide;
+};
+
+class BinaryOperatorNode : public ExpressionNode{
+public:
+    BinaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
+        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
+        op = _symbolName;
+        if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
+    }
+    BinaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    std::string getNodeTypeName(){
+        return std::string("BinaryOperatorNode  ")+(getVariableName());
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    std::string op;
+    ExpressionNode *mLeftHandSide, *mRightHandSide;
+};
+
+class TenaryOperatorNode : public ExpressionNode{
+public:
+    TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
+        mMidHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
+        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[2]);
+        op = _symbolName;
+        if(mLeftHandSide==NULL || mRightHandSide==NULL || mMidHandSide==NULL)throw("castfail");
+    }
+    TenaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    std::string getNodeTypeName(){
+        return std::string("TenaryOperatorNode  ")+(getVariableName());
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    std::string op;
+    ExpressionNode *mLeftHandSide, *mRightHandSide, *mMidHandSide;
+};
+
+class AssignmentNode : public ExpressionNode{
+public:
+    AssignmentNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node*));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
+        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
+        this->op = _symbolName;
+        if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
+    }
+    AssignmentNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    std::string getNodeTypeName(){
+        return std::string("AssignmentNode ")+("=");
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+private:
+    std::string op;
+    ExpressionNode *mLeftHandSide, *mRightHandSide;
 };
 
 // 属性。这个是变量的属性，是存在符号表里的，不是语法分析树的属性，它们会有细微的差别。
