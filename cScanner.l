@@ -1,5 +1,5 @@
 %{
-#include"./cCompilerCommon.hpp"
+#include "./cCompilerCommon.hpp"
 #include "./cParser.hpp"
 
 void echo(bool negligible=false);
@@ -45,7 +45,7 @@ int {
 }
 float {
     echo();
-    csColumnCnt += 5;
+    csColumnCnt+=5;
     return FLOAT;
 }
 double {
@@ -60,7 +60,7 @@ char {
 }
 for {
     echo();
-    csColumnCnt+=4;
+    csColumnCnt+=3;
     return FOR;
 }
 do {
@@ -149,17 +149,17 @@ goto {
 {intNumber} {
     echoint();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return INT_NUMBER;
 }
 {doubleNumber} {
     echodouble();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return DOUBLE_NUMBER;
 }
 {char} {
     echochar();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return INT_NUMBER;
 }
 \+\= {
     echo();
