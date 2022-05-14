@@ -6,7 +6,7 @@ int main(){
     Node *treeRoot = makeParseTree();
     if(treeRoot){
         treeRoot->printTree();
-        treeRoot->simplify();
+        // treeRoot->simplify();
         std::cout<<"\n\nThe simplified tree is:\n\n";
         treeRoot->printTree();
     }

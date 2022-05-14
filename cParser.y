@@ -32,14 +32,14 @@ static void error_functionReturnsArray();
 %code requires {
 #include"./cCompilerCommon.hpp"
 }
-%token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING
+%token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
 %token FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN
 %token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 
 %union{
     Node* nodePtr;
 }
-%type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
+%type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 %type<nodePtr> cCode0 cCode globalDeclaration declaration type
 %type<nodePtr> typeName structTypeName structMemberDeclarations structMemberDeclaration structMembers initializations initialization variable pointerSpecifier variableName
 %type<nodePtr> paramTypes paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration statementBlock localDeclarations statements
@@ -129,7 +129,7 @@ declaration :
 
 type :
         typeName {           /* int */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("type"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("type"), 1, $1);
             $$->copyFromChild();
         }
     |   CONST typeName {     /* const int，不实现这一条。 */
@@ -142,43 +142,43 @@ type :
 
 typeName :
         INT { 
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }               
     |   UNSIGNED INT { /* 不实现这一条 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 2, $1, $2);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 2, $1, $2);
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   CHAR { 
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_CHAR);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   FLOAT { /* 不实现这一条 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_FLOAT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   DOUBLE { 
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_DOUBLE);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   VOID { 
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_VOID);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   structTypeName { 
-            $$ = new AttributivedNode(nameCounter.getNumberedName("typeName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("typeName"), 1, $1);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($1->getStructTypeName());
@@ -196,7 +196,7 @@ structTypeName :
                                      std::vector<int>(), name, csLineCnt, csColumnCnt-1));
             symbolTableStack->push(new SymbolTable(name));
         } structMemberDeclarations '}' {
-            $$ = new AttributivedNode(nameCounter.getNumberedName("structTypeName"), 4, $1, $2, $4, $5);
+            $$ = new Node(nameCounter.getNumberedName("structTypeName"), 4, $1, $2, $4, $5);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName(symbolTableStack->top()->getName());
@@ -204,7 +204,7 @@ structTypeName :
             symbolTableStack->pop();
         }
     |   STRUCT IDENTIFIER { /* 一个之前已经定义过的结构体名字。 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("structTypeName"), 2, $1, $2);
+            $$ = new Node(nameCounter.getNumberedName("structTypeName"), 2, $1, $2);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($2->getTokenValue()/*nameCounter.getNumberedName($2->getTokenValue())*/);
@@ -267,11 +267,11 @@ initializations :
 
 initialization :
         variable {                       /* int a; 没有初始值 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("initialization"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("initialization"), 1, $1);
             $$->copyFromChild();
         }
     |   variable '=' initialValue {   /* int a=10; 有初始值 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
+            $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
             $$->copyFromChild();
         }
     ;
@@ -281,7 +281,7 @@ variable :
             $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
         }
     |   variableName { /* 不是指针的变量 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("variable"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("variable"), 1, $1);
             $$->copyFromChild();
         }
     ;
@@ -304,13 +304,13 @@ pointerSpecifier :
 
 variableName :
         IDENTIFIER { /* 一个普通的变量 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("variableName"), 1, $1);
             $$->setKind(Node::KIND_VARIABLE);
             $$->setVariableName($1->getTokenValue());
             $$->setPosition(csLineCnt, csColumnCnt);
         }
-    |   variableName '[' NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+    |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
+            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
                 error_illegalArraySize($3);
             }else{
@@ -328,13 +328,13 @@ variableName :
             $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
         }
     |   variableName '(' ')' {           /* 函数定义 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
+            $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
             $$->setKind(Node::KIND_FUNCTION);
             $$->setVariableName($1->getVariableName());
             $$->setPosition($1);
         }
     |   variableName '(' paramTypes ')' {    /* 函数定义 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
             $$->copyFrom($1);
             $$->setKind(Node::KIND_FUNCTION);
             std::vector<Node::Type> argList;
@@ -373,7 +373,7 @@ paramTypeName :
             $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
         }
     |   type variable {      /* 这一条是要正常实现的，定义函数用的 */
-            $$ = new AttributivedNode(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
+            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
             $$->copyFrom($2);
             $$->setType($1);
         }
@@ -391,7 +391,7 @@ variableWithNoName :        /* !! 如果要阅读这个的话，请和 variable 
 
 /* 不用管这个，都不实现的。 */
 variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
-        variableWithNoNameCore '[' NUMBER ']' {
+        variableWithNoNameCore '[' INT_NUMBER ']' {
             $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
         }
     |   '(' variableWithNoName ')' {
@@ -621,7 +621,7 @@ jumpStatement :
 
 expression : 
         assignmentExpression {
-            $$ = new AttributivedNode(nameCounter.getNumberedName("expression"), 1, $1);
+            $$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
             $$->copyFrom($1);
         }
     |   expression ',' assignmentExpression {
@@ -643,10 +643,10 @@ assignmentExpression :
             $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE)) || $1->isArray()){
+            if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
-            if(!typeMatch($1,$3)){
+            if(!typeMatch($1, $3)){
                 error_typeMismatch($1);
             }
         }
@@ -654,10 +654,10 @@ assignmentExpression :
             $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE))){
+            if(!(checkKind($1, Node::KIND_VARIABLE))){
                 error_expressionTypeError($1,$2,$3);
             }
-            if(!typeMatch($1,$3)){
+            if(!typeMatch($1, $3)){
                 error_typeMismatch($1);
             }
         }
@@ -1001,10 +1001,10 @@ castedExpression :
             $$ = $1;
         }/*
     |   '(' type ')' castedExpression {
-            $$ = new AttributivedNode("castedExpression", 2, $2, $4);
+            $$ = new Node("castedExpression", 2, $2, $4);
         }
     |   '(' type variableWithNoName ')' castedExpression {
-            $$ = new AttributivedNode("castedExpression", 3, $2, $3, $5);
+            $$ = new Node("castedExpression", 3, $2, $3, $5);
         }*/
     ;
 
@@ -1105,7 +1105,7 @@ postfixUnaryExpression :
             }else{
                 std::vector<Node::Type> argList;
                 std::vector<std::string> argListStructName;
-                for(int i=0;i<$3->getChildrenNumber();i++){
+                for(int i=0; i<$3->getChildrenNumber(); i++){
                     auto child = $3->getChildrenById(i);
                     if(child->isTerminal() && child->getTokenValue().compare(",")==0)continue;
                     argList.push_back(child->getType());
@@ -1138,7 +1138,7 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
-            Node *t=$2;
+            Node *t = $2;
             $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $2->setPosition(t);
@@ -1189,7 +1189,10 @@ atomicExpression :
                 $$->setPosition(csLineCnt, csColumnCnt);
             }
         }
-    |   NUMBER {
+    |   DOUBLE_NUMBER {
+            $$ = $1;
+        }
+    |   INT_NUMBER {
             $$ = $1;
         }
     |   STRING { /* 这个就不实现了吧 */
