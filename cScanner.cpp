@@ -2276,21 +2276,21 @@ void echo(bool negligible){
     //printf("get: %s\n",yytext);
 }
 void echoint(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
+    yylval.nodePtr = new IntNode(std::string(yytext));
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
     yylval.nodePtr->setType(Node::TYPE_INT);
     yylval.nodePtr->setKind(Node::KIND_CONSTANT);
     yylval.nodePtr->setVariableName(std::string(yytext));
 }
 void echodouble(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
+    yylval.nodePtr = new DoubleNode(std::string(yytext));
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
     yylval.nodePtr->setType(Node::TYPE_DOUBLE);
     yylval.nodePtr->setKind(Node::KIND_CONSTANT);
     yylval.nodePtr->setVariableName(std::string(yytext));
 }
 void echochar(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
+    yylval.nodePtr = new IntNode(std::string(yytext));
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
     yylval.nodePtr->setType(Node::TYPE_CHAR);
     yylval.nodePtr->setKind(Node::KIND_CONSTANT);

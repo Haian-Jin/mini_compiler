@@ -1,3 +1,4 @@
+rm cParser.hpp  cParser.cpp
 bison -d cParser.y -o cParser.cpp
 flex -o cScanner.cpp cScanner.l
 
