@@ -1,4 +1,4 @@
-#include"./cCompilerCommon.hpp"
+#include "./cCompilerCommon.hpp"
 
 // 用于记录行数和列数 
 int csLineCnt = 0;
@@ -167,7 +167,7 @@ void Node::setPosition(Node *c){
     mColumnNumber = c->getColumnNumber();
 }
 
-void Attribute::print(){
+void symAttribute::print(){
     std::cout<<name<<' ';
     switch(type){
         case Node::TYPE_INT:
@@ -240,7 +240,7 @@ SymbolTable::SymbolTable(std::string name):mSymbolTableName(name){
 std::string SymbolTable::getName(){
     return mSymbolTableName;
 }
-bool SymbolTable::insert(Attribute* t){
+bool SymbolTable::insert(symAttribute* t){
     if(map.find(t->name)!=map.end()){
         return false;
     }else{
@@ -248,7 +248,7 @@ bool SymbolTable::insert(Attribute* t){
         return true;
     }
 }
-Attribute *SymbolTable::lookUp(std::string name){
+symAttribute *SymbolTable::lookUp(std::string name){
     if(map.find(name)==map.end()){
         return NULL;
     }else{
@@ -292,7 +292,7 @@ void SymbolTableStack::pop(){
 SymbolTable *SymbolTableStack::top(){
     return stack[stack.size()-1];
 }
-Attribute *SymbolTableStack::lookUp(std::string name){
+symAttribute *SymbolTableStack::lookUp(std::string name){
     for(int i=stack.size()-1;i>=0;i--){
         if(stack[i]->lookUp(name)){
             return stack[i]->lookUp(name);
@@ -300,7 +300,7 @@ Attribute *SymbolTableStack::lookUp(std::string name){
     }
     return NULL;
 }
-bool SymbolTableStack::insert(Attribute* t){
+bool SymbolTableStack::insert(symAttribute* t){
     return stack[stack.size()-1]->insert(t);
 }
 
@@ -353,7 +353,7 @@ bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s){
 
     return true;
 }
-bool typeMatch(Attribute *a, Node* b){
+bool typeMatch(symAttribute *a, Node* b){
     if(b->isArray())return false;
     if(a->type==b->getType()){
         if(a->type==Node::TYPE_STRUCT){
@@ -365,7 +365,7 @@ bool typeMatch(Attribute *a, Node* b){
 }
 
 void Node::setAttribute(void *p){
-    auto c = (Attribute*)p;
+    auto c = (symAttribute*)p;
     this->setType(c->type);
     this->setKind(c->kind);
     this->setArgList(c->argList);
@@ -376,7 +376,7 @@ void Node::setAttribute(void *p){
     this->setPosition(c->lineNumber, c->columnNumber);
 }
 
-void Node::copyFrom(Attribute *c){
+void Node::copyFrom(symAttribute *c){
     if(!c) return;
     this->setType(c->type);
     this->setKind(c->kind);
@@ -387,7 +387,7 @@ void Node::copyFrom(Attribute *c){
     this->setPosition(c->lineNumber, c->columnNumber);
 }
 
-std::string type_to_string(Attribute *t){
+std::string type_to_string(symAttribute *t){
     switch(t->type){
         case(Node::TYPE_VOID):
             return "void";

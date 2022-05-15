@@ -10,3 +10,4 @@ compiler
 parsetree.txt
 g++
 gcc
+/build

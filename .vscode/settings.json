@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "*.html": "html",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "memory": "cpp",
+        "*.tcc": "cpp",
+        "istream": "cpp"
     }
 }
