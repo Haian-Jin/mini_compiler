@@ -34,9 +34,12 @@ static void error_functionReturnsArray();
 }
 
 %union{
-    Node* nodePtr;
+    shared_ptr<Node> nodePtr;
     IdentifierNodeList* identifierNodeListPtr;
     IdentifierNode* identifierNodePtr;
+    VarDeclarationList* varDeclarationListPtr;
+    StatementNodesBlock* statementNodesBlockPtr;
+    GlobalDeclaraionNode* globalDeclaraionNodePtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -46,12 +49,14 @@ static void error_functionReturnsArray();
 
 
 %type<identifierNodeListPtr> initializations 
-%type<identifierNodePtr> initialization variable variableName IDENTIFIER  typeName type
+%type<identifierNodePtr> initialization IDENTIFIER  typeName type
+%type<varDeclarationListPtr> paramTypes
+%type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
-%type<nodePtr> cCode0 cCode globalDeclaration declaration 
+%type<globalDeclaraionNodePtr> cCode0 cCode 
 %type<nodePtr> structTypeName structMemberDeclarations structMemberDeclaration structMembers  pointerSpecifier 
-%type<nodePtr> paramTypes paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration statementBlock localDeclarations statements
-%type<nodePtr> statement expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
+%type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration localDeclarations 
+%type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
 %type<nodePtr> paramList atomicExpression relationComparisonExpression
@@ -78,11 +83,11 @@ cCode0 :
 
 cCode :
         globalDeclaration {
-            $$ = new Node(nameCounter.getNumberedName("cCode"), 1, $1);
+            $$ = $1;
         }
     |   cCode globalDeclaration {
             $$ = $1;
-            $$->addChild($2);
+            $$->mergeStatements(shared_ptr<GlobalDeclaraionNode>($2));
     }
     ;
 
@@ -91,10 +96,10 @@ cCode :
 
 globalDeclaration :
         declaration { /* 全局的变量定义，兼定义结构体。 */
-            $$ = $1; //???
+            $$ = new GlobalDeclaraionNode(shared_ptr<StatementNodesBlock>($1));
         }
     |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */ 
-            $$ = new Node(nameCounter.getNumberedName("globalDeclaration"), 1, $1);
+            $$ = new GlobalDeclaraionNode(shared_ptr<StatementNodesBlock>($1));
         }
     |   statement { /* 不允许在全局范围内出现不是定义的语句。 */
             yyerror("syntax error");
@@ -109,8 +114,8 @@ globalDeclaration :
 
 declaration :
         type initializations ';' { /* 定义变量 */
-            $$ = new StatementNodesBlock()
-            $$->createMultiVarDeclaration($1, $2);
+            $$ = new StatementNodesBlock();
+            $$->createMultiVarDeclaration(shared_ptr<IdentifierNode>($1), shared_ptr<IdentifierNodeList>($2));
 
         }
     |   STRUCT IDENTIFIER { /* 定义结构体 */ /* TODO */
@@ -310,34 +315,18 @@ variableName :
             $$->setPosition($1);
         }
     |   variableName '(' paramTypes ')' {    /* 函数定义 */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
-            $$->copyFrom($1);
-            $$->setKind(Node::KIND_FUNCTION);
-            std::vector<Node::Type> argList;
-            std::vector<std::string> argListStructName;
-            for(int i=0;i<$3->getChildrenNumber();i++){
-                auto child = $3->getChildrenById(i);
-                if(child->isTerminal())continue;
-                argList.push_back(child->getType());
-                if(child->getType()==Node::TYPE_STRUCT){
-                    argListStructName.push_back(child->getStructTypeName());
-                }else{
-                    argListStructName.push_back({""});
-                }
-            }
-            $$->setArgList(argList);
-            $$->setArgListStructName(argListStructName);
+            $$ = new FuncNameAndArgsNode(shared_ptr<IdentifierNode>(variableName), shared_ptr<VarDeclarationList(paramTypes)>(paramTypes));
         }
     ;
 
 paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参数必须给名字。 */
         paramTypeName {
-            $$ = new Node(nameCounter.getNumberedName("paramTypes"), 1, $1);
+            $$ = new VarDeclarationList();
+            $$->mVarDeclarationLis.push_back(shared_ptr<VariableDeclarationNode>($1))
         }
     |   paramTypes ',' paramTypeName {
             $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
+            $$->mVarDeclarationLis.push_back(shared_ptr<VariableDeclarationNode>($3))
         }
     ;
 
@@ -349,9 +338,8 @@ paramTypeName :
             $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
         }
     |   type variable {      /* 这一条是要正常实现的，定义函数用的 */
-            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
-            $$->copyFrom($2);
-            $$->setType($1);
+            $$ = new VariableDeclarationNode(shared_ptr<IdentifierNode>($1), shared_ptr<IdentifierNode>($2));
+
         }
     ;
 
@@ -414,54 +402,33 @@ initialValues :
 
 /* 函数定义 */
 functionDeclaration :   
-        type variable { /* 在取得函数名字之后，及时建立该函数的符号表 */
-            $2->setType($1->getType());
-            if($2->isArray()){
-                error_functionReturnsArray();
-            }
-            if(symbolTableStack->insert(new Attribute($2))==false){
-                error_duplicatedVariable($2);
-                $2->setVariableName(nameCounter.getNumberedName($2->getVariableName()));
-                while(symbolTableStack->insert(new Attribute($2))==false){
-                    $2->setVariableName(nameCounter.getNumberedName($2->getVariableName()));
-                }
-            }
-            symbolTableStack->push(new SymbolTable($2->getVariableName()));
-            if($2->getArgList().size()>0){
-                for(int i=0;i<$2->getChildrenById($2->getChildrenNumber()-1)->getChildrenById(2)->getChildrenNumber();i++){
-                    auto argument = $2->getChildrenById($2->getChildrenNumber()-1)->getChildrenById(2)->getChildrenById(i);
-                    if(argument->isTerminal())continue;
-                    /* 所有的参数都被当作局部变量来对待了。 */
-                    argument->setKind(Node::KIND_VARIABLE);
-                    if(symbolTableStack->insert(new Attribute(argument))==false){
-                        error_duplicatedVariable(argument);
-                    }
-                }
-            }
-        } statementBlock {
-            $$ = new Node(nameCounter.getNumberedName("functionDeclaration"), 3, $1, $2, $4);
-            symbolTableStack->pop();
-            /* parse 完一个函数之后，把这个函数的符号表出栈，维护变量的生命周期。 */
+        type variable  statementBlock {
+            $$ = new FunctionDeclarationNode(shared_ptr<IdentifierNode>($1), shared_ptr<FuncNameAndArgsNode>($2), shared_ptr<StatementBlockNode>($3));
         }
     ;
 
 /* 语句块，即“{...}” */
 statementBlock : 
         '{' '}' { /* 可以 {} 这样而不必 {;} 这样 */
-            $$ = new Node(nameCounter.getNumberedName("statementBlock"), 2, $1, $2);
+            $$ = StatementNodesBlock();
+            $$->mStatementList.push_back(new NullStatementNode());
         }
     |   '{' statements '}' {
-            $$ = new Node(nameCounter.getNumberedName("statementBlock"), 3, $1, $2, $3);
+            $$ = $2;
         }
+
+    /* 暂时先不管
     |   '{' localDeclarations '}' {
             $$ = new Node(nameCounter.getNumberedName("statementBlock"), 3, $1, $2, $3);
         }
-    |   '{' localDeclarations statements '}' { /* 如果要定义局部变量，必须要把所有的定义语句语句块的最前面。 */
+    |   '{' localDeclarations statements '}' { // 如果要定义局部变量，必须要把所有的定义语句语句块的最前面。
             $$ = new Node(nameCounter.getNumberedName("statementBlock"), 4, $1, $2, $3, $4);
         }
     |   '{' localDeclarations statements error '}' {
             yyerror("Declaration after statements");
         }
+    */
+        
     ;
 
 /* 局部变量定义。和全局定义的区别在于，局部不能定义函数。 */
@@ -477,16 +444,19 @@ localDeclarations :
 
 statements :    /* 一串语句 */
         statement {
-            $$ = new Node(nameCounter.getNumberedName("statements"), 1, $1);
+            $$ = $1;
         }
     |   statements statement {
             $$ = $1;
-            $$->addChild($2);
+            $$->mergeStatements(shared_ptr<StatementNodesBlock>($2));
         }
     ;
 
 statement :     /* 一个语句，以封号“;”结尾。（但是语句块可以不以封号结尾） */
-        expressionStatement { /* 表达式，也是最常见的语句 */
+        declaration {
+            $$ = $1;
+        }
+    |   expressionStatement { /* 表达式，也是最常见的语句 */
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
     |   loopStatement { /* 循环 */

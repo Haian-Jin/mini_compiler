@@ -102,11 +102,16 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 39 "cParser.y"
+#line 36 "cParser.y"
 
-    Node* nodePtr;
+    shared_ptr<Node> nodePtr;
+    IdentifierNodeList* identifierNodeListPtr;
+    IdentifierNode* identifierNodePtr;
+    VarDeclarationList* varDeclarationListPtr;
+    StatementNodesBlock* statementNodesBlockPtr;
+    GlobalDeclaraionNode* globalDeclaraionNodePtr;
 
-#line 110 "cParser.hpp"
+#line 115 "cParser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

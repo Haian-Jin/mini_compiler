@@ -276,12 +276,12 @@ public:
 };
 
 // store all statements nodes of the same block
-class StatementNodesBlock : public ExpressionNode{
+class StatementNodesBlock : public StatementNode{
 public:
 
     std::vector<shared_ptr<StatementNode>> mStatementList;
 
-    StatementNodesBlock():ExpressionNode(){}
+    StatementNodesBlock():StatementNode(){}
 
     std::string getNodeTypeName(){
         return "StatementsBlock";
@@ -303,9 +303,15 @@ public:
         std::vector<shared_ptr<IdentifierNode>> idenNameList = nameList->mIdentifierNodeList; // vector of identifiers, store the name of the variables
         for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
             // create a variable declaration
-            VariableDeclaritionNode * varDecl  = new VariableDeclaritionNode(type, *it);
+            VariableDeclarationNode * varDecl  = new VariableDeclarationNode(type, *it);
             mStatementList.push_back(shared_ptr<StatementNode>(varDecl));
         }
+    }
+
+    // merge two statements block into one same statements block
+    void mergeStatements(shared_ptr<StatementNodesBlock> to_merge) {
+        assert(to_merge != nullptr);
+        this->mStatementList.insert(mStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
     }
 
 };
@@ -391,24 +397,25 @@ public:
 
 class IdentifierNode : public ExpressionNode{
 public:
-
-    IdentifierNode(std::string _tokenValue, bool isType=false):ExpressionNode(_tokenValue){
-        this->mSymbolName = _tokenValue;
+    IdentifierNode(std::string name, bool isType=false):ExpressionNode(name){
+        this->mSymbolName = name;
         if (isType) {
             this->setKind(Node::KIND_ATTRIBUTE);
-            if (_tokenValue == "int") {
+            if (name == "int") {
                 this->setType(Node::TYPE_INT);           
-            } else if (_tokenValue == "float") {
+            } else if (name == "float") {
                 this->setType(Node::TYPE_FLOAT);
-            } else if (_tokenValue == "double") {
+            } else if (name == "double") {
                 this->setType(Node::TYPE_DOUBLE);
-            } else if (_tokenValue == "char") {
+            } else if (name == "char") {
                 this->setType(Node::TYPE_CHAR);
-            } else if (_tokenValue == "void") {
+            } else if (name == "void") {
                 this->setType(Node::TYPE_VOID);
             } 
         }
     };
+
+
     bool isType() const{
         return Node::NodeKind == Node::KIND_ATTRIBUTE;
     }
@@ -438,6 +445,21 @@ public:
 
 };
 
+// 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
+class FuncNameAndArgsNode : public ExpressionNode {
+public:
+    shared_ptr<IdentifierNode> mFuncName;
+    shared_ptr<VarDeclarationList> parasList; // used for function agrs
+        // used for function declararion
+    FuncNameAndArgsNode(shared_ptr<IdentifierNode> nameIdentifier, shared_ptr<VarDeclarationList> args): ExpressionNode(){
+        this->mFuncName = nameIdentifier;
+        this->parasList = args;
+
+    };
+};
+
+
+
 class IdentifierNodeList : public ExpressionNode{
 public:
     std::vector<shared_ptr<IdentifierNode>> mIdentifierNodeList;
@@ -458,14 +480,13 @@ public:
 
 };
 
-class VariableDeclaritionNode: public StatementNode  {
-
+class VariableDeclarationNode: public StatementNode  {
 public:
     shared_ptr<IdentifierNode> type;
     shared_ptr<IdentifierNode> id;
 	shared_ptr<ExpressionNode> assignmentExpr = nullptr;
 
-    VariableDeclaritionNode(const shared_ptr<IdentifierNode> type, shared_ptr<IdentifierNode> id, shared_ptr<IdentifierNode> assignmentExpr = NULL):StatementNode(){
+    VariableDeclarationNode(const shared_ptr<IdentifierNode> type, shared_ptr<IdentifierNode> id, shared_ptr<IdentifierNode> assignmentExpr = NULL):StatementNode(){
         this->type = type;
         this->id = id;
         this->assignmentExpr = assignmentExpr;
@@ -473,7 +494,7 @@ public:
 
 
     std::string getNodeTypeName() const override {
-        return "VariableDeclaritionNode";
+        return "VariableDeclarationNode";
     }
 
     Json::Value jsonGen() const override {
@@ -493,8 +514,67 @@ public:
 
 };
 
+// store all the variable declaration, this is used for function declaration and struct declaraion
+class VarDeclarationList : public StatementNode{
+public:
+
+    std::vector<shared_ptr<VariableDeclarationNode>> mVarDeclarationList;
+
+    VarDeclarationList():StatementNode(){}
+
+    std::string getNodeTypeName(){
+        return "VarDeclarationList";
+    }
+    Json::Value jsonGen(){
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mVarDeclarationList.begin(); it != mVarDeclarationList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context) override{}
+
+};
+
+class FunctionDeclarationNode : public StatementNode{
+public:
+    shared_ptr<IdentifierNode> type; // return type
+    shared_ptr<IdentifierNode> id; // function name
+    shared_ptr<VarDeclarationList> parasList; // function args
+    shared_ptr<StatementNodesBlock> body; // function body
 
 
+    FunctionDeclarationNode(shared_ptr<IdentifierNode> type, shared_ptr<FuncNameAndArgsNode> name_and_args, shared_ptr<StatementNodesBlock> body):StatementNode(){
+        assert (type != nullptr);
+        assert (name_and_args != nullptr);
+        assert (body != nullptr);
+        assert (type->isType());
+        this->type = type;
+        this->id = name_and_args->mFuncName;
+        this->parasList = name_and_args->parasList;
+        this->body = body;
+    }
+    std::string getNodeTypeName(){
+        return "FuncDeclarationList";
+    }
+
+
+    Json::Value jsonGen(){
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(type->jsonGen());
+        root["children"].append(id->jsonGen());
+
+        for (auto it = parasList->mVarDeclarationList.begin(); it != parasList->mVarDeclarationList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+
+        root["children"].append(body->jsonGen());
+
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context) override{}
+
+};
 
 
 
@@ -622,6 +702,49 @@ private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide;
 };
+
+
+
+// central global Node 
+class GlobalDeclaraionNode : public StatementNode{
+public:
+
+    std::vector<shared_ptr<StatementNode>> mGlobalStatementList;
+
+    GlobalDeclaraionNode():StatementNode(){}
+
+    // copy from statements block 
+    GlobalDeclaraionNode(shared_ptr<StatementNodesBlock> toCopy):StatementNode(){
+        for (auto it = toCopy->mStatementList.begin(); it != toCopy->mStatementList.end(); ++it){
+            mGlobalStatementList.push_back(*it);
+        }
+    } 
+
+    std::string getNodeTypeName(){
+        return "CentralBlock";
+    }
+    Json::Value jsonGen(){
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mGlobalStatementList.begin(); it != mGlobalStatementList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context) override{}
+
+
+    // merge another global declaration statements block
+    void mergeStatements(shared_ptr<GlobalDeclaraionNode> to_merge) {
+        assert(to_merge != nullptr);
+        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mGlobalStatementList.begin(), to_merge->mGlobalStatementList.end());
+    }
+
+};
+
+
+
+
+
 
 // 属性。这个是变量的属性，是存在符号表里的，不是语法分析树的属性，它们会有细微的差别。
 struct Attribute{

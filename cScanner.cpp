@@ -2299,8 +2299,17 @@ void echochar(){
 void errecho(){
     printf("ERROR at line %d, column %d: Unsupported Character, '%s' is not supported in our C-- language, scanner will treat it as an empty character.\n", csLineCnt, csColumnCnt-1, yytext);
 }
+
+void echoidentifier(){
+    yylval.nodePtr = new IdentifierNode(std::string(yytext), isType=false);
+    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
+}
+
+
+
+
 inline void mkNode(bool negligible){
-    yylval.nodePtr = new IdentifierNode(std::string(yytext), negligible);
+    yylval.nodePtr = new Node(std::string(yytext), negligible);
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
 }
 
