@@ -6,6 +6,8 @@
 #include<iostream>
 #include<vector>
 #include<map>
+#include<assert.h>
+
 
 // #include"noError.h"
 // #include <tr1/memory>
@@ -277,7 +279,7 @@ public:
 class StatementNodesBlock : public ExpressionNode{
 public:
 
-    std::vector<IdentifierNode*> mStatementList;
+    std::vector<shared_ptr<StatementNode>> mStatementList;
 
     StatementNodesBlock():ExpressionNode(){}
 
@@ -292,6 +294,19 @@ public:
         }
     }
     virtual llvm::Value* codeGen(CodeGenContext& context) override{}
+
+
+    // input type expression and multiple name identifiers, create multiple declaration nodes
+    void createMultiVarDeclaration(const shared_ptr<IdentifierNode> type, shared_ptr<IdentifierNodeList> nameList) {
+        assert(type != nullptr && nameList != nullptr);
+        assert(type->isType());
+        std::vector<shared_ptr<IdentifierNode>> idenNameList = nameList->mIdentifierNodeList; // vector of identifiers, store the name of the variables
+        for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
+            // create a variable declaration
+            VariableDeclaritionNode * varDecl  = new VariableDeclaritionNode(type, *it);
+            mStatementList.push_back(shared_ptr<StatementNode>(varDecl));
+        }
+    }
 
 };
 
@@ -425,7 +440,7 @@ public:
 
 class IdentifierNodeList : public ExpressionNode{
 public:
-    std::vector<IdentifierNode*> mIdentifierNodeList;
+    std::vector<shared_ptr<IdentifierNode>> mIdentifierNodeList;
 
     IdentifierNodeList():ExpressionNode("IdentifierNodeList",0){
 

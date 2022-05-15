@@ -91,7 +91,7 @@ cCode :
 
 globalDeclaration :
         declaration { /* 全局的变量定义，兼定义结构体。 */
-            $$ = new Node(nameCounter.getNumberedName("globalDeclaration"), 1, $1);
+            $$ = $1; //???
         }
     |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */ 
             $$ = new Node(nameCounter.getNumberedName("globalDeclaration"), 1, $1);
@@ -109,22 +109,8 @@ globalDeclaration :
 
 declaration :
         type initializations ';' { /* 定义变量 */
-            /* $$ = new Node(nameCounter.getNumberedName("declaration"), 3, $1, $2, $3);
-            for(int i = 0; i < $2->getChildrenNumber(); i++){
-                Node *child = $2->getChildrenById(i);
-                //child->setType($1->getType());
-                child->setType($1);
-            }
-            for(int i = 0;i < $2->getChildrenNumber(); i++){
-                Node *child = $2->getChildrenById(i);
-                if(child->isTerminal() && child->getTokenValue().compare({","})==0)continue;
-                if(symbolTableStack->insert(new Attribute(child)) == false){// insert fault.
-                    error_duplicatedVariable(child);
-                }
-            } */
-            
-
-
+            $$ = new StatementNodesBlock()
+            $$->createMultiVarDeclaration($1, $2);
 
         }
     |   STRUCT IDENTIFIER { /* 定义结构体 */ /* TODO */
