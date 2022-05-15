@@ -35,7 +35,8 @@ static void error_functionReturnsArray();
 
 %union{
     Node* nodePtr;
-
+    IdentifierNodeList* identifierNodeListPtr;
+    IdentifierNode* identifierNodePtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -43,15 +44,23 @@ static void error_functionReturnsArray();
 %token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 
 
-%type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
-%type<nodePtr> cCode0 cCode globalDeclaration declaration type
-%type<nodePtr> typeName structTypeName structMemberDeclarations structMemberDeclaration structMembers initializations initialization variable pointerSpecifier variableName
+
+%type<identifierNodeListPtr> initializations 
+%type<identifierNodePtr> initialization variable variableName IDENTIFIER  typeName type
+%type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
+%type<nodePtr> cCode0 cCode globalDeclaration declaration 
+%type<nodePtr> structTypeName structMemberDeclarations structMemberDeclaration structMembers  pointerSpecifier 
 %type<nodePtr> paramTypes paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration statementBlock localDeclarations statements
 %type<nodePtr> statement expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
 %type<nodePtr> paramList atomicExpression relationComparisonExpression
 %type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
+
+
+
+
+
 
 %start cCode0
 
@@ -100,7 +109,7 @@ globalDeclaration :
 
 declaration :
         type initializations ';' { /* 定义变量 */
-            $$ = new Node(nameCounter.getNumberedName("declaration"), 3, $1, $2, $3);
+            /* $$ = new Node(nameCounter.getNumberedName("declaration"), 3, $1, $2, $3);
             for(int i = 0; i < $2->getChildrenNumber(); i++){
                 Node *child = $2->getChildrenById(i);
                 //child->setType($1->getType());
@@ -112,9 +121,13 @@ declaration :
                 if(symbolTableStack->insert(new Attribute(child)) == false){// insert fault.
                     error_duplicatedVariable(child);
                 }
-            }
+            } */
+            
+
+
+
         }
-    |   STRUCT IDENTIFIER { /* 定义结构体 */
+    |   STRUCT IDENTIFIER { /* 定义结构体 */ /* TODO */
             /* 取得结构体名之后，即使为该结构体构建符号表 */
             $2->setType(Node::TYPE_STRUCT);
             $2->setKind(Node::KIND_ATTRIBUTE);
@@ -122,7 +135,7 @@ declaration :
             $2->setVariableName($2->getTokenValue());
             symbolTableStack->insert(new Attribute($2));
             symbolTableStack->push(new SymbolTable($2->getStructTypeName()));
-        } '{' structMemberDeclarations '}' ';' {
+        } '{' structMemberDeclarations '}' ';' { /* TODO */
             $$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
             symbolTableStack->pop();
         }
@@ -132,58 +145,35 @@ declaration :
     ;
 
 type :
-        typeName {           /* int */
-            $$ = new Node(nameCounter.getNumberedName("type"), 1, $1);
-            $$->copyFromChild();
-        }
-    |   CONST typeName {     /* const int，不实现这一条。 */
-            $$ = new Node(nameCounter.getNumberedName("type"), 2, $1, $2);
-        }
-    |   STATIC typeName {    /* static int，不实现这一条。 */
-            $$ = new Node(nameCounter.getNumberedName("type"), 2, $1, $2);
-        }
+        typeName {$$ = $1;}          /* int */
+    |   CONST typeName {$$ = $1;}     /* const int, 不实现这一条。 */     
+    |   STATIC typeName {$$ = $1;}   /* static int, 不实现这一条。 */
     ;
 
 typeName :
         INT { 
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setPosition(csLineCnt, csColumnCnt);
-
         }               
-    |   UNSIGNED INT { /* 不实现这一条 */
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_ATTRIBUTE);
-            $$->setPosition(csLineCnt, csColumnCnt);
-        }  
+    |   UNSIGNED INT { /* 不实现这一条 */}  
     |   CHAR { 
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_CHAR);
-            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
-    |   FLOAT { /* 不实现这一条 */
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_FLOAT);
-            $$->setKind(Node::KIND_ATTRIBUTE);
+    |   FLOAT { /* 不实现这一条, 只支持double */
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   DOUBLE { 
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_DOUBLE);
-            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   VOID { 
-            $$ = new IdentifierNode(std::string($1));
-            $$->setType(Node::TYPE_VOID);
-            $$->setKind(Node::KIND_ATTRIBUTE);
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
-    |   structTypeName { 
-            $$ = new IdentifierNode(std::string($1));
+    |   structTypeName { /* TODO */
+            $$ = new IdentifierNode(std::string($1, isType==true));
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($1->getStructTypeName());

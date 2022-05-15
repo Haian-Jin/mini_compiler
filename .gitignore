@@ -8,3 +8,5 @@ parsetree.txt
 CMakeLists.txt
 compiler
 parsetree.txt
+test.cpp
+test.exe

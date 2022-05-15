@@ -297,7 +297,7 @@ void errecho(){
 }
 
 void echoidentifier(){
-    yylval.nodePtr = new IdentifierNode(std::string(yytext));
+    yylval.nodePtr = new IdentifierNode(std::string(yytext), isType=false);
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
 }
 

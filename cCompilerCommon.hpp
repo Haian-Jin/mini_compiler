@@ -1,20 +1,18 @@
 #pragma once
-#include<stdio.h>
-#include<stdlib.h>
+#include <json/json.h>
+#include <llvm/IR/Value.h>
 #include<math.h>
-#include<string.h>
 #include<string>
 #include<iostream>
 #include<vector>
 #include<map>
-#include<cstdarg>
-#include"noError.h"
-#include <tr1/memory>
-// #include <llvm/IR/Value.h>
-// #include <json/json.h>
+
+// #include"noError.h"
+// #include <tr1/memory>
+
 using std::shared_ptr;
 using std::make_shared;
-#include <memory>
+
 
 class CodeGenContext;
 
@@ -160,11 +158,11 @@ public:
 
     // 判定该节点是不是数组，是 true 否 false
     // virtual bool isArray(){} //jha
-    virtual bool isArray(); //jha
+    virtual bool isArray() const; //jha
 
 
     // 判断改节点是不是double, float等type
-    virtual bool isType(){
+    virtual bool isType() const{
         return Node::NodeKind == Node::KIND_ATTRIBUTE;
     }
 
@@ -230,7 +228,9 @@ public:
 
 
     /* defined by jha begins */
-    virtual std::string getNodeTypeName() {} ;
+    virtual std::string getNodeTypeName() const=0 ;
+    virtual llvm::Value *codeGen(CodeGenContext &context) { return (llvm::Value *)0; }
+	virtual Json::Value jsonGen() const { return Json::Value(); }
     /* defined by jha ends */
 };
 
@@ -247,7 +247,7 @@ public:
         mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
     }
     ExpressionNode(std::string _tokenValue, bool negligible=false){};
-    std::string getNodeTypeName(){
+    std::string getNodeTypeName() const override{
         return "ExpressionNode";
     }
     Json::Value jsonGen(){
@@ -266,11 +266,33 @@ public:
         return "ExpressionNode";
     }
 
-    Json::Value jsonGen(){
+    Json::Value jsonGen() const override{
         Json::Value r;
         r["name"] = getNodeTypeName();
         return r;
     }
+};
+
+// store all statements nodes of the same block
+class StatementNodesBlock : public ExpressionNode{
+public:
+
+    std::vector<IdentifierNode*> mStatementList;
+
+    StatementNodesBlock():ExpressionNode(){}
+
+    std::string getNodeTypeName(){
+        return "StatementsBlock";
+    }
+    Json::Value jsonGen(){
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mStatementList.begin(); it != mStatementList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+    }
+    virtual llvm::Value* codeGen(CodeGenContext& context) override{}
+
 };
 
 
@@ -281,40 +303,13 @@ public:
     std::string getNodeTypeName() const {
         return "NullStatementNode";
     }
-    Json::Value jsonGen(){
-        Json::Value r;
-        r["name"] = getNodeTypeName();
-        return r;
-    }
-};
-
-// class
-
-
-class VariableDeclaritionNode: public Node {
-
-public:
-    // const shared_ptr<IdentifierNode*> type;
-    
-
-    VariableDeclaritionNode(std::string _symbolName, int childrenNumber, ...):Node(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0; i < childrenNumber; i++){
-            mChildren.push_back(va_arg(vl,Node*));
-        }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+    Json::Value jsonGen() const override{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        return root;
     }
 
-    VariableDeclaritionNode(std::string _tokenValue, bool negligible=false):Node(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
-        return "VariableDeclaritionNode";
-    }
-    Json::Value jsonGen(){
-        Json::Value r;
-        r["name"] = getNodeTypeName();
-        return r;
-    }
+    virtual llvm::Value* codeGen(CodeGenContext& context) override{}
 };
 
 
@@ -335,7 +330,11 @@ public:
         return this->value;
     }
     
-    Json::Value jsonGen() const override {};
+    Json::Value jsonGen() const override {
+        Json::Value root;
+        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+        return root;
+    };
 
 	virtual llvm::Value* codeGen(CodeGenContext& context) {};
 
@@ -359,7 +358,12 @@ public:
     }
 
     
-    Json::Value jsonGen() const override {};
+    Json::Value jsonGen() const override {
+        Json::Value root;
+        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+        return root;
+    };
+
 
     virtual llvm::Value* codeGen(CodeGenContext& context) {} ;
 };
@@ -367,6 +371,57 @@ public:
 
 
 
+
+
+
+class IdentifierNode : public ExpressionNode{
+public:
+
+    IdentifierNode(std::string _tokenValue, bool isType=false):ExpressionNode(_tokenValue){
+        this->mSymbolName = _tokenValue;
+        if (isType) {
+            this->setKind(Node::KIND_ATTRIBUTE);
+            if (_tokenValue == "int") {
+                this->setType(Node::TYPE_INT);           
+            } else if (_tokenValue == "float") {
+                this->setType(Node::TYPE_FLOAT);
+            } else if (_tokenValue == "double") {
+                this->setType(Node::TYPE_DOUBLE);
+            } else if (_tokenValue == "char") {
+                this->setType(Node::TYPE_CHAR);
+            } else if (_tokenValue == "void") {
+                this->setType(Node::TYPE_VOID);
+            } 
+        }
+    };
+    bool isType() const{
+        return Node::NodeKind == Node::KIND_ATTRIBUTE;
+    }
+    bool isArray() const{ 
+        return Node::isArray();
+    }
+
+    std::string getNodeTypeName() const override {
+        if (isType()) {
+            return "TypeNode";
+        } else {
+            return "IdentifierNode";
+        }
+    }
+
+    // std::string getName(){
+    //     return mSymbolName;
+    // }
+    // 用getVariableName
+
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+    Json::Value jsonGen() const override {
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        return root;
+    }
+
+};
 
 class IdentifierNodeList : public ExpressionNode{
 public:
@@ -385,37 +440,49 @@ public:
         root["name"] = getNodeTypeName();
     }
     virtual llvm::Value* codeGen(CodeGenContext& context){}
+
 };
 
-class IdentifierNode : public ExpressionNode{
+class VariableDeclaritionNode: public StatementNode  {
+
 public:
+    shared_ptr<IdentifierNode> type;
+    shared_ptr<IdentifierNode> id;
+	shared_ptr<ExpressionNode> assignmentExpr = nullptr;
 
-    IdentifierNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){
-        this->mSymbolName = _tokenValue;
-    };
-    bool isType(){
-        return Node::NodeKind == Node::KIND_ATTRIBUTE;
-    }
-    bool isArray(){ 
-        return Node::isArray();
-    }
-
-    std::string getNodeTypeName(){
-        return std::string("IdentifierNode ")+(mSymbolName);
+    VariableDeclaritionNode(const shared_ptr<IdentifierNode> type, shared_ptr<IdentifierNode> id, shared_ptr<IdentifierNode> assignmentExpr = NULL):StatementNode(){
+        this->type = type;
+        this->id = id;
+        this->assignmentExpr = assignmentExpr;
     }
 
-    // std::string getName(){
-    //     return mSymbolName;
-    // }
-    // 用getVariableName
 
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
-    Json::Value jsonGen(){
+    std::string getNodeTypeName() const override {
+        return "VariableDeclaritionNode";
+    }
+
+    Json::Value jsonGen() const override {
         Json::Value root;
         root["name"] = getNodeTypeName();
+        root["children"].append(type->jsonGen());
+        root["children"].append(id->jsonGen());
+        /* TODO */
+        if( assignmentExpr != nullptr){
+            root["children"].append(assignmentExpr->jsonGen());
+        }
+        return root;
     }
 
+    /* TODO */
+    virtual llvm::Value* codeGen(CodeGenContext& context){}
+
 };
+
+
+
+
+
+
 
 class FunctionCallNode : public ExpressionNode{
 public:
