@@ -3,7 +3,7 @@ cParser.hpp
 cScanner.cpp
 parsetree.txt
 /.idea
-./.vscode
+./.vscode/*
 /cmake-build-debug
 CMakeLists.txt
 compiler

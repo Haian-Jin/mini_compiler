@@ -13,6 +13,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
 #include <json/json.h>
+#include <unordered_map>
 
 using namespace llvm;
 using std::shared_ptr;
@@ -21,11 +22,16 @@ using std::make_shared;
 static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<Module> TheModule;
-
+static std::unordered_map<std::string, Value*> a;
 
 
 
 struct symAttribute;
+
+
+Value *LogErrorV(const char *Str);
+
+Value *LogErrorV(std::string str);
 
 /*
     命名器，输入一个字符串，输出它的带编号版本。用于输出parse tree的时候给各个节点命名。
@@ -299,7 +305,7 @@ public:
             root["children"].append((*it)->jsonGen());
         }
     }
-    virtual llvm::Value* codeGen() override{}
+    virtual llvm::Value* codeGen() override{/*todo*/}
 
 
     // input type expression and multiple name identifiers, create multiple declaration nodes
@@ -330,7 +336,7 @@ public:
         return root;
     }
 
-    virtual llvm::Value* codeGen() override{}
+    virtual llvm::Value* codeGen() override{/*todo*/}
 };
 
 
@@ -439,7 +445,10 @@ public:
     // }
     // 用getVariableName
 
-    virtual llvm::Value* codeGen(){}
+    virtual llvm::Value* codeGen(){
+        /* todo */
+
+    }
     Json::Value jsonGen() const override {
         Json::Value root;
         root["name"] = getNodeTypeName();
@@ -464,7 +473,9 @@ public:
         Json::Value root;
         root["name"] = getNodeTypeName();
     }
-    virtual llvm::Value* codeGen(){}
+    virtual llvm::Value* codeGen(){
+         /* todo */
+    }
 
 };
 
@@ -531,7 +542,26 @@ public:
     void addArgument(Node *c){
         mArguments->push_back(dynamic_cast<ExpressionNode*>(c));
     }
-    virtual llvm::Value* codeGen(){}
+    virtual llvm::Value* codeGen(){
+        Function *CalleeF = TheModule->getFunction(mFunctionName->getVariableName());
+        if (!CalleeF)
+            return LogErrorV("Incorrect # arguments passed");
+        if (CalleeF->arg_size() != (*mArguments).size()) {
+            return LogErrorV("Incorrect # arguments passed");
+        }
+
+        std::vector<Value *> ArgsV;
+        for (size_t i = 0; i < mArguments->size(); i++)
+        {
+            ArgsV.push_back((*mArguments)[i]->codeGen());
+            if(!ArgsV.back())
+                return nullptr;
+        }
+
+        return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
+        
+
+    }
 private:
     IdentifierNode *mFunctionName;
     std::vector<ExpressionNode*> *mArguments;
@@ -717,4 +747,16 @@ bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s);
 bool typeMatch(symAttribute *a, Node* b);
 std::string type_to_string(symAttribute *t);
 
+std::unique_ptr<ExpressionNode> LogError(const char *str) {
+    fprintf(stderr, "LogError: %s\n", str);
+    return nullptr;
+}
 
+Value *LogErrorV(std::string str){
+    return LogErrorV(str.c_str());
+}
+
+Value *LogErrorV(const char *Str) {
+  LogError(Str);
+  return nullptr;
+}
