@@ -3,10 +3,11 @@ cParser.hpp
 cScanner.cpp
 parsetree.txt
 /.idea
-/.vscode
+./.vscode
 /cmake-build-debug
 CMakeLists.txt
 compiler
 parsetree.txt
 test.cpp
 test.exe
+.gitignore
