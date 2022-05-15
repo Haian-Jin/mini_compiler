@@ -104,14 +104,16 @@ union YYSTYPE
 {
 #line 36 "cParser.y"
 
-    shared_ptr<Node> nodePtr;
+    Node * nodePtr;
+    DoubleNode * doubleNodePtr;
+    IntNode * intNodePtr;
     IdentifierNodeList* identifierNodeListPtr;
     IdentifierNode* identifierNodePtr;
     VarDeclarationList* varDeclarationListPtr;
     StatementNodesBlock* statementNodesBlockPtr;
-    GlobalDeclaraionNode* globalDeclaraionNodePtr;
+    GlobalDeclaraionNode * globalDeclaraionNodePtr;
 
-#line 115 "cParser.hpp"
+#line 117 "cParser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -14,19 +14,19 @@ static void error_missingRightBrancket();
 static void error_missingRightBrancket2();
 static void error_elseWithNoIf();
 static void eatToNewLine();
-static void error_duplicatedVariable(Node*);
+static void error_duplicatedVariable(Node *);
 static void error_variableNotDeclared(std::string);
-static void error_illegalArraySize(Node*);
-static void error_expressionTypeError(Node*,Node*,Node*);
-static void error_expressionTypeError(Node*,Node*);
-static void error_typeMismatch(Node*);
-static void error_variableNotDeclaredInStruct(Node*,Node*);
-static void error_argumentNumberNotMatch(Node*,int);
-static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node*,std::vector<std::string>&);
+static void error_illegalArraySize(Node *);
+static void error_expressionTypeError(Node *,Node *,Node *);
+static void error_expressionTypeError(Node *,Node *);
+static void error_typeMismatch(Node *);
+static void error_variableNotDeclaredInStruct(Node *,Node *);
+static void error_argumentNumberNotMatch(Node *,int);
+static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node *,std::vector<std::string>&);
 static void error_structNotDeclared(std::string);
-static void error_notArray(Node*);
+static void error_notArray(Node *);
 static void error_returnValueTypeMismatch(Attribute* need, Node::Type give);
-static void error_returnValueTypeMismatch(Attribute* need, Node* give);
+static void error_returnValueTypeMismatch(Attribute* need, Node * give);
 static void error_functionReturnsArray();
 %}
 %code requires {
@@ -34,12 +34,14 @@ static void error_functionReturnsArray();
 }
 
 %union{
-    shared_ptr<Node> nodePtr;
+    Node * nodePtr;
+    DoubleNode * doubleNodePtr;
+    IntNode * intNodePtr;
     IdentifierNodeList* identifierNodeListPtr;
     IdentifierNode* identifierNodePtr;
     VarDeclarationList* varDeclarationListPtr;
     StatementNodesBlock* statementNodesBlockPtr;
-    GlobalDeclaraionNode* globalDeclaraionNodePtr;
+    GlobalDeclaraionNode * globalDeclaraionNodePtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -83,11 +85,11 @@ cCode0 :
 
 cCode :
         globalDeclaration {
-            $$ = $1;
+            $$ = new GlobalDeclaraionNode(dynamic_cast<StatementNodesBlock*>($1));
         }
     |   cCode globalDeclaration {
             $$ = $1;
-            $$->mergeStatements(shared_ptr<GlobalDeclaraionNode>($2));
+            $$->mergeGlobalStatements(dynamic_cast<GlobalDeclaraionNode*>($2));
     }
     ;
 
@@ -96,75 +98,78 @@ cCode :
 
 globalDeclaration :
         declaration { /* 全局的变量定义，兼定义结构体。 */
-            $$ = new GlobalDeclaraionNode(shared_ptr<StatementNodesBlock>($1));
+            printf("global declaration\n");
+            $$ = $1;
         }
-    |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */ 
-            $$ = new GlobalDeclaraionNode(shared_ptr<StatementNodesBlock>($1));
+    |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */
+            $$ = new StatementNodesBlock(); 
+            $$->mStatementList.push_back(dynamic_cast<StatementNode*>($1));
         }
-    |   statement { /* 不允许在全局范围内出现不是定义的语句。 */
+    /* |   statement { // 不允许在全局范围内出现不是定义的语句。 
             yyerror("syntax error");
             std::cout<<"C-- only supports statements within a function.\n";
         }
     |   '}' {
             yyerror("syntax error");
             std::cout<<"a '}' without its '{'.\n";
-        }
+        } */
     ;
 
 
 declaration :
         type initializations ';' { /* 定义变量 */
             $$ = new StatementNodesBlock();
-            $$->createMultiVarDeclaration(shared_ptr<IdentifierNode>($1), shared_ptr<IdentifierNodeList>($2));
+            $$->createMultiVarDeclaration(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNodeList *>($2));
 
         }
-    |   STRUCT IDENTIFIER { /* 定义结构体 */ /* TODO */
-            /* 取得结构体名之后，即使为该结构体构建符号表 */
+    // TODO
+    /* |   STRUCT IDENTIFIER { // 定义结构体
+            // 取得结构体名之后，即使为该结构体构建符号表
             $2->setType(Node::TYPE_STRUCT);
             $2->setKind(Node::KIND_ATTRIBUTE);
             $2->setStructTypeName($2->getTokenValue());
             $2->setVariableName($2->getTokenValue());
             symbolTableStack->insert(new Attribute($2));
             symbolTableStack->push(new SymbolTable($2->getStructTypeName()));
-        } '{' structMemberDeclarations '}' ';' { /* TODO */
+        } '{' structMemberDeclarations '}' ';' { 
             $$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
             symbolTableStack->pop();
         }
     |   type initializations error  {
-            error_missingSemicolon();
-        } 
+            error_missingSemicolon(); 
+        } */
     ;
 
 type :
         typeName {$$ = $1;}          /* int */
-    |   CONST typeName {$$ = $1;}     /* const int, 不实现这一条。 */     
-    |   STATIC typeName {$$ = $1;}   /* static int, 不实现这一条。 */
+    |   CONST typeName {$$ = $2;}     /* const int, 不实现这一条。 */     
+    |   STATIC typeName {$$ = $2;}   /* static int, 不实现这一条。 */
     ;
 
 typeName :
         INT { 
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }               
     |   UNSIGNED INT { /* 不实现这一条 */}  
     |   CHAR { 
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   FLOAT { /* 不实现这一条, 只支持double */
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   DOUBLE { 
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   VOID { 
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   structTypeName { /* TODO */
-            $$ = new IdentifierNode(std::string($1, isType==true));
+            $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($1->getStructTypeName());
@@ -242,28 +247,28 @@ structMembers : /* 注：结构体的成员变量不能做初始化 */
 /* 有时间的话就实现一下初始值，没时间就算了。 */
 initializations :
         initialization {
-            $$ = new IndentifierNodeList();
-            $$->mIdentifierNodeList.push_back($1);
+            $$ = new IdentifierNodeList();
+            $$->addIdentifierNode($1);
         }
     |   initializations ',' initialization {
             $$ = $1;
-            $$->mIdentifierNodeList.push_back($3);
+            $$->addIdentifierNode($3);
         }
     ;
 
 initialization :
         variable {                       /* int a; 没有初始值 */
-            $$ = $1;
+            $$ = dynamic_cast<IdentifierNode*>($1);
         }
     |   variable '=' initialValue {   /* int a=10; 有初始值, 暂不实现 */
-            $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
-            $$->copyFromChild();
+            /* $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
+            $$->copyFromChild(); */
         }
     ;
 
 variable :
         pointerSpecifier variableName {  /* int *a; 指针变量，这里不打算实现。 */
-            $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
+           // $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
         }
     |   variableName { /* 不是指针的变量 */
             $$ = $1;
@@ -309,24 +314,21 @@ variableName :
             $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
         }
     |   variableName '(' ')' {           /* 函数定义 */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
-            $$->setKind(Node::KIND_FUNCTION);
-            $$->setVariableName($1->getVariableName());
-            $$->setPosition($1);
+           $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
         }
     |   variableName '(' paramTypes ')' {    /* 函数定义 */
-            $$ = new FuncNameAndArgsNode(shared_ptr<IdentifierNode>(variableName), shared_ptr<VarDeclarationList(paramTypes)>(paramTypes));
+            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<VarDeclarationList *>($3));
         }
     ;
 
 paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参数必须给名字。 */
         paramTypeName {
             $$ = new VarDeclarationList();
-            $$->mVarDeclarationLis.push_back(shared_ptr<VariableDeclarationNode>($1))
+            $$->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>($1));
         }
     |   paramTypes ',' paramTypeName {
             $$ = $1;
-            $$->mVarDeclarationLis.push_back(shared_ptr<VariableDeclarationNode>($3))
+            $$->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>($3));
         }
     ;
 
@@ -338,7 +340,7 @@ paramTypeName :
             $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
         }
     |   type variable {      /* 这一条是要正常实现的，定义函数用的 */
-            $$ = new VariableDeclarationNode(shared_ptr<IdentifierNode>($1), shared_ptr<IdentifierNode>($2));
+            $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
 
         }
     ;
@@ -403,14 +405,14 @@ initialValues :
 /* 函数定义 */
 functionDeclaration :   
         type variable  statementBlock {
-            $$ = new FunctionDeclarationNode(shared_ptr<IdentifierNode>($1), shared_ptr<FuncNameAndArgsNode>($2), shared_ptr<StatementBlockNode>($3));
+            $$ = new FunctionDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<FuncNameAndArgsNode *>($2), dynamic_cast<StatementNodesBlock*>($3));
         }
     ;
 
 /* 语句块，即“{...}” */
 statementBlock : 
         '{' '}' { /* 可以 {} 这样而不必 {;} 这样 */
-            $$ = StatementNodesBlock();
+            $$ = new StatementNodesBlock();
             $$->mStatementList.push_back(new NullStatementNode());
         }
     |   '{' statements '}' {
@@ -448,7 +450,7 @@ statements :    /* 一串语句 */
         }
     |   statements statement {
             $$ = $1;
-            $$->mergeStatements(shared_ptr<StatementNodesBlock>($2));
+            $$->mergeStatements(dynamic_cast<StatementNodesBlock *>($2));
         }
     ;
 
@@ -456,15 +458,16 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
         declaration {
             $$ = $1;
         }
-    |   expressionStatement { /* 表达式，也是最常见的语句 */
+    // TODO
+    /* |   expressionStatement { // 表达式，也是最常见的语句
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
-    |   loopStatement { /* 循环 */
+    |   loopStatement { // 循环
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
-    |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { /* 语句块。 */
-            /* 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 */
-            /* 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 */
+    |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
+            // 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 
+            // 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
             symbolTableStack->pop();
         }    
@@ -476,7 +479,7 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
         }
     |   error ';' {
         error_wrongStatement();
-    }
+    } */
     ;
 
 expressionStatement :
@@ -1060,7 +1063,7 @@ postfixUnaryExpression :
                     }else{
                         argListStructName.push_back({""});
                     }
-                    (dynamic_cast<FunctionCallNode*>($$))->addArgument(child);
+                    (dynamic_cast<FunctionCallNode *>($$))->addArgument(child);
                 }
                 if(argList.size()!=$1->getArgList().size()){
                     //std::cout<<"~";
@@ -1126,14 +1129,14 @@ paramList :
 atomicExpression :
         IDENTIFIER {
             $$ = $1;
-            if(!symbolTableStack->lookUp($1->getTokenValue())){
-                error_variableNotDeclared($1->getTokenValue());
+            /* if(!symbolTableStack->lookUp($1->getTokenValue()())){
+                error_variableNotDeclared($1->getTokenValue()());
                 $$->setKind(Node::KIND_VARIABLE);
                 $$->setType(Node::TYPE_INT);
             }else{
-                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()));
+                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()()));
                 $$->setPosition(csLineCnt, csColumnCnt);
-            }
+            } */
         }
     |   DOUBLE_NUMBER {
             $$ = $1;
@@ -1195,7 +1198,7 @@ static void error_structNotDeclared(std::string name){
     std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
     std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
 }
-static void error_illegalArraySize(Node* c){
+static void error_illegalArraySize(Node * c){
     std::cout<<"[ERROR] ";
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
@@ -1233,7 +1236,7 @@ static void error_returnValueTypeMismatch(Attribute* need, Node::Type give){
     std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
     std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave nothing\n"; 
 }
-static void error_returnValueTypeMismatch(Attribute* need, Node* give){
+static void error_returnValueTypeMismatch(Attribute* need, Node * give){
     std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
     std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave "<<give->getTypeString()<<std::endl;
 }

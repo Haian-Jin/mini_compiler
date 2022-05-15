@@ -558,11 +558,12 @@ void echoint();
 void echodouble();
 void echochar();
 void errecho();
+void echoidentifier();
 inline void mkNode(bool negligible);
 extern YYSTYPE yylval;
 static YYSTYPE tempYylval;
-#line 565 "cScanner.cpp"
 #line 566 "cScanner.cpp"
+#line 567 "cScanner.cpp"
 
 #define INITIAL 0
 
@@ -779,9 +780,9 @@ YY_DECL
 		}
 
 	{
-#line 26 "cScanner.l"
+#line 27 "cScanner.l"
 
-#line 785 "cScanner.cpp"
+#line 786 "cScanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -841,7 +842,7 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 27 "cScanner.l"
+#line 28 "cScanner.l"
 {
     if(yytext[0] == '\n'){
         csColumnCnt = 0;
@@ -854,7 +855,7 @@ YY_RULE_SETUP
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 35 "cScanner.l"
+#line 36 "cScanner.l"
 {
     csColumnCnt=0;
     for(int i=0; yytext[i]; i++)
@@ -863,7 +864,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 41 "cScanner.l"
+#line 42 "cScanner.l"
 {
     echo();
     csColumnCnt+=3;
@@ -872,7 +873,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 46 "cScanner.l"
+#line 47 "cScanner.l"
 {
     echo();
     csColumnCnt+=5;
@@ -881,7 +882,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 51 "cScanner.l"
+#line 52 "cScanner.l"
 {
     echo();
     csColumnCnt+=6;
@@ -890,7 +891,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 56 "cScanner.l"
+#line 57 "cScanner.l"
 {
     echo();
     csColumnCnt+=4;
@@ -899,7 +900,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 61 "cScanner.l"
+#line 62 "cScanner.l"
 {
     echo();
     csColumnCnt+=3;
@@ -908,7 +909,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 66 "cScanner.l"
+#line 67 "cScanner.l"
 {
     echo();
     csColumnCnt+=2;
@@ -917,7 +918,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 71 "cScanner.l"
+#line 72 "cScanner.l"
 {
     echo();
     csColumnCnt+=5;
@@ -926,7 +927,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 76 "cScanner.l"
+#line 77 "cScanner.l"
 {
     echo();
     csColumnCnt+=8;
@@ -935,7 +936,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 81 "cScanner.l"
+#line 82 "cScanner.l"
 {
     echo();
     csColumnCnt+=5;
@@ -944,7 +945,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 86 "cScanner.l"
+#line 87 "cScanner.l"
 {
     echo();
     csColumnCnt+=6;
@@ -953,7 +954,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 91 "cScanner.l"
+#line 92 "cScanner.l"
 {
     echo();
     csColumnCnt+=4;
@@ -962,7 +963,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 96 "cScanner.l"
+#line 97 "cScanner.l"
 {
     echo();
     csColumnCnt+=7;
@@ -971,7 +972,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 101 "cScanner.l"
+#line 102 "cScanner.l"
 {
     echo();
     csColumnCnt+=2;
@@ -980,7 +981,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 106 "cScanner.l"
+#line 107 "cScanner.l"
 {
     echo();
     csColumnCnt+=4;
@@ -989,7 +990,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 111 "cScanner.l"
+#line 112 "cScanner.l"
 {
     echo();
     csColumnCnt+=6;
@@ -998,7 +999,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 116 "cScanner.l"
+#line 117 "cScanner.l"
 {
     echo();
     csColumnCnt+=5;
@@ -1007,7 +1008,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 121 "cScanner.l"
+#line 122 "cScanner.l"
 {
     echo();
     csColumnCnt+=8;
@@ -1016,7 +1017,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 126 "cScanner.l"
+#line 127 "cScanner.l"
 {
     echo();
     csColumnCnt+=5;
@@ -1025,7 +1026,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 131 "cScanner.l"
+#line 132 "cScanner.l"
 {
     echo();
     csColumnCnt+=6;
@@ -1034,7 +1035,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 136 "cScanner.l"
+#line 137 "cScanner.l"
 {
     echo();
     csColumnCnt+=4;
@@ -1043,7 +1044,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 141 "cScanner.l"
+#line 142 "cScanner.l"
 {
     echo();
     csColumnCnt+=4;
@@ -1052,7 +1053,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 149 "cScanner.l"
+#line 150 "cScanner.l"
 {
     echoint();
     csColumnCnt+=strlen(yytext);
@@ -1061,7 +1062,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 154 "cScanner.l"
+#line 155 "cScanner.l"
 {
     echodouble();
     csColumnCnt+=strlen(yytext);
@@ -1070,7 +1071,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 159 "cScanner.l"
+#line 160 "cScanner.l"
 {
     echochar();
     csColumnCnt+=strlen(yytext);
@@ -1079,7 +1080,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 164 "cScanner.l"
+#line 165 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1088,7 +1089,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 169 "cScanner.l"
+#line 170 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1097,7 +1098,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 174 "cScanner.l"
+#line 175 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1106,7 +1107,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 179 "cScanner.l"
+#line 180 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1115,7 +1116,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 184 "cScanner.l"
+#line 185 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1124,7 +1125,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 189 "cScanner.l"
+#line 190 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1133,7 +1134,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 194 "cScanner.l"
+#line 195 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1142,7 +1143,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 199 "cScanner.l"
+#line 200 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1151,7 +1152,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 204 "cScanner.l"
+#line 205 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1160,7 +1161,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 209 "cScanner.l"
+#line 210 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1169,7 +1170,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 214 "cScanner.l"
+#line 215 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1178,7 +1179,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 219 "cScanner.l"
+#line 220 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1187,7 +1188,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 224 "cScanner.l"
+#line 225 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1196,7 +1197,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 229 "cScanner.l"
+#line 230 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1205,7 +1206,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 234 "cScanner.l"
+#line 235 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1214,9 +1215,9 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 241 "cScanner.l"
+#line 242 "cScanner.l"
 {
-    echo();
+    echoidentifier();
     csColumnCnt+=strlen(yytext);
     return IDENTIFIER;
 }
@@ -1224,7 +1225,7 @@ YY_RULE_SETUP
 case 43:
 /* rule 43 can match eol */
 YY_RULE_SETUP
-#line 246 "cScanner.l"
+#line 247 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1233,7 +1234,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 251 "cScanner.l"
+#line 252 "cScanner.l"
 {
     echo(true);
     csColumnCnt+=strlen(yytext);
@@ -1242,7 +1243,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 256 "cScanner.l"
+#line 257 "cScanner.l"
 {
     echo();
     csColumnCnt+=strlen(yytext);
@@ -1251,7 +1252,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 262 "cScanner.l"
+#line 263 "cScanner.l"
 {
     errecho();
     csColumnCnt+=strlen(yytext);
@@ -1260,10 +1261,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 268 "cScanner.l"
+#line 269 "cScanner.l"
 ECHO;
 	YY_BREAK
-#line 1267 "cScanner.cpp"
+#line 1268 "cScanner.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2268,7 +2269,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 268 "cScanner.l"
+#line 269 "cScanner.l"
 
 
 void echo(bool negligible){
@@ -2276,33 +2277,33 @@ void echo(bool negligible){
     //printf("get: %s\n",yytext);
 }
 void echoint(){
-    yylval.nodePtr = new IntNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_INT);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.intNodePtr = new IntNode(std::string(yytext));
+    yylval.intNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.intNodePtr->setType(Node::TYPE_INT);
+    yylval.intNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.intNodePtr->setVariableName(std::string(yytext));
 }
 void echodouble(){
-    yylval.nodePtr = new DoubleNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_DOUBLE);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.doubleNodePtr = new DoubleNode(std::string(yytext));
+    yylval.doubleNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.doubleNodePtr->setType(Node::TYPE_DOUBLE);
+    yylval.doubleNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.doubleNodePtr->setVariableName(std::string(yytext));
 }
 void echochar(){
-    yylval.nodePtr = new IntNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_CHAR);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.intNodePtr = new IntNode(std::string(yytext));
+    yylval.intNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.intNodePtr->setType(Node::TYPE_CHAR);
+    yylval.intNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.intNodePtr->setVariableName(std::string(yytext));
 }
 void errecho(){
     printf("ERROR at line %d, column %d: Unsupported Character, '%s' is not supported in our C-- language, scanner will treat it as an empty character.\n", csLineCnt, csColumnCnt-1, yytext);
 }
 
 void echoidentifier(){
-    yylval.nodePtr = new IdentifierNode(std::string(yytext), isType=false);
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.identifierNodePtr = new IdentifierNode(std::string(yytext), false);
+    yylval.identifierNodePtr->setPosition(csLineCnt, csColumnCnt);
 }
 
 

@@ -1,0 +1,18 @@
+{
+	"children" : 
+	[
+		{
+			"children" : 
+			[
+				{
+					"name" : "TypeNode"
+				},
+				{
+					"name" : "IdentifierNode"
+				}
+			],
+			"name" : "VariableDeclarationNode"
+		}
+	],
+	"name" : "CentralBlock"
+}
