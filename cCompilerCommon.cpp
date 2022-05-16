@@ -21,13 +21,13 @@ Node::Node(std::string _symbolName, int childrenNumber, ...):mIsNegligible(false
     va_list vl;
     va_start(vl, childrenNumber);
     for(int i=0;i<childrenNumber;i++){
-        mChildren.push_back(va_arg(vl,Node*));
+        mChildren.push_back(va_arg(vl,Node *));
     }
 }
 void Node::addChild(Node *newChild){
     mChildren.push_back(newChild);
 }
-Node* Node::getChildrenById(int i){
+Node * Node::getChildrenById(int i){
     return mChildren[i];
 }
 int Node::getChildrenNumber(){
@@ -134,7 +134,7 @@ std::vector<std::string> Node::getArgListStructName(){
 std::vector<int> Node::getArraySizes(){
     return mArraySizes;
 }
-bool Node::isArray(){
+bool Node::isArray() const{
     return mArraySizes.size() > 0;
 }
 int Node::getArrayDimension(){
@@ -353,7 +353,7 @@ bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s){
 
     return true;
 }
-bool typeMatch(Attribute *a, Node* b){
+bool typeMatch(Attribute *a, Node * b){
     if(b->isArray())return false;
     if(a->type==b->getType()){
         if(a->type==Node::TYPE_STRUCT){
