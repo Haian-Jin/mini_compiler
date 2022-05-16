@@ -780,7 +780,6 @@ public:
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "bit operation is not supported");
-            /* todo */
         } else if (op == "==") {
             return isFloat ? Builder.CreateFCmpOEQ(Left, Right, "feqop")
                            : Builder.CreateICmpEQ(Left, Right, "ieqop");
@@ -793,6 +792,12 @@ public:
         } else if (op == ">") {
             return isFloat ? Builder.CreateFCmpOGT(Left, Right, "fgtop")
                            : Builder.CreateICmpSGT(Left, Right, "igtop");
+        } else if (op == ">=") {
+            return isFloat ? Builder.CreateFCmpOGE(Left, Right, "fgeop")
+                           : Builder.CreateICmpSGE(Left, Right, "igeop");
+        } else if (op == "<=") {
+            return isFloat ? Builder.CreateFCmpOLE(Left, Right, "fleop")
+                           : Builder.CreateICmpSLE(Left, Right, "ileop");
         } else if (op == ">>") {
             if (isFloat) {
                 return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
@@ -863,8 +868,11 @@ public:
     std::string getNodeTypeName() {
         return std::string("TenaryOperatorNode  ") + (getVariableName());
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    
+    virtual llvm::Value *codeGen() {
+
+    }
+
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide, *mMidHandSide;
