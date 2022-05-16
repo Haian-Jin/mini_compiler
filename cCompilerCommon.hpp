@@ -1,6 +1,6 @@
 #pragma once
 #include <json/json.h>
-// #include <llvm/IR/Value.h>
+#include <llvm/IR/Value.h>
 #include<math.h>
 #include<string>
 #include <cstring>
@@ -13,16 +13,27 @@
 
 // #include"noError.h"
 #include <tr1/memory>
+#include <llvm/IR/Value.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Module.h>
+#include <json/json.h>
+#include <unordered_map>
 
+using namespace llvm;
 using std::shared_ptr;
 using std::make_shared;
 
+static llvm::LLVMContext TheContext;
+static llvm::IRBuilder<> Builder(TheContext);
+static std::unique_ptr<Module> TheModule;
+static std::unordered_map<std::string, Value*> a;
 
-class CodeGenContext;
+struct symAttribute;
 
+Value *LogErrorV(const char *Str);
 
-struct Attribute;
-
+Value *LogErrorV(std::string str);
 /*
     命名器，输入一个字符串，输出它的带编号版本。用于输出parse tree的时候给各个节点命名。
     同时也用于给匿名作用域对应的符号表命名（比如statement block和匿名结构体）。
@@ -66,7 +77,7 @@ protected:
     std::vector<Node::Type> mTokenArgList;// 参数列表的类型，只有函数能用到
     std::vector<std::string> mTokenArgListStructTypeName;// 和参数列表配合使用，提供参数的结构体名字（如果是结构体的话）
     std::vector<int> mArraySizes;// 数组的各个维度的大小，只有数组能用到。如果不是数组，则这个容器的维度是 0。
-    std::string mStructTypeName;// 结构体名字，只有当类型是结构体的时候能用到。注：若类别是 Attribute 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
+    std::string mStructTypeName;// 结构体名字，只有当类型是结构体的时候能用到。注：若类别是 symAttribute 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
     std::string mVariableName;// 变量的名字。
     int mLineNumber;// 位置（行）
     int mColumnNumber;// 位置（列）
@@ -220,7 +231,7 @@ public:
     virtual void copyFrom(Node *c);
 
     // 将给定的属性复制给这个节点。（包括位置）我承认这个是我写代码写到一半忘记了，又把 setAttribute 拿来重写了一遍...
-    virtual void copyFrom(Attribute *c);
+    virtual void copyFrom(symAttribute *c);
 
 
     // 返回非终结符的名字。已弃置不用。
@@ -235,8 +246,11 @@ public:
     virtual std::string getNodeTypeName() const{
         return "!!!";
     } ;
-    // virtual llvm::Value *codeGen(CodeGenContext &context) { return (llvm::Value *)0;}
+
+    virtual llvm::Value *codeGen() { return (llvm::Value *)0;}
+
 	virtual Json::Value jsonGen() const {return Json::Value();}
+
     /* defined by jha ends */
 };
 
@@ -507,7 +521,9 @@ public:
         return root;
     };
 
-	// virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;};
+	virtual llvm::Value* codeGen() {
+        return llvm::ConstantFP::get(TheContext, llvm::APFloat(value));
+    };
 
 };
 
@@ -536,7 +552,9 @@ public:
     };
 
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    virtual llvm::Value* codeGen() {
+        return ConstantInt::get(llvm::Type::getInt32Ty(TheContext), this->value, true);
+    } 
 };
 
 
@@ -644,7 +662,27 @@ public:
     void addArgument(Node *c){
         mArguments->push_back(dynamic_cast<ExpressionNode *>(c));
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    
+    virtual llvm::Value* codeGen(){
+        Function *CalleeF = TheModule->getFunction(mFunctionName->getVariableName());
+        if (!CalleeF)
+            return LogErrorV("Incorrect # arguments passed");
+        if (CalleeF->arg_size() != (*mArguments).size()) {
+            return LogErrorV("Incorrect # arguments passed");
+        }
+
+        std::vector<Value *> ArgsV;
+        for (size_t i = 0; i < mArguments->size(); i++)
+        {
+            ArgsV.push_back((*mArguments)[i]->codeGen());
+            if(!ArgsV.back())
+                return nullptr;
+        }
+
+        return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
+        
+
+    }
 private:
     IdentifierNode *mFunctionName;
     std::vector<ExpressionNode *> *mArguments;
@@ -792,7 +830,7 @@ public:
 
 
 // 属性。这个是变量的属性，是存在符号表里的，不是语法分析树的属性，它们会有细微的差别。
-struct Attribute{
+struct symAttribute{
     std::string name;
     Node::Type type;
     Node::Kind kind;
@@ -802,10 +840,10 @@ struct Attribute{
     std::string structTypeName;
     int lineNumber;
     int columnNumber;
-    Attribute(std::string _name, Node::Type _type, Node::Kind _kind, std::vector<Node::Type> _argList, std::vector<std::string> _argListStructName, std::vector<int> _arraySizes, std::string _structTypeName, int l, int c)
+    symAttribute(std::string _name, Node::Type _type, Node::Kind _kind, std::vector<Node::Type> _argList, std::vector<std::string> _argListStructName, std::vector<int> _arraySizes, std::string _structTypeName, int l, int c)
         : name(_name),type(_type),kind(_kind),argList(_argList),arraySizes(_arraySizes),structTypeName(_structTypeName),lineNumber(l),columnNumber(c),argListStructName(_argListStructName){};
-    Attribute(){}
-    Attribute(Node *p)
+    symAttribute(){}
+    symAttribute(Node *p)
         : name(p->getVariableName()),type(p->getType()),kind(p->getKind()),argList(p->getArgList()),arraySizes(p->getArraySizes()),
           structTypeName(p->getStructTypeName()),lineNumber(p->getLineNumber()),columnNumber(p->getColumnNumber()),argListStructName(p->getArgListStructName()){};
     
@@ -817,7 +855,7 @@ struct Attribute{
 class SymbolTable{
 private:
     std::string mSymbolTableName;// 表名。表明就是这个表对应的函数名/结构体名等。对匿名作用域来说，表名是用 NameCounter 自动生成的不重复的名字。
-    std::map<std::string, Attribute*> map;// 符号表本体
+    std::map<std::string, symAttribute*> map;// 符号表本体
     static std::map<std::string, SymbolTable*> set;// 所有的符号表
 public:
     SymbolTable();
@@ -825,10 +863,10 @@ public:
     std::string getName();
 
     // 向符号表中插入一个符号（符号的名字直接由 t->name 取得）。如果表中原本没有这个符号，则插入成功，返回 true；否则返回 false 并且不插入。
-    bool insert(Attribute* t);
+    bool insert(symAttribute* t);
 
     // 查表。依据给定的 name 从表中取得对应的属性。没查到的话返回 NULL
-    Attribute *lookUp(std::string name);
+    symAttribute *lookUp(std::string name);
 
     // 打印表，用来看的。
     void print();
@@ -857,10 +895,10 @@ public:
     SymbolTable *top();
 
     // 查表，从栈顶开始查，查不到就一层层往下查。全都查不到的话返回 NULL
-    Attribute *lookUp(std::string name);
+    symAttribute *lookUp(std::string name);
 
     // 将符号插入栈顶的符号表。
-    bool insert(Attribute* t);
+    bool insert(symAttribute* t);
 };
 
 extern int csLineCnt;
@@ -872,7 +910,20 @@ bool checkKind(Node *p, Node::Kind kind);
 bool typeMatch(Node *a, Node *b);
 bool typeMatch(std::vector<Node::Type> a, std::vector<Node::Type> b);
 bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s);
-bool typeMatch(Attribute *a, Node * b);
-std::string type_to_string(Attribute *t);
+bool typeMatch(symAttribute *a, Node * b);
+std::string type_to_string(symAttribute *t);
 
 
+std::unique_ptr<ExpressionNode> LogError(const char *str) {
+    fprintf(stderr, "LogError: %s\n", str);
+    return nullptr;
+}
+
+Value *LogErrorV(std::string str){
+    return LogErrorV(str.c_str());
+}
+
+Value *LogErrorV(const char *Str) {
+  LogError(Str);
+  return nullptr;
+}
