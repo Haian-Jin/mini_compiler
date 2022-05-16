@@ -529,16 +529,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  23
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   241
+#define YYLAST   286
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  67
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  44
+#define YYNNTS  45
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  114
+#define YYNRULES  117
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  187
+#define YYNSTATES  190
 
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   297
@@ -594,13 +594,13 @@ static const yytype_int16 yyrline[] =
      198,   212,   215,   222,   237,   240,   250,   254,   261,   264,
      271,   274,   281,   284,   287,   290,   296,   299,   314,   317,
      320,   326,   330,   345,   388,   391,   398,   401,   410,   417,
-     421,   451,   454,   461,   575,   579,   591,   594,   605,   616,
-     627,   638,   654,   657,   675,   678,   693,   696,   711,   714,
-     729,   732,   747,   750,   765,   768,   781,   796,   799,   812,
-     825,   838,   856,   859,   867,   880,   883,   894,   910,   913,
-     924,   935,   952,   967,   970,   976,   984,   992,  1000,  1008,
-    1018,  1021,  1029,  1037,  1052,  1081,  1092,  1114,  1120,  1123,
-    1133,  1144,  1147,  1150,  1153
+     421,   451,   454,   461,   465,   493,   496,   499,   579,   597,
+     600,   611,   622,   633,   644,   660,   663,   681,   684,   699,
+     702,   717,   720,   735,   738,   753,   756,   771,   774,   787,
+     802,   805,   818,   831,   844,   862,   865,   873,   886,   889,
+     898,   912,   915,   924,   933,   948,   957,   960,   966,   974,
+     982,   990,   998,  1008,  1011,  1019,  1027,  1042,  1071,  1082,
+    1086,  1092,  1095,  1105,  1110,  1113,  1116,  1119
 };
 #endif
 
@@ -623,7 +623,7 @@ static const char *const yytname[] =
   "initializations", "initialization", "variable", "pointerSpecifier",
   "variableName", "paramTypes", "paramTypeName", "initialValue",
   "initialValues", "functionDeclaration", "statementBlock", "statements",
-  "statement", "expression", "assignmentExpression",
+  "statement", "expressionStatement", "expression", "assignmentExpression",
   "tenaryConditionExpression", "logicalOrExpression",
   "logicalAndExpression", "bitwiseOrExpression",
   "bitwiseExclusiveOrExpression", "bitwiseAndExpression",
@@ -649,7 +649,7 @@ static const yytype_int16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF (-74)
+#define YYPACT_NINF (-77)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -663,25 +663,25 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     188,    12,   -74,   -74,   -74,   199,   -74,   199,   -19,   -74,
-      43,   188,   -74,   -74,     8,   -74,   -74,   -74,   -74,   -74,
-     -74,   -74,   -74,   -74,   -74,   -74,     8,     0,    39,   -74,
-      22,     9,    97,   188,   -15,   -74,   -74,     8,   137,     1,
-     -74,    57,    97,   173,    29,     8,   149,   -74,   -74,   -74,
-      83,   -74,   -74,     8,   161,   -74,    21,    21,   -74,   -74,
-     -74,   -74,    21,   111,     1,    21,    21,   -74,   -74,   -74,
-      -4,    59,    11,    96,   107,    70,    16,    86,   110,    17,
-       4,   -74,   -11,   -74,   -74,   -74,     8,    -2,   -74,   103,
-      80,   -74,   -74,   -74,   -74,   -74,   -11,   -11,   -11,    10,
-     -74,   -74,   -12,   -11,   -11,   111,   111,   111,   111,   111,
-     111,   111,   111,   111,   111,   111,   111,   111,   111,   111,
-     111,   111,   111,   111,   111,   111,   111,   111,   111,   -74,
-     -74,   101,   111,   145,   -74,   -74,   188,   -74,   -74,     8,
-     -74,   111,   -74,     1,    59,   -74,    78,    11,    96,   107,
-      70,    16,    16,    86,    86,    86,    86,   110,   110,    17,
-      17,   -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,   -74,
-     -74,   -74,    31,     2,   116,   -74,   -74,   -74,   -74,   -74,
-     111,   -74,   111,   -74,   -74,   -74,   -74
+     233,    11,   -77,   -77,   -77,   244,   -77,   244,   -18,   -77,
+      43,   233,   -77,   -77,   -11,   -77,   -77,   -77,   -77,   -77,
+     -77,   -77,   -77,   -77,   -77,   -77,   -11,    -5,    -6,   -77,
+      19,     7,   -17,   233,   -27,   -77,   -77,   -11,   103,    21,
+     -77,    16,   -17,   209,    44,   -11,   186,   -77,   -77,   -77,
+      13,    89,    89,   -77,   -77,   -77,   -77,    89,   194,   -77,
+      89,   -77,    89,   -77,   -11,   145,   -77,   -77,     4,   -77,
+     -77,    -2,    71,    39,    59,    79,    73,    -1,    80,    70,
+      63,    17,   -77,     1,   -77,    21,   -77,   -77,   -77,   -77,
+     -11,   -15,   -77,    91,    22,   -77,   -77,   -77,     1,     1,
+       1,   110,     1,     1,   -77,   -77,   -77,   -77,   194,   194,
+     194,   194,   194,   194,   194,   194,   194,   194,   194,   194,
+     194,   194,   194,   194,   194,   194,   194,   194,   194,   194,
+     194,   194,   -77,   -77,   153,   194,   131,   -77,   -24,   -77,
+     -77,   233,   -77,   -77,   -11,   -77,    71,   -77,    96,    39,
+      59,    79,    73,    -1,    -1,    80,    80,    80,    80,    70,
+      70,    63,    63,   -77,   -77,   -77,   -77,   -77,   -77,   -77,
+     -77,   -77,   -77,   -77,     3,   167,   127,   -77,   -77,    21,
+     -77,   -77,   194,   -77,   194,   -77,   -77,   -77,   -77,   -77
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -694,40 +694,40 @@ static const yytype_int8 yydefact[] =
        9,    10,    12,     1,     4,    36,     0,    32,     0,    26,
       28,     0,    31,     0,     0,    34,     7,     0,     0,     0,
       48,    33,    30,     0,     0,     0,     0,    21,    38,    27,
-      28,    49,    53,     0,     0,    51,     0,     0,   110,   111,
-     112,   113,     0,     0,     0,     0,     0,    29,    45,    56,
-      62,    64,    66,    68,    70,    72,    74,    77,    82,    85,
-      88,    93,    94,   100,    35,    39,     0,     0,    41,     0,
-       0,    24,    19,    22,    50,    52,    95,    96,    99,     0,
-      54,    46,     0,    98,    97,     0,     0,     0,     0,     0,
+      28,     0,     0,   113,   114,   115,   116,     0,     0,    49,
+       0,    55,     0,    53,     0,     0,    51,    54,     0,    58,
+      59,    65,    67,    69,    71,    73,    75,    77,    80,    85,
+      88,    91,    96,    97,   103,     0,    29,    45,    35,    39,
+       0,     0,    41,     0,     0,    24,    19,    22,    98,    99,
+     102,     0,   101,   100,    50,    52,    57,    56,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,   101,
-     102,     0,     0,     0,    43,    40,     0,    37,    23,     0,
-     114,     0,    44,     0,    65,    88,     0,    67,    69,    71,
-      73,    75,    76,    81,    80,    78,    79,    83,    84,    86,
-      87,    91,    92,    89,    90,    58,    59,    60,    61,    57,
-     105,   108,     0,     0,    54,   106,    42,    25,    55,    47,
-       0,   104,     0,   107,   103,    63,   109
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,   104,   105,     0,     0,     0,    46,     0,    43,
+      40,     0,    37,    23,     0,   117,    68,    91,     0,    70,
+      72,    74,    76,    78,    79,    84,    83,    81,    82,    86,
+      87,    89,    90,    94,    95,    92,    93,    61,    62,    63,
+      64,    60,   108,   111,     0,     0,    58,   109,    44,     0,
+      42,    25,     0,   107,     0,   110,   106,    47,    66,   112
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -74,   -74,   -74,   156,    -3,   -31,   143,   -74,   -74,   -74,
-     122,   -74,   -74,   136,   -13,   -74,   154,   -74,    44,   -48,
-     -74,   -74,   -74,   -74,   138,   -73,   -16,    24,   -74,    92,
-     102,   108,   109,   114,    46,    20,     6,    -6,    37,   -39,
-     -74,    41,   -74,   -74
+     -77,   -77,   -77,   165,    12,   -30,    69,   -77,   -77,   -77,
+     135,   -77,   -77,   146,   -12,   -77,   157,   -77,    50,   -76,
+     -77,   -77,   -77,   -77,   128,   -77,   -54,   -29,    18,   -77,
+      84,    93,    83,    94,    88,     2,    10,    31,     8,    32,
+     -38,   -77,   202,   -77,   -77
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
       -1,    10,    11,    12,    13,    14,    15,    16,    33,    46,
-      47,    90,    28,    29,    50,    31,    32,    87,    88,    67,
-     102,    17,    40,    54,    55,    99,    68,    69,    70,    71,
-      72,    73,    74,    75,    76,    77,    78,    79,   161,   145,
-      81,    82,   172,    83
+      47,    94,    28,    29,    50,    31,    32,    91,    92,    86,
+     138,    17,    40,    65,    66,    67,    68,    69,    70,    71,
+      72,    73,    74,    75,    76,    77,    78,    79,    80,   163,
+     147,    82,    83,   174,    84
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -735,60 +735,68 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      80,    30,    45,   183,   105,   129,   130,    53,   124,   125,
-     126,   127,    86,    34,    22,    45,   101,    56,    57,    58,
-      59,    60,    61,    53,    80,    80,    25,    25,   113,   114,
-      18,    48,    91,   146,   131,    52,   132,    35,   142,    58,
-      59,    60,    61,    23,   135,    62,    63,   100,   143,    89,
-      64,    52,    65,    26,    26,   133,   140,   106,   136,   173,
-     128,    19,   141,    27,    41,    66,    63,    80,   107,   121,
-     141,    38,   122,   134,   115,   116,   108,   181,    39,   123,
-     111,   112,   162,   162,   162,    80,    80,    80,    80,    80,
-     100,   182,    80,    80,    84,   179,    36,    96,    97,    37,
-     117,   118,    80,    98,    80,    86,   103,   104,   165,   166,
-     167,   168,   169,   159,   160,   171,   174,    56,    57,    58,
-      59,    60,    61,   157,   158,   178,   177,    56,    57,    58,
-      59,    60,    61,   153,   154,   155,   156,   138,   141,    39,
-     139,   180,    43,    80,    44,    62,    63,   170,    20,   109,
-      21,   137,    65,   119,   120,    62,    63,   151,   152,   163,
-     164,   110,    65,   175,   184,    66,   186,    24,    93,     1,
-       2,     3,     4,    49,     5,    66,     6,     7,     8,     9,
-     176,     1,     2,     3,     4,    42,     5,    51,     6,     7,
-       8,     9,    95,     1,     2,     3,     4,   144,     5,    92,
-       6,     7,     8,     9,   185,     1,     2,     3,     4,   147,
-       5,    94,     6,     7,     8,     9,   148,     0,   149,    85,
-       1,     2,     3,     4,   150,     5,     0,     6,     7,     8,
-       9,     1,     2,     3,     4,     0,     0,     0,     6,     0,
-       8,     9
+      81,    81,    30,    45,   101,   106,   108,    25,    64,   137,
+      87,   116,   117,    90,    34,    22,    45,   132,   133,    48,
+      81,   127,   128,   129,   130,    25,   178,    81,    43,    18,
+      44,   140,    35,    95,    26,    64,   179,    51,    52,    53,
+      54,    55,    56,    23,    27,   141,   134,    81,   135,   183,
+      63,    36,    26,    88,    37,   148,    87,   118,   119,   109,
+      19,   107,    41,   184,    93,    57,    58,   136,    38,    39,
+      85,    81,    60,   131,    20,    39,    21,    63,   139,   143,
+     110,   175,   144,   114,   115,    62,   164,   164,   164,    81,
+      81,    81,    81,    81,   120,   121,    81,    81,   167,   168,
+     169,   170,   171,   187,   111,   173,   176,    53,    54,    55,
+      56,    90,   112,   122,   123,   124,   153,   154,   125,    51,
+      52,    53,    54,    55,    56,   126,   155,   156,   157,   158,
+     161,   162,   181,   113,    58,     1,     2,     3,     4,   142,
+       5,    81,     6,     7,     8,     9,    81,    57,    58,   177,
+      87,   159,   160,    59,    60,   189,   145,   165,   166,   182,
+      61,    51,    52,    53,    54,    55,    56,    62,   185,    51,
+      52,    53,    54,    55,    56,   186,    24,     1,     2,     3,
+       4,    97,     5,    49,     6,     7,     8,     9,    42,    57,
+      58,   180,   146,   105,   150,   104,    60,    57,    58,   172,
+     188,   152,    61,   149,    60,     0,   151,     0,     0,    62,
+      51,    52,    53,    54,    55,    56,     0,    62,     1,     2,
+       3,     4,     0,     5,     0,     6,     7,     8,     9,     0,
+       0,     0,     0,     0,     0,     0,    96,     0,    57,    58,
+       0,     1,     2,     3,     4,    60,     5,     0,     6,     7,
+       8,     9,     0,    98,    99,    89,     0,     0,    62,   100,
+       0,     0,   102,     0,   103,     1,     2,     3,     4,     0,
+       5,     0,     6,     7,     8,     9,     1,     2,     3,     4,
+       0,     0,     0,     6,     0,     8,     9
 };
 
 static const yytype_int16 yycheck[] =
 {
-      39,    14,    33,     1,     8,    16,    17,    38,     4,     5,
-       6,     7,    43,    26,    33,    46,    64,    16,    17,    18,
-      19,    20,    21,    54,    63,    64,    18,    18,    12,    13,
-      18,    46,    45,   106,    45,    38,    47,    37,    50,    18,
-      19,    20,    21,     0,    46,    44,    45,    63,    60,    20,
-      49,    54,    51,    45,    45,    66,    46,    61,    60,   132,
-      56,    49,    60,    55,    55,    64,    45,   106,     9,    52,
-      60,    49,    55,    86,    58,    59,    65,    46,    56,    62,
-      10,    11,   121,   122,   123,   124,   125,   126,   127,   128,
-     106,    60,   131,   132,    37,   143,    57,    56,    57,    60,
-      14,    15,   141,    62,   143,   136,    65,    66,   124,   125,
-     126,   127,   128,   119,   120,   131,   132,    16,    17,    18,
-      19,    20,    21,   117,   118,   141,   139,    16,    17,    18,
-      19,    20,    21,   113,   114,   115,   116,    57,    60,    56,
-      60,    63,    45,   182,    47,    44,    45,    46,     5,    53,
-       7,    48,    51,    43,    44,    44,    45,   111,   112,   122,
-     123,    54,    51,    18,    48,    64,   182,    11,    46,    32,
-      33,    34,    35,    37,    37,    64,    39,    40,    41,    42,
-     136,    32,    33,    34,    35,    31,    37,    50,    39,    40,
-      41,    42,    54,    32,    33,    34,    35,   105,    37,    50,
-      39,    40,    41,    42,   180,    32,    33,    34,    35,   107,
-      37,    50,    39,    40,    41,    42,   108,    -1,   109,    46,
-      32,    33,    34,    35,   110,    37,    -1,    39,    40,    41,
-      42,    32,    33,    34,    35,    -1,    -1,    -1,    39,    -1,
-      41,    42
+      38,    39,    14,    33,    58,     1,     8,    18,    38,    85,
+      39,    12,    13,    43,    26,    33,    46,    16,    17,    46,
+      58,     4,     5,     6,     7,    18,    50,    65,    45,    18,
+      47,    46,    37,    45,    45,    65,    60,    16,    17,    18,
+      19,    20,    21,     0,    55,    60,    45,    85,    47,    46,
+      38,    57,    45,    37,    60,   109,    85,    58,    59,    61,
+      49,    57,    55,    60,    20,    44,    45,    66,    49,    56,
+      49,   109,    51,    56,     5,    56,     7,    65,    90,    57,
+       9,   135,    60,    10,    11,    64,   124,   125,   126,   127,
+     128,   129,   130,   131,    14,    15,   134,   135,   127,   128,
+     129,   130,   131,   179,    65,   134,   135,    18,    19,    20,
+      21,   141,    53,    43,    44,    52,   114,   115,    55,    16,
+      17,    18,    19,    20,    21,    62,   116,   117,   118,   119,
+     122,   123,   144,    54,    45,    32,    33,    34,    35,    48,
+      37,   179,    39,    40,    41,    42,   184,    44,    45,    18,
+     179,   120,   121,    50,    51,   184,    46,   125,   126,    63,
+      57,    16,    17,    18,    19,    20,    21,    64,     1,    16,
+      17,    18,    19,    20,    21,    48,    11,    32,    33,    34,
+      35,    46,    37,    37,    39,    40,    41,    42,    31,    44,
+      45,   141,   108,    65,   111,    50,    51,    44,    45,    46,
+     182,   113,    57,   110,    51,    -1,   112,    -1,    -1,    64,
+      16,    17,    18,    19,    20,    21,    -1,    64,    32,    33,
+      34,    35,    -1,    37,    -1,    39,    40,    41,    42,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    50,    -1,    44,    45,
+      -1,    32,    33,    34,    35,    51,    37,    -1,    39,    40,
+      41,    42,    -1,    51,    52,    46,    -1,    -1,    64,    57,
+      -1,    -1,    60,    -1,    62,    32,    33,    34,    35,    -1,
+      37,    -1,    39,    40,    41,    42,    32,    33,    34,    35,
+      -1,    -1,    -1,    39,    -1,    41,    42
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -800,20 +808,20 @@ static const yytype_int8 yystos[] =
       73,    73,    33,     0,    70,    18,    45,    55,    79,    80,
       81,    82,    83,    75,    81,    37,    57,    60,    49,    56,
       89,    55,    83,    45,    47,    72,    76,    77,    46,    80,
-      81,    50,    71,    72,    90,    91,    16,    17,    18,    19,
-      20,    21,    44,    45,    49,    51,    64,    86,    93,    94,
+      81,    16,    17,    18,    19,    20,    21,    44,    45,    50,
+      51,    57,    64,    71,    72,    90,    91,    92,    93,    94,
       95,    96,    97,    98,    99,   100,   101,   102,   103,   104,
-     106,   107,   108,   110,    37,    46,    72,    84,    85,    20,
-      78,    81,    50,    77,    50,    91,   108,   108,   108,    92,
-      93,    86,    87,   108,   108,     8,    61,     9,    65,    53,
-      54,    10,    11,    12,    13,    58,    59,    14,    15,    43,
-      44,    52,    55,    62,     4,     5,     6,     7,    56,    16,
-      17,    45,    47,    66,    81,    46,    60,    48,    57,    60,
-      46,    60,    50,    60,    96,   106,    92,    97,    98,    99,
-     100,   101,   101,   102,   102,   102,   102,   103,   103,   104,
-     104,   105,   106,   105,   105,    93,    93,    93,    93,    93,
-      46,    93,   109,    92,    93,    18,    85,    81,    93,    86,
-      63,    46,    60,     1,    48,    94,    93
+     105,   107,   108,   109,   111,    49,    86,    94,    37,    46,
+      72,    84,    85,    20,    78,    81,    50,    77,   109,   109,
+     109,    93,   109,   109,    50,    91,     1,    57,     8,    61,
+       9,    65,    53,    54,    10,    11,    12,    13,    58,    59,
+      14,    15,    43,    44,    52,    55,    62,     4,     5,     6,
+       7,    56,    16,    17,    45,    47,    66,    86,    87,    81,
+      46,    60,    48,    57,    60,    46,    97,   107,    93,    98,
+      99,   100,   101,   102,   102,   103,   103,   103,   103,   104,
+     104,   105,   105,   106,   107,   106,   106,    94,    94,    94,
+      94,    94,    46,    94,   110,    93,    94,    18,    50,    60,
+      85,    81,    63,    46,    60,     1,    48,    86,    95,    94
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -824,13 +832,13 @@ static const yytype_int8 yyr1[] =
       74,    76,    76,    77,    78,    78,    79,    79,    80,    80,
       81,    81,    82,    82,    82,    82,    83,    83,    83,    83,
       83,    84,    84,    85,    86,    86,    87,    87,    88,    89,
-      89,    90,    90,    91,    92,    92,    93,    93,    93,    93,
-      93,    93,    94,    94,    95,    95,    96,    96,    97,    97,
-      98,    98,    99,    99,   100,   100,   100,   101,   101,   101,
-     101,   101,   102,   102,   102,   103,   103,   103,   104,   104,
-     104,   104,   105,   106,   106,   107,   107,   107,   107,   107,
-     108,   108,   108,   108,   108,   108,   108,   108,   109,   109,
-     110,   110,   110,   110,   110
+      89,    90,    90,    91,    91,    92,    92,    92,    93,    94,
+      94,    94,    94,    94,    94,    95,    95,    96,    96,    97,
+      97,    98,    98,    99,    99,   100,   100,   101,   101,   101,
+     102,   102,   102,   102,   102,   103,   103,   103,   104,   104,
+     104,   105,   105,   105,   105,   106,   107,   107,   108,   108,
+     108,   108,   108,   109,   109,   109,   109,   109,   109,   109,
+     109,   110,   110,   111,   111,   111,   111,   111
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -841,13 +849,13 @@ static const yytype_int8 yyr2[] =
        2,     1,     2,     3,     1,     3,     1,     3,     1,     3,
        2,     1,     1,     2,     2,     3,     1,     4,     3,     3,
        4,     1,     3,     2,     3,     1,     1,     3,     3,     2,
-       3,     1,     2,     1,     1,     3,     1,     3,     3,     3,
-       3,     3,     1,     5,     1,     3,     1,     3,     1,     3,
-       1,     3,     1,     3,     1,     3,     3,     1,     3,     3,
-       3,     3,     1,     3,     3,     1,     3,     3,     1,     3,
-       3,     3,     1,     1,     1,     2,     2,     2,     2,     2,
-       1,     2,     2,     4,     4,     3,     3,     4,     1,     3,
-       1,     1,     1,     1,     3
+       3,     1,     2,     1,     1,     1,     2,     2,     1,     1,
+       3,     3,     3,     3,     3,     1,     5,     1,     3,     1,
+       3,     1,     3,     1,     3,     1,     3,     1,     3,     3,
+       1,     3,     3,     3,     3,     1,     3,     3,     1,     3,
+       3,     1,     3,     3,     3,     1,     1,     1,     2,     2,
+       2,     2,     2,     1,     2,     2,     4,     4,     3,     3,
+       4,     1,     3,     1,     1,     1,     1,     3
 };
 
 
@@ -1547,7 +1555,7 @@ yyreduce:
               {
             treeRoot = (yyvsp[0].globalDeclaraionNodePtr);
         }
-#line 1551 "cParser.cpp"
+#line 1559 "cParser.cpp"
     break;
 
   case 3:
@@ -1555,7 +1563,7 @@ yyreduce:
                           {
             (yyval.globalDeclaraionNodePtr) = new GlobalDeclaraionNode(dynamic_cast<StatementNodesBlock*>((yyvsp[0].statementNodesBlockPtr)));
         }
-#line 1559 "cParser.cpp"
+#line 1567 "cParser.cpp"
     break;
 
   case 4:
@@ -1564,7 +1572,7 @@ yyreduce:
             (yyval.globalDeclaraionNodePtr) = (yyvsp[-1].globalDeclaraionNodePtr);
             (yyval.globalDeclaraionNodePtr)->mergeGlobalStatements(dynamic_cast<StatementNodesBlock*>((yyvsp[0].statementNodesBlockPtr)));
     }
-#line 1568 "cParser.cpp"
+#line 1576 "cParser.cpp"
     break;
 
   case 5:
@@ -1572,7 +1580,7 @@ yyreduce:
                     { /* 全局的变量定义，兼定义结构体。 */
             (yyval.statementNodesBlockPtr) = (yyvsp[0].statementNodesBlockPtr);
         }
-#line 1576 "cParser.cpp"
+#line 1584 "cParser.cpp"
     break;
 
   case 6:
@@ -1581,7 +1589,7 @@ yyreduce:
             (yyval.statementNodesBlockPtr) = new StatementNodesBlock(); 
             (yyval.statementNodesBlockPtr)->addStatementNode(dynamic_cast<StatementNode*>((yyvsp[0].nodePtr)));
         }
-#line 1585 "cParser.cpp"
+#line 1593 "cParser.cpp"
     break;
 
   case 7:
@@ -1591,25 +1599,25 @@ yyreduce:
             (yyval.statementNodesBlockPtr)->createMultiVarDeclaration(dynamic_cast<IdentifierNode *>((yyvsp[-2].identifierNodePtr)), dynamic_cast<IdentifierNodeList *>((yyvsp[-1].identifierNodeListPtr)));
 
         }
-#line 1595 "cParser.cpp"
+#line 1603 "cParser.cpp"
     break;
 
   case 8:
 #line 145 "cParser.y"
                  {(yyval.identifierNodePtr) = (yyvsp[0].identifierNodePtr);}
-#line 1601 "cParser.cpp"
+#line 1609 "cParser.cpp"
     break;
 
   case 9:
 #line 146 "cParser.y"
                        {(yyval.identifierNodePtr) = (yyvsp[0].identifierNodePtr);}
-#line 1607 "cParser.cpp"
+#line 1615 "cParser.cpp"
     break;
 
   case 10:
 #line 147 "cParser.y"
                         {(yyval.identifierNodePtr) = (yyvsp[0].identifierNodePtr);}
-#line 1613 "cParser.cpp"
+#line 1621 "cParser.cpp"
     break;
 
   case 11:
@@ -1618,13 +1626,13 @@ yyreduce:
             (yyval.identifierNodePtr) = new IdentifierNode((yyvsp[0].nodePtr)->getTokenValue(), true);
             (yyval.identifierNodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 1622 "cParser.cpp"
+#line 1630 "cParser.cpp"
     break;
 
   case 12:
 #line 155 "cParser.y"
                      { /* 不实现这一条 */}
-#line 1628 "cParser.cpp"
+#line 1636 "cParser.cpp"
     break;
 
   case 13:
@@ -1633,7 +1641,7 @@ yyreduce:
             (yyval.identifierNodePtr) = new IdentifierNode((yyvsp[0].nodePtr)->getTokenValue(), true);
             (yyval.identifierNodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 1637 "cParser.cpp"
+#line 1645 "cParser.cpp"
     break;
 
   case 14:
@@ -1642,7 +1650,7 @@ yyreduce:
             (yyval.identifierNodePtr) = new IdentifierNode((yyvsp[0].nodePtr)->getTokenValue(), true);
             (yyval.identifierNodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 1646 "cParser.cpp"
+#line 1654 "cParser.cpp"
     break;
 
   case 15:
@@ -1651,7 +1659,7 @@ yyreduce:
             (yyval.identifierNodePtr) = new IdentifierNode((yyvsp[0].nodePtr)->getTokenValue(), true);
             (yyval.identifierNodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 1655 "cParser.cpp"
+#line 1663 "cParser.cpp"
     break;
 
   case 16:
@@ -1660,7 +1668,7 @@ yyreduce:
             (yyval.identifierNodePtr) = new IdentifierNode((yyvsp[0].nodePtr)->getTokenValue(), true);
             (yyval.identifierNodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 1664 "cParser.cpp"
+#line 1672 "cParser.cpp"
     break;
 
   case 17:
@@ -1672,7 +1680,7 @@ yyreduce:
             (yyval.identifierNodePtr)->setStructTypeName((yyvsp[0].nodePtr)->getStructTypeName());
             (yyval.identifierNodePtr)->setPosition((yyvsp[0].nodePtr));
         }
-#line 1676 "cParser.cpp"
+#line 1684 "cParser.cpp"
     break;
 
   case 18:
@@ -1684,7 +1692,7 @@ yyreduce:
                                      std::vector<int>(), name, csLineCnt, csColumnCnt-1));
             symbolTableStack->push(new SymbolTable(name));
         }
-#line 1688 "cParser.cpp"
+#line 1696 "cParser.cpp"
     break;
 
   case 19:
@@ -1697,7 +1705,7 @@ yyreduce:
             (yyval.nodePtr)->setPosition((yyvsp[-4].nodePtr));
             symbolTableStack->pop();
         }
-#line 1701 "cParser.cpp"
+#line 1709 "cParser.cpp"
     break;
 
   case 20:
@@ -1712,7 +1720,7 @@ yyreduce:
                 error_structNotDeclared((yyvsp[0].identifierNodePtr)->getTokenValue());
             }
         }
-#line 1716 "cParser.cpp"
+#line 1724 "cParser.cpp"
     break;
 
   case 21:
@@ -1720,7 +1728,7 @@ yyreduce:
                                 {
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 1, (yyvsp[0].nodePtr));
         }
-#line 1724 "cParser.cpp"
+#line 1732 "cParser.cpp"
     break;
 
   case 22:
@@ -1729,7 +1737,7 @@ yyreduce:
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 1733 "cParser.cpp"
+#line 1741 "cParser.cpp"
     break;
 
   case 23:
@@ -1746,7 +1754,7 @@ yyreduce:
                 }
             }
         }
-#line 1750 "cParser.cpp"
+#line 1758 "cParser.cpp"
     break;
 
   case 24:
@@ -1754,7 +1762,7 @@ yyreduce:
                  {
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("structMembers"), 1, (yyvsp[0].nodePtr));
         }
-#line 1758 "cParser.cpp"
+#line 1766 "cParser.cpp"
     break;
 
   case 25:
@@ -1764,7 +1772,7 @@ yyreduce:
             (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 1768 "cParser.cpp"
+#line 1776 "cParser.cpp"
     break;
 
   case 26:
@@ -1773,7 +1781,7 @@ yyreduce:
             (yyval.identifierNodeListPtr) = new IdentifierNodeList();
             (yyval.identifierNodeListPtr)->addIdentifierNode((yyvsp[0].identifierNodePtr));
         }
-#line 1777 "cParser.cpp"
+#line 1785 "cParser.cpp"
     break;
 
   case 27:
@@ -1782,7 +1790,7 @@ yyreduce:
             (yyval.identifierNodeListPtr) = (yyvsp[-2].identifierNodeListPtr);
             (yyval.identifierNodeListPtr)->addIdentifierNode((yyvsp[0].identifierNodePtr));
         }
-#line 1786 "cParser.cpp"
+#line 1794 "cParser.cpp"
     break;
 
   case 28:
@@ -1790,7 +1798,7 @@ yyreduce:
                  {                       /* int a; 没有初始值 */
             (yyval.identifierNodePtr) = dynamic_cast<IdentifierNode*>((yyvsp[0].nodePtr));
         }
-#line 1794 "cParser.cpp"
+#line 1802 "cParser.cpp"
     break;
 
   case 29:
@@ -1799,7 +1807,7 @@ yyreduce:
             /* $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
             $$->copyFromChild(); */
         }
-#line 1803 "cParser.cpp"
+#line 1811 "cParser.cpp"
     break;
 
   case 30:
@@ -1807,7 +1815,7 @@ yyreduce:
                                       {  /* int *a; 指针变量，这里不打算实现。 */
            // $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
         }
-#line 1811 "cParser.cpp"
+#line 1819 "cParser.cpp"
     break;
 
   case 31:
@@ -1815,7 +1823,7 @@ yyreduce:
                      { /* 不是指针的变量 */
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 1819 "cParser.cpp"
+#line 1827 "cParser.cpp"
     break;
 
   case 32:
@@ -1823,7 +1831,7 @@ yyreduce:
             { /* a simple pointer */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 1, (yyvsp[0].nodePtr));
         }
-#line 1827 "cParser.cpp"
+#line 1835 "cParser.cpp"
     break;
 
   case 33:
@@ -1831,7 +1839,7 @@ yyreduce:
                              { /* a pointer to another pointer variable */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1835 "cParser.cpp"
+#line 1843 "cParser.cpp"
     break;
 
   case 34:
@@ -1839,7 +1847,7 @@ yyreduce:
                   { /* a pointer to a const variable */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1843 "cParser.cpp"
+#line 1851 "cParser.cpp"
     break;
 
   case 35:
@@ -1847,7 +1855,7 @@ yyreduce:
                                    { /* a pointer to another pointer which is a pointer to a const value */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1851 "cParser.cpp"
+#line 1859 "cParser.cpp"
     break;
 
   case 36:
@@ -1855,7 +1863,7 @@ yyreduce:
                    { /* 一个普通的变量 */
             (yyval.nodePtr) = (yyvsp[0].identifierNodePtr);
         }
-#line 1859 "cParser.cpp"
+#line 1867 "cParser.cpp"
     break;
 
   case 37:
@@ -1875,7 +1883,7 @@ yyreduce:
                 (yyval.nodePtr)->setPosition((yyvsp[-3].nodePtr));
             }
         }
-#line 1879 "cParser.cpp"
+#line 1887 "cParser.cpp"
     break;
 
   case 38:
@@ -1883,7 +1891,7 @@ yyreduce:
                          {              /* 这一条弃之不用，太复杂了 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("variableName"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1887 "cParser.cpp"
+#line 1895 "cParser.cpp"
     break;
 
   case 39:
@@ -1891,7 +1899,7 @@ yyreduce:
                              {           /* 函数定义 */
            (yyval.nodePtr) = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>((yyvsp[-2].nodePtr)), nullptr);
         }
-#line 1895 "cParser.cpp"
+#line 1903 "cParser.cpp"
     break;
 
   case 40:
@@ -1899,7 +1907,7 @@ yyreduce:
                                         {    /* 函数定义 */
             (yyval.nodePtr) = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>((yyvsp[-3].nodePtr)), dynamic_cast<VarDeclarationList *>((yyvsp[-1].varDeclarationListPtr)));
         }
-#line 1903 "cParser.cpp"
+#line 1911 "cParser.cpp"
     break;
 
   case 41:
@@ -1908,7 +1916,7 @@ yyreduce:
             (yyval.varDeclarationListPtr) = new VarDeclarationList();
             (yyval.varDeclarationListPtr)->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>((yyvsp[0].nodePtr)));
         }
-#line 1912 "cParser.cpp"
+#line 1920 "cParser.cpp"
     break;
 
   case 42:
@@ -1917,7 +1925,7 @@ yyreduce:
             (yyval.varDeclarationListPtr) = (yyvsp[-2].varDeclarationListPtr);
             (yyval.varDeclarationListPtr)->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>((yyvsp[0].nodePtr)));
         }
-#line 1921 "cParser.cpp"
+#line 1929 "cParser.cpp"
     break;
 
   case 43:
@@ -1926,7 +1934,7 @@ yyreduce:
             (yyval.nodePtr) = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>((yyvsp[-1].identifierNodePtr)), dynamic_cast<IdentifierNode *>((yyvsp[0].nodePtr)));
 
         }
-#line 1930 "cParser.cpp"
+#line 1938 "cParser.cpp"
     break;
 
   case 44:
@@ -1934,7 +1942,7 @@ yyreduce:
                               {          /* int a[10]={1}; 初始化列表 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValue"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1938 "cParser.cpp"
+#line 1946 "cParser.cpp"
     break;
 
   case 45:
@@ -1942,7 +1950,7 @@ yyreduce:
                              {          /* int a=5+6; int b=a=3; 普通的初始值 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValue"), 1, (yyvsp[0].nodePtr));
     }
-#line 1946 "cParser.cpp"
+#line 1954 "cParser.cpp"
     break;
 
   case 46:
@@ -1950,7 +1958,7 @@ yyreduce:
                      {
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValues"), 1, (yyvsp[0].nodePtr));
         }
-#line 1954 "cParser.cpp"
+#line 1962 "cParser.cpp"
     break;
 
   case 47:
@@ -1960,7 +1968,7 @@ yyreduce:
             (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 1964 "cParser.cpp"
+#line 1972 "cParser.cpp"
     break;
 
   case 48:
@@ -1968,7 +1976,7 @@ yyreduce:
                                       {
             (yyval.nodePtr) = new FunctionDeclarationNode(dynamic_cast<IdentifierNode *>((yyvsp[-2].identifierNodePtr)), dynamic_cast<FuncNameAndArgsNode *>((yyvsp[-1].nodePtr)), dynamic_cast<StatementNodesBlock*>((yyvsp[0].statementNodesBlockPtr)));
         }
-#line 1972 "cParser.cpp"
+#line 1980 "cParser.cpp"
     break;
 
   case 49:
@@ -1977,7 +1985,7 @@ yyreduce:
             (yyval.statementNodesBlockPtr) = new StatementNodesBlock();
             (yyval.statementNodesBlockPtr)->addStatementNode(dynamic_cast<StatementNode *>(new NullStatementNode()));
         }
-#line 1981 "cParser.cpp"
+#line 1989 "cParser.cpp"
     break;
 
   case 50:
@@ -1985,7 +1993,7 @@ yyreduce:
                            {
             (yyval.statementNodesBlockPtr) = (yyvsp[-1].statementNodesBlockPtr);
         }
-#line 1989 "cParser.cpp"
+#line 1997 "cParser.cpp"
     break;
 
   case 51:
@@ -1993,7 +2001,7 @@ yyreduce:
                   {
             (yyval.statementNodesBlockPtr) = (yyvsp[0].statementNodesBlockPtr);
         }
-#line 1997 "cParser.cpp"
+#line 2005 "cParser.cpp"
     break;
 
   case 52:
@@ -2002,7 +2010,7 @@ yyreduce:
             (yyval.statementNodesBlockPtr) = (yyvsp[-1].statementNodesBlockPtr);
             (yyval.statementNodesBlockPtr)->mergeStatements(dynamic_cast<StatementNodesBlock *>((yyvsp[0].statementNodesBlockPtr)));
         }
-#line 2006 "cParser.cpp"
+#line 2014 "cParser.cpp"
     break;
 
   case 53:
@@ -2010,40 +2018,60 @@ yyreduce:
                     {
             (yyval.statementNodesBlockPtr) = (yyvsp[0].statementNodesBlockPtr);
         }
-#line 2014 "cParser.cpp"
+#line 2022 "cParser.cpp"
     break;
 
   case 54:
-#line 575 "cParser.y"
-                             {
-            (yyval.nodePtr) = new Node(nameCounter.getNumberedName("expression"), 1, (yyvsp[0].nodePtr));
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
+#line 465 "cParser.y"
+                                { // 表达式，也是最常见的语句
+            (yyval.statementNodesBlockPtr) = new StatementNodesBlock();
+            (yyval.statementNodesBlockPtr)->addStatementNode(dynamic_cast<StatementNode *>((yyvsp[0].nodePtr)));
         }
-#line 2023 "cParser.cpp"
+#line 2031 "cParser.cpp"
     break;
 
   case 55:
-#line 579 "cParser.y"
-                                            {
-            (yyval.nodePtr) = (yyvsp[-2].nodePtr);
-            (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
-            (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
-            /* 一串逗号分隔的表达式的值，是最后一个表达式的值。 */
-            (yyval.nodePtr)->copyFrom((yyval.nodePtr)->getChildrenById((yyval.nodePtr)->getChildrenNumber()-1));
+#line 493 "cParser.y"
+            { /* 注：空语句是一个 expressionStatement */
+            (yyval.nodePtr) = new NullStatementNode();
         }
-#line 2035 "cParser.cpp"
+#line 2039 "cParser.cpp"
     break;
 
   case 56:
-#line 591 "cParser.y"
-                                  {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 496 "cParser.y"
+                       {
+            (yyval.nodePtr) = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>((yyvsp[-1].nodePtr)));
         }
-#line 2043 "cParser.cpp"
+#line 2047 "cParser.cpp"
     break;
 
   case 57:
-#line 594 "cParser.y"
+#line 499 "cParser.y"
+                         {
+            error_missingSemicolon();
+        }
+#line 2055 "cParser.cpp"
+    break;
+
+  case 58:
+#line 579 "cParser.y"
+                             {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2063 "cParser.cpp"
+    break;
+
+  case 59:
+#line 597 "cParser.y"
+                                  {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2071 "cParser.cpp"
+    break;
+
+  case 60:
+#line 600 "cParser.y"
                                                  {
             (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2055,11 +2083,11 @@ yyreduce:
                 error_typeMismatch((yyvsp[-2].nodePtr));
             }
         }
-#line 2059 "cParser.cpp"
+#line 2087 "cParser.cpp"
     break;
 
-  case 58:
-#line 605 "cParser.y"
+  case 61:
+#line 611 "cParser.y"
                                                         {
             (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2071,67 +2099,67 @@ yyreduce:
                 error_typeMismatch((yyvsp[-2].nodePtr));
             }
         }
-#line 2075 "cParser.cpp"
-    break;
-
-  case 59:
-#line 616 "cParser.y"
-                                                        {
-            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
-                error_typeMismatch((yyvsp[-2].nodePtr));
-            }
-        }
-#line 2091 "cParser.cpp"
-    break;
-
-  case 60:
-#line 627 "cParser.y"
-                                                        {
-            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
-                error_typeMismatch((yyvsp[-2].nodePtr));
-            }
-        }
-#line 2107 "cParser.cpp"
-    break;
-
-  case 61:
-#line 638 "cParser.y"
-                                                        {
-            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
-                error_typeMismatch((yyvsp[-2].nodePtr));
-            }
-        }
-#line 2123 "cParser.cpp"
+#line 2103 "cParser.cpp"
     break;
 
   case 62:
-#line 654 "cParser.y"
-                            {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 622 "cParser.y"
+                                                        {
+            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
+            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
+            (yyval.nodePtr)->copyFromChild();
+            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
+                error_typeMismatch((yyvsp[-2].nodePtr));
+            }
         }
-#line 2131 "cParser.cpp"
+#line 2119 "cParser.cpp"
     break;
 
   case 63:
-#line 657 "cParser.y"
+#line 633 "cParser.y"
+                                                        {
+            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
+            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
+            (yyval.nodePtr)->copyFromChild();
+            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
+                error_typeMismatch((yyvsp[-2].nodePtr));
+            }
+        }
+#line 2135 "cParser.cpp"
+    break;
+
+  case 64:
+#line 644 "cParser.y"
+                                                        {
+            (yyvsp[-1].nodePtr) = new AssignmentNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
+            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
+            (yyval.nodePtr)->copyFromChild();
+            if(!(checkKind((yyvsp[-2].nodePtr),Node::KIND_VARIABLE))){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr))){
+                error_typeMismatch((yyvsp[-2].nodePtr));
+            }
+        }
+#line 2151 "cParser.cpp"
+    break;
+
+  case 65:
+#line 660 "cParser.y"
+                            {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2159 "cParser.cpp"
+    break;
+
+  case 66:
+#line 663 "cParser.y"
                                                                          {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
             (yyval.nodePtr) = new TenaryOperatorNode({"?:"}, 3, (yyvsp[-4].nodePtr), (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2145,138 +2173,138 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-4].nodePtr),(yyval.nodePtr));
             }
         }
-#line 2149 "cParser.cpp"
-    break;
-
-  case 64:
-#line 675 "cParser.y"
-                             {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2157 "cParser.cpp"
-    break;
-
-  case 65:
-#line 678 "cParser.y"
-                                                            {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2172 "cParser.cpp"
-    break;
-
-  case 66:
-#line 693 "cParser.y"
-                            {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2180 "cParser.cpp"
+#line 2177 "cParser.cpp"
     break;
 
   case 67:
-#line 696 "cParser.y"
-                                                             {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2195 "cParser.cpp"
-    break;
-
-  case 68:
-#line 711 "cParser.y"
-                                     {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2203 "cParser.cpp"
-    break;
-
-  case 69:
-#line 714 "cParser.y"
-                                                             {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2218 "cParser.cpp"
-    break;
-
-  case 70:
-#line 729 "cParser.y"
+#line 681 "cParser.y"
                              {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2226 "cParser.cpp"
+#line 2185 "cParser.cpp"
+    break;
+
+  case 68:
+#line 684 "cParser.y"
+                                                            {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2200 "cParser.cpp"
+    break;
+
+  case 69:
+#line 699 "cParser.y"
+                            {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2208 "cParser.cpp"
+    break;
+
+  case 70:
+#line 702 "cParser.y"
+                                                             {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2223 "cParser.cpp"
     break;
 
   case 71:
-#line 732 "cParser.y"
-                                                              {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
+#line 717 "cParser.y"
+                                     {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2241 "cParser.cpp"
+#line 2231 "cParser.cpp"
     break;
 
   case 72:
-#line 747 "cParser.y"
-                                     {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2249 "cParser.cpp"
-    break;
+#line 720 "cParser.y"
+                                                             {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
 
-  case 73:
-#line 750 "cParser.y"
-                                                              {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
             (yyval.nodePtr)->setType(Node::TYPE_INT);
             (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
             if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2264 "cParser.cpp"
+#line 2246 "cParser.cpp"
+    break;
+
+  case 73:
+#line 735 "cParser.y"
+                             {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2254 "cParser.cpp"
     break;
 
   case 74:
-#line 765 "cParser.y"
-                                     {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 738 "cParser.y"
+                                                              {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
         }
-#line 2272 "cParser.cpp"
+#line 2269 "cParser.cpp"
     break;
 
   case 75:
-#line 768 "cParser.y"
+#line 753 "cParser.y"
+                                     {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2277 "cParser.cpp"
+    break;
+
+  case 76:
+#line 756 "cParser.y"
+                                                              {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2292 "cParser.cpp"
+    break;
+
+  case 77:
+#line 771 "cParser.y"
+                                     {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2300 "cParser.cpp"
+    break;
+
+  case 78:
+#line 774 "cParser.y"
                                                                      {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
             (yyval.nodePtr)->setType(Node::TYPE_INT);
             (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
             /*if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -2286,195 +2314,167 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2290 "cParser.cpp"
+#line 2318 "cParser.cpp"
     break;
 
-  case 76:
-#line 781 "cParser.y"
+  case 79:
+#line 787 "cParser.y"
                                                                      {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
             (yyval.nodePtr)->setType(Node::TYPE_INT);
             (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
             if(!typeMatch((yyvsp[-2].nodePtr),(yyvsp[0].nodePtr)) || (yyvsp[-2].nodePtr)->getType()==Node::TYPE_VOID || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2305 "cParser.cpp"
-    break;
-
-  case 77:
-#line 796 "cParser.y"
-                        {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2313 "cParser.cpp"
-    break;
-
-  case 78:
-#line 799 "cParser.y"
-                                                         {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2331 "cParser.cpp"
-    break;
-
-  case 79:
-#line 812 "cParser.y"
-                                                         {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2349 "cParser.cpp"
+#line 2333 "cParser.cpp"
     break;
 
   case 80:
-#line 825 "cParser.y"
-                                                        {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2367 "cParser.cpp"
-    break;
-
-  case 81:
-#line 838 "cParser.y"
-                                                        {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFromChild();
-            (yyval.nodePtr)->setType(Node::TYPE_INT);
-            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
-            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2385 "cParser.cpp"
-    break;
-
-  case 82:
-#line 856 "cParser.y"
-                                {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2393 "cParser.cpp"
-    break;
-
-  case 83:
-#line 859 "cParser.y"
-                                                   {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[-2].nodePtr));
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2406 "cParser.cpp"
-    break;
-
-  case 84:
-#line 867 "cParser.y"
-                                                    {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[-2].nodePtr));
-            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2419 "cParser.cpp"
-    break;
-
-  case 85:
-#line 880 "cParser.y"
-                                {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
-        }
-#line 2427 "cParser.cpp"
-    break;
-
-  case 86:
-#line 883 "cParser.y"
-                                                            {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_DOUBLE || (yyvsp[0].nodePtr)->getType()==Node::TYPE_DOUBLE){
-                (yyval.nodePtr)->setType(Node::TYPE_DOUBLE);
-            }
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2443 "cParser.cpp"
-    break;
-
-  case 87:
-#line 894 "cParser.y"
-                                                            {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_DOUBLE || (yyvsp[0].nodePtr)->getType()==Node::TYPE_DOUBLE){
-                (yyval.nodePtr)->setType(Node::TYPE_DOUBLE);
-            }
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2459 "cParser.cpp"
-    break;
-
-  case 88:
-#line 910 "cParser.y"
+#line 802 "cParser.y"
                         {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2467 "cParser.cpp"
+#line 2341 "cParser.cpp"
+    break;
+
+  case 81:
+#line 805 "cParser.y"
+                                                         {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2359 "cParser.cpp"
+    break;
+
+  case 82:
+#line 818 "cParser.y"
+                                                         {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2377 "cParser.cpp"
+    break;
+
+  case 83:
+#line 831 "cParser.y"
+                                                        {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2395 "cParser.cpp"
+    break;
+
+  case 84:
+#line 844 "cParser.y"
+                                                        {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            (yyval.nodePtr)->setType(Node::TYPE_INT);
+            (yyval.nodePtr)->setKind(Node::KIND_CONSTANT);
+            if(checkType((yyvsp[-2].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[-2].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[-2].nodePtr),Node::TYPE_STRING)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRUCT)||checkType((yyvsp[0].nodePtr),Node::TYPE_VOID)||checkType((yyvsp[0].nodePtr),Node::TYPE_STRING)){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+            if((yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2413 "cParser.cpp"
+    break;
+
+  case 85:
+#line 862 "cParser.y"
+                                {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2421 "cParser.cpp"
+    break;
+
+  case 86:
+#line 865 "cParser.y"
+                                                   {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2434 "cParser.cpp"
+    break;
+
+  case 87:
+#line 873 "cParser.y"
+                                                    {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            if(!(checkType((yyvsp[-2].nodePtr),Node::TYPE_INT)&&checkType((yyvsp[0].nodePtr),Node::TYPE_INT)) || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
+        }
+#line 2447 "cParser.cpp"
+    break;
+
+  case 88:
+#line 886 "cParser.y"
+                                {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2455 "cParser.cpp"
     break;
 
   case 89:
-#line 913 "cParser.y"
-                                                     {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_DOUBLE || (yyvsp[0].nodePtr)->getType()==Node::TYPE_DOUBLE){
-                (yyval.nodePtr)->setType(Node::TYPE_DOUBLE);
+#line 889 "cParser.y"
+                                                            {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            // 不知道要不要留
+            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
+        }
+#line 2469 "cParser.cpp"
+    break;
+
+  case 90:
+#line 898 "cParser.y"
+                                                            {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            // 不知道要不要留
             if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
@@ -2482,64 +2482,82 @@ yyreduce:
 #line 2483 "cParser.cpp"
     break;
 
-  case 90:
-#line 924 "cParser.y"
-                                                     {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_DOUBLE || (yyvsp[0].nodePtr)->getType()==Node::TYPE_DOUBLE){
-                (yyval.nodePtr)->setType(Node::TYPE_DOUBLE);
-            }
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
-        }
-#line 2499 "cParser.cpp"
-    break;
-
   case 91:
-#line 935 "cParser.y"
-                                                     {
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyval.nodePtr)->copyFrom((yyvsp[0].nodePtr));
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_DOUBLE || (yyvsp[0].nodePtr)->getType()==Node::TYPE_DOUBLE){
-                (yyval.nodePtr)->setType(Node::TYPE_DOUBLE);
-            }
-            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
-            }
+#line 912 "cParser.y"
+                        {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2515 "cParser.cpp"
+#line 2491 "cParser.cpp"
     break;
 
   case 92:
-#line 952 "cParser.y"
-                       {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 915 "cParser.y"
+                                                     {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            // 不知道要不要留
+            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
         }
-#line 2523 "cParser.cpp"
+#line 2505 "cParser.cpp"
     break;
 
   case 93:
-#line 967 "cParser.y"
-                              {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 924 "cParser.y"
+                                                     {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            // 不知道要不要留
+            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
         }
-#line 2531 "cParser.cpp"
+#line 2519 "cParser.cpp"
     break;
 
   case 94:
-#line 970 "cParser.y"
-                               {
-            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+#line 933 "cParser.y"
+                                                     {
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+
+            // 不知道要不要留
+            if((yyvsp[-2].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[0].nodePtr)->getType()==Node::TYPE_STRUCT || (yyvsp[-2].nodePtr)->isArray() || (yyvsp[0].nodePtr)->isArray()){
+                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
+            }
         }
-#line 2539 "cParser.cpp"
+#line 2533 "cParser.cpp"
     break;
 
   case 95:
-#line 976 "cParser.y"
+#line 948 "cParser.y"
+                       {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2541 "cParser.cpp"
+    break;
+
+  case 96:
+#line 957 "cParser.y"
+                              {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2549 "cParser.cpp"
+    break;
+
+  case 97:
+#line 960 "cParser.y"
+                               {
+            (yyval.nodePtr) = (yyvsp[0].nodePtr);
+        }
+#line 2557 "cParser.cpp"
+    break;
+
+  case 98:
+#line 966 "cParser.y"
                                    {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode(std::string("pre")+(yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2548,11 +2566,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2552 "cParser.cpp"
+#line 2570 "cParser.cpp"
     break;
 
-  case 96:
-#line 984 "cParser.y"
+  case 99:
+#line 974 "cParser.y"
                                    {/* --a, the same as ++a[i] */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode(std::string("pre")+(yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2561,11 +2579,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2565 "cParser.cpp"
+#line 2583 "cParser.cpp"
     break;
 
-  case 97:
-#line 992 "cParser.y"
+  case 100:
+#line 982 "cParser.y"
                                    {/* logical NOT */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2574,11 +2592,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2578 "cParser.cpp"
+#line 2596 "cParser.cpp"
     break;
 
-  case 98:
-#line 1000 "cParser.y"
+  case 101:
+#line 990 "cParser.y"
                                    {/* bitwise NOT */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2587,11 +2605,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2591 "cParser.cpp"
+#line 2609 "cParser.cpp"
     break;
 
-  case 99:
-#line 1008 "cParser.y"
+  case 102:
+#line 998 "cParser.y"
                                    {/* negative */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2599,19 +2617,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2603 "cParser.cpp"
+#line 2621 "cParser.cpp"
     break;
 
-  case 100:
-#line 1018 "cParser.y"
+  case 103:
+#line 1008 "cParser.y"
                          {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2611 "cParser.cpp"
+#line 2629 "cParser.cpp"
     break;
 
-  case 101:
-#line 1021 "cParser.y"
+  case 104:
+#line 1011 "cParser.y"
                                    {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
             (yyvsp[0].nodePtr) = new UnaryOperatorNode(std::string("post")+(yyvsp[0].nodePtr)->getName(), 1, (yyvsp[-1].nodePtr));
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
@@ -2620,11 +2638,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2624 "cParser.cpp"
+#line 2642 "cParser.cpp"
     break;
 
-  case 102:
-#line 1029 "cParser.y"
+  case 105:
+#line 1019 "cParser.y"
                                    {/* a-- */
             (yyvsp[0].nodePtr) = new UnaryOperatorNode(std::string("post")+(yyvsp[0].nodePtr)->getName(), 1, (yyvsp[-1].nodePtr));
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
@@ -2633,11 +2651,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2637 "cParser.cpp"
+#line 2655 "cParser.cpp"
     break;
 
-  case 103:
-#line 1037 "cParser.y"
+  case 106:
+#line 1027 "cParser.y"
                                                             {/* array a[10], corresponding to prefix ++ */
             (yyval.nodePtr) = new BinaryOperatorNode({"[]"}, 2, (yyvsp[-3].nodePtr), (yyvsp[-1].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2653,11 +2671,11 @@ yyreduce:
                 (yyval.nodePtr)->setArraySizes(arraySizes);
             }
         }
-#line 2657 "cParser.cpp"
+#line 2675 "cParser.cpp"
     break;
 
-  case 104:
-#line 1052 "cParser.y"
+  case 107:
+#line 1042 "cParser.y"
                                                  {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             (yyval.nodePtr) = new FunctionCallNode({"()"}, 2, (yyvsp[-3].nodePtr), (yyvsp[-1].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2687,11 +2705,11 @@ yyreduce:
                 }
             }
         }
-#line 2691 "cParser.cpp"
+#line 2709 "cParser.cpp"
     break;
 
-  case 105:
-#line 1081 "cParser.y"
+  case 108:
+#line 1071 "cParser.y"
                                                  {/* function with no params. */
             (yyval.nodePtr) = new FunctionCallNode({"()"}, 1, (yyvsp[-2].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2703,98 +2721,80 @@ yyreduce:
                 }
             }
         }
-#line 2707 "cParser.cpp"
-    break;
-
-  case 106:
-#line 1092 "cParser.y"
-                                                 {/* struct's member (a.val) */
-            Node *t = (yyvsp[-1].nodePtr);
-            (yyvsp[-1].nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 2, (yyvsp[-2].nodePtr), (yyvsp[0].identifierNodePtr));
-            (yyval.nodePtr) = (yyvsp[-1].nodePtr);
-            (yyvsp[-1].nodePtr)->setPosition(t);
-            if(checkKind((yyvsp[-2].nodePtr), Node::KIND_ATTRIBUTE) || !(checkType((yyvsp[-2].nodePtr), Node::TYPE_STRUCT)) || (yyvsp[-2].nodePtr)->isArray())
-                error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr));
-            else {
-                auto symbolTable = SymbolTable::getSymbolTableByName((yyvsp[-2].nodePtr)->getStructTypeName());
-            
-                if(symbolTable->lookUp((yyvsp[0].identifierNodePtr)->getTokenValue()) == NULL)
-                    error_variableNotDeclaredInStruct((yyvsp[-2].nodePtr),(yyvsp[0].identifierNodePtr));
-                
-                (yyval.nodePtr)->copyFrom(symbolTable->lookUp((yyvsp[0].identifierNodePtr)->getTokenValue()));
-            }
-        }
-#line 2728 "cParser.cpp"
-    break;
-
-  case 107:
-#line 1114 "cParser.y"
-                                                     {
-            error_missingRightBrancket2();
-        }
-#line 2736 "cParser.cpp"
-    break;
-
-  case 108:
-#line 1120 "cParser.y"
-                             {
-            (yyval.nodePtr) = new Node(nameCounter.getNumberedName("paramList"), 1, (yyvsp[0].nodePtr));
-        }
-#line 2744 "cParser.cpp"
+#line 2725 "cParser.cpp"
     break;
 
   case 109:
-#line 1123 "cParser.y"
+#line 1082 "cParser.y"
+                                                 {/* struct's member (a.val) */
+            (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].identifierNodePtr)));
+            (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
+        }
+#line 2734 "cParser.cpp"
+    break;
+
+  case 110:
+#line 1086 "cParser.y"
+                                                     {
+            error_missingRightBrancket2();
+        }
+#line 2742 "cParser.cpp"
+    break;
+
+  case 111:
+#line 1092 "cParser.y"
+                             {
+            (yyval.nodePtr) = new Node(nameCounter.getNumberedName("paramList"), 1, (yyvsp[0].nodePtr));
+        }
+#line 2750 "cParser.cpp"
+    break;
+
+  case 112:
+#line 1095 "cParser.y"
                                            {/* 这里面不能填 expression，因为 expression 也是用逗号隔开的一串表达式 */
             (yyval.nodePtr) = (yyvsp[-2].nodePtr);
             (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 2754 "cParser.cpp"
+#line 2760 "cParser.cpp"
     break;
 
-  case 110:
-#line 1133 "cParser.y"
+  case 113:
+#line 1105 "cParser.y"
                    {
             (yyval.nodePtr) = (yyvsp[0].identifierNodePtr);
-            /* if(!symbolTableStack->lookUp($1->getTokenValue()())){
-                error_variableNotDeclared($1->getTokenValue()());
-                $$->setKind(Node::KIND_VARIABLE);
-                $$->setType(Node::TYPE_INT);
-            }else{
-                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()()));
-                $$->setPosition(csLineCnt, csColumnCnt);
-            } */
+            (yyval.nodePtr)->setPosition(csLineCnt, csColumnCnt);
+
         }
 #line 2770 "cParser.cpp"
     break;
 
-  case 111:
-#line 1144 "cParser.y"
+  case 114:
+#line 1110 "cParser.y"
                       {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
 #line 2778 "cParser.cpp"
     break;
 
-  case 112:
-#line 1147 "cParser.y"
+  case 115:
+#line 1113 "cParser.y"
                    {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
 #line 2786 "cParser.cpp"
     break;
 
-  case 113:
-#line 1150 "cParser.y"
+  case 116:
+#line 1116 "cParser.y"
                { /* 这个就不实现了吧 */
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
 #line 2794 "cParser.cpp"
     break;
 
-  case 114:
-#line 1153 "cParser.y"
+  case 117:
+#line 1119 "cParser.y"
                            {
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
         }
@@ -3034,7 +3034,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1159 "cParser.y"
+#line 1125 "cParser.y"
 
 int yyerror(std::string s){
     noError = false;

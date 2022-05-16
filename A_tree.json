@@ -98,6 +98,24 @@
 									"children" : 
 									[
 										{
+											"children" : 
+											[
+												{
+													"name" : "IntNode:1"
+												},
+												{
+													"name" : "IntNode:1"
+												}
+											],
+											"name" : "+"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
 											"name" : "TypeNode"
 										},
 										{

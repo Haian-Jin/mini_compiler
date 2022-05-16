@@ -189,7 +189,7 @@ public:
 
     // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
     // virtual std::string getVariableName(){}
-    virtual std::string getVariableName();
+    virtual std::string getVariableName() const;
 
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
     // virtual void setPosition(int l,int c){}
@@ -540,6 +540,29 @@ public:
 };
 
 
+class ExpressionStatementNode : public StatementNode{
+public:
+    ExpressionNode * mExpression;
+
+    ExpressionStatementNode(ExpressionNode * expression):StatementNode(){
+        assert(expression != nullptr);
+        this->mExpression = expression;
+    }
+
+    virtual std::string getNodeTypeName() const{
+        return "ExpressionStatementNode";
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mExpression->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+
 
 
 // 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
@@ -635,7 +658,7 @@ public:
     }
     FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
 
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("FunctionCallNode  ") + (mFunctionName->getName());
     }
     std::vector<ExpressionNode *> getArguments()const{
@@ -664,7 +687,7 @@ public:
         if(mHandSide==NULL)throw("castfail");
     }
     UnaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("UnaryOperatorNode  ")+(getVariableName());
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
@@ -687,9 +710,41 @@ public:
         op = _symbolName;
         if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
     }
+    
     BinaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
-        return std::string("BinaryOperatorNode  ")+(getVariableName());
+    
+    BinaryOperatorNode(std::string opType, ExpressionNode *lhs, ExpressionNode *rhs, bool isArithmetic=true):ExpressionNode() {
+        assert(lhs != nullptr);
+        assert(rhs != nullptr);
+        assert(opType != "");
+        this->setType(Node::TYPE_INT);
+        mLeftHandSide = lhs;
+        mRightHandSide = rhs;
+        op = opType;
+
+
+        if (isArithmetic) // + - * / %
+        {
+            if(lhs->getType()==Node::TYPE_DOUBLE || rhs->getType()==Node::TYPE_DOUBLE){
+                this->setType(Node::TYPE_DOUBLE);
+            }
+        }
+
+
+
+    }
+    
+    virtual std::string getNodeTypeName() const{
+        return op;
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mLeftHandSide->jsonGen());
+        root["children"].append(mRightHandSide->jsonGen());
+
+        return root;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
@@ -713,7 +768,7 @@ public:
         if(mLeftHandSide==NULL || mRightHandSide==NULL || mMidHandSide==NULL)throw("castfail");
     }
     TenaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("TenaryOperatorNode  ")+(getVariableName());
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
@@ -737,7 +792,7 @@ public:
         if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
     }
 
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("AssignmentNode ")+("=");
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
