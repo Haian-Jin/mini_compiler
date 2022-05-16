@@ -101,13 +101,13 @@
 											"children" : 
 											[
 												{
-													"name" : "IntNode:1"
+													"name" : "IdentifierNode"
 												},
 												{
 													"name" : "IntNode:1"
 												}
 											],
-											"name" : "+"
+											"name" : "AssignmentNode ="
 										}
 									],
 									"name" : "ExpressionStatementNode"

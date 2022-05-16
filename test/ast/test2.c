@@ -3,7 +3,7 @@ double b;
 
 int main(int x, double y) {
     int t;
-    1 * 5 * 1.5;
+    t = 1;
+    double a =1.0 + 5.2 + 2;
 
-    
 }

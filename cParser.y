@@ -261,9 +261,7 @@ initialization :
         variable {                       /* int a; 没有初始值 */
             $$ = dynamic_cast<IdentifierNode*>($1);
         }
-    |   variable '=' initialValue {   /* int a=10; 有初始值, 暂不实现 */
-            /* $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
-            $$->copyFromChild(); */
+    |   variable '=' initialValue {   /* int a=10; 有初始值 暂时不实现 */
         }
     ;
 
@@ -598,17 +596,21 @@ assignmentExpression :
             $$ = $1;
         }
     |   unaryExpression '=' assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
+            $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
+
+            /* if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
+                if (!(checkKind($1, Node::KIND_VARIABLE))) {
+                    printf("hhhhh");
+                }
                 error_expressionTypeError($1,$2,$3);
-            }
+            } */
             if(!typeMatch($1, $3)){
                 error_typeMismatch($1);
             }
+
         }
-    |   unaryExpression ADD_ASSIGN assignmentExpression {
+    // 暂时只实现= TODO
+    /* |   unaryExpression ADD_ASSIGN assignmentExpression {
             $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
@@ -651,7 +653,7 @@ assignmentExpression :
             if(!typeMatch($1,$3)){
                 error_typeMismatch($1);
             }
-        }
+        } */
     ;
 
 /* PRIORITY 13: "?:" tenary conditional operator */
@@ -1109,12 +1111,15 @@ atomicExpression :
         }
     |   DOUBLE_NUMBER {
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   INT_NUMBER {
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   STRING { /* 这个就不实现了吧 */
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   '(' expression ')' {
             $$ = $2;
