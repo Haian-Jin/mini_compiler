@@ -706,16 +706,16 @@ public:
         return std::string("UnaryOperatorNode  ") + (getVariableName());
     }
 
-    virtual llvm::Value* codeGen(){
-        Value* OperandV = mHandSide->codeGen();
+    virtual llvm::Value *codeGen() {
+        Value *OperandV = mHandSide->codeGen();
         if (!OperandV)
             return nullptr;
         /* todo */
     }
 
 private:
-  std::string op;
-  ExpressionNode *mHandSide;
+    std::string op;
+    ExpressionNode *mHandSide;
 };
 
 class BinaryOperatorNode : public ExpressionNode {
@@ -741,35 +741,97 @@ public:
         return std::string("BinaryOperatorNode  ") + (getVariableName());
     }
 
-    virtual llvm::Value* codeGen(){
-        Value* Left = mLeftHandSide->codeGen();
-        Value* Right = mRightHandSide->codeGen();
-        if(!Left || !Right)
+    virtual llvm::Value *codeGen() {
+        Value *Left = mLeftHandSide->codeGen();
+        Value *Right = mRightHandSide->codeGen();
+        if (!Left || !Right)
             return nullptr;
         bool isFloat = false;
 
-        if (Left->getType()->getTypeID() == llvm::Type::DoubleTyID || Right->getType()->getTypeID() == llvm::Type::DoubleTyID) {
+        if (Left->getType()->getTypeID() == llvm::Type::DoubleTyID ||
+            Right->getType()->getTypeID() == llvm::Type::DoubleTyID) {
             isFloat = true;
             if (!(Left->getType()->getTypeID() == llvm::Type::DoubleTyID)) {
-                Left = Builder.CreateSIToFP(Left, llvm::Type::getDoubleTy(TheContext), "ftmp");
-            } else if (!(Right->getType()->getTypeID() == llvm::Type::DoubleTyID)) {
-                Right = Builder.CreateSIToFP(Left, llvm::Type::getDoubleTy(TheContext), "ftmp");
+                Left = Builder.CreateSIToFP(
+                    Left, llvm::Type::getDoubleTy(TheContext), "ftmp");
+            } else if (!(Right->getType()->getTypeID() ==
+                         llvm::Type::DoubleTyID)) {
+                Right = Builder.CreateSIToFP(
+                    Left, llvm::Type::getDoubleTy(TheContext), "ftmp");
             }
         }
 
-        if (op == "&&") {
+        if (op == "&&") { // and operation
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + std::to_string(this->getColumnNumber()) + "invalid boolean operation with float number");
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid boolean operation with float number");
             }
-            /* todo */
-        } else if (op=="|") {
+            return Builder.CreateAnd(Left, Right, "andop");
+        } else if (op == "||") { // or operation
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + std::to_string(this->getColumnNumber()) + "invalid boolean operation with float number");
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid boolean operation with float number");
             }
+            return Builder.CreateOr(Left, Right, "orop");
+        } else if (op == "^" || op == "|" ||
+                   op == "&") { // bitwise operation, but not supported
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "bit operation is not supported");
             /* todo */
-        } 
-
-
+        } else if (op == "==") {
+            return isFloat ? Builder.CreateFCmpOEQ(Left, Right, "feqop")
+                           : Builder.CreateICmpEQ(Left, Right, "ieqop");
+        } else if (op == "!=") {
+            return isFloat ? Builder.CreateFCmpONE(Left, Right, "fneop")
+                           : Builder.CreateICmpNE(Left, Right, "ineop");
+        } else if (op == "<") {
+            return isFloat ? Builder.CreateFCmpOLT(Left, Right, "fltop")
+                           : Builder.CreateICmpSLT(Left, Right, "iltop");
+        } else if (op == ">") {
+            return isFloat ? Builder.CreateFCmpOGT(Left, Right, "fgtop")
+                           : Builder.CreateICmpSGT(Left, Right, "igtop");
+        } else if (op == ">>") {
+            if (isFloat) {
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid boolean operation with float number");
+            }
+            return Builder.CreateAShr(Left, Right, "shrop");
+            /* todo */
+        } else if (op == "<<") {
+            if (isFloat) {
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid boolean operation with float number");
+            }
+            return Builder.CreateShl(Left, Right, "shlop");
+        } else if (op == "+") {
+            return isFloat ? Builder.CreateFAdd(Left, Right, "faddop")
+                           : Builder.CreateAdd(Left, Right, "addop");
+        } else if (op == "-") {
+            return isFloat ? Builder.CreateFSub(Left, Right, "fsubop")
+                           : Builder.CreateSub(Left, Right, "subop");
+        } else if (op == "*") {
+            return isFloat ? Builder.CreateFMul(Left, Right, "fmulop")
+                           : Builder.CreateMul(Left, Right, "mulop");
+        } else if (op == "/") {
+            return isFloat ? Builder.CreateFDiv(Left, Right, "fdivop")
+                           : Builder.CreateSDiv(Left, Right, "divop");
+        } else if (op == "%") {
+            if (isFloat) {
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid \"%\" operation with float number");
+            }
+            return Builder.CreateSRem(Left, Right, "smodop");
+        } else {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "\"" + op + "\" is not supported as an operator");
+        }
     }
 
 private:
