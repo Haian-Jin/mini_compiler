@@ -345,11 +345,12 @@ public:
     }
 
     virtual std::string getNodeTypeName() const{
-        return "IdentifierNodeLis";
+        return "IdentifierNodeList";
     }
     virtual Json::Value jsonGen() const{
         Json::Value root;
         root["name"] = getNodeTypeName();
+        return root;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 
@@ -361,6 +362,9 @@ public:
 	ExpressionNode *  assignmentExpr = nullptr;
 
     VariableDeclarationNode(const IdentifierNode *  type, IdentifierNode *  id, IdentifierNode *  assignmentExpr = NULL):StatementNode(){
+        assert(type != nullptr);
+        assert(id != nullptr);
+
         this->type = type;
         this->id = id;
         this->assignmentExpr = assignmentExpr;
@@ -405,6 +409,7 @@ public:
         for(auto it = mVarDeclarationList.begin(); it != mVarDeclarationList.end(); it++){
             root["children"].append((*it)->jsonGen());
         }
+        return root;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 
@@ -428,7 +433,14 @@ public:
         for(auto it = mStatementList.begin(); it != mStatementList.end(); it++){
             root["children"].append((*it)->jsonGen());
         }
+        return root;
     }
+
+    void addStatementNode(StatementNode *statementNode){
+        assert(statementNode != nullptr);
+        mStatementList.push_back(statementNode);
+    }
+
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 
 
@@ -445,10 +457,12 @@ public:
     }
 
     // merge two statements block into one same statements block
-    void mergeStatements(StatementNodesBlock *  to_merge) {
+    void mergeStatements(StatementNodesBlock * to_merge) {
         assert(to_merge != nullptr);
-        this->mStatementList.insert(mStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+        this->mStatementList.insert(this->mStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
     }
+
+    
 
 };
 
@@ -535,6 +549,7 @@ public:
     VarDeclarationList *  parasList; // used for function agrs
         // used for function declararion
     FuncNameAndArgsNode(IdentifierNode * nameIdentifier, VarDeclarationList * args): ExpressionNode(){
+        assert (nameIdentifier != nullptr);
         this->mFuncName = nameIdentifier;
         this->parasList = args;
 
@@ -561,20 +576,42 @@ public:
         this->body = body;
     }
     virtual std::string getNodeTypeName() const{
-        return "FuncDeclarationList";
+        return "FunctionDeclarationNode";
     }
 
 
     virtual Json::Value jsonGen() const{
         Json::Value root;
         root["name"] = getNodeTypeName();
-        root["children"].append(type->jsonGen());
-        root["children"].append(id->jsonGen());
 
-        for (auto it = parasList->mVarDeclarationList.begin(); it != parasList->mVarDeclarationList.end(); it++){
-            root["children"].append((*it)->jsonGen());
+        Json::Value returnType;
+        returnType["name"] = std::string("ReturnType");
+        returnType["children"].append(type->jsonGen());
+
+
+        Json::Value funcName;
+        funcName["name"] = std::string("FuncName");
+        funcName["children"].append(id->jsonGen());
+
+        Json::Value paras;
+        paras["name"] = std::string("Paras");
+        if (this->parasList != nullptr) {
+            for (auto it = parasList->mVarDeclarationList.begin(); it != parasList->mVarDeclarationList.end(); it++){
+                paras["children"].append((*it)->jsonGen());
+            }
         }
-        root["children"].append(body->jsonGen());
+
+
+        Json::Value funcBody;
+        funcBody["name"] = std::string("Body");
+        funcBody["children"].append(body->jsonGen());
+
+        root["children"].append(returnType);
+        root["children"].append(funcName);
+        root["children"].append(paras);
+        root["children"].append(funcBody);
+
+
         return root;
 
     }
@@ -741,10 +778,10 @@ public:
 
 
     // merge another global declaration statements block
-    void mergeGlobalStatements(GlobalDeclaraionNode *  to_merge) {
+    void mergeGlobalStatements(StatementNodesBlock *  to_merge) {
 
         assert(to_merge != nullptr);
-        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mGlobalStatementList.begin(), to_merge->mGlobalStatementList.end());
+        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
     }
 
 };

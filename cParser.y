@@ -89,7 +89,7 @@ cCode :
         }
     |   cCode globalDeclaration {
             $$ = $1;
-            $$->mergeGlobalStatements(dynamic_cast<GlobalDeclaraionNode*>($2));
+            $$->mergeGlobalStatements(dynamic_cast<StatementNodesBlock*>($2));
     }
     ;
 
@@ -98,13 +98,14 @@ cCode :
 
 globalDeclaration :
         declaration { /* 全局的变量定义，兼定义结构体。 */
-            printf("global declaration\n");
             $$ = $1;
         }
     |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */
             $$ = new StatementNodesBlock(); 
-            $$->mStatementList.push_back(dynamic_cast<StatementNode*>($1));
+            $$->addStatementNode(dynamic_cast<StatementNode*>($1));
         }
+
+    
     /* |   statement { // 不允许在全局范围内出现不是定义的语句。 
             yyerror("syntax error");
             std::cout<<"C-- only supports statements within a function.\n";
@@ -333,13 +334,15 @@ paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参�
     ;
 
 paramTypeName :
-        type {   /* int (*f)(double,char); 不实现这一条，太复杂 */
+    /*
+        type {   // int (*f)(double,char); 不实现这一条，太复杂 
             $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 1, $1);
         }
-    |   type variableWithNoName { /* 无名字的指针变量。不实现这一条，天复杂 */
+    |   type variableWithNoName { // 无名字的指针变量。不实现这一条，天复杂 
             $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
         }
-    |   type variable {      /* 这一条是要正常实现的，定义函数用的 */
+    |   */
+        type variable {      // 这一条是要正常实现的，定义函数用的 
             $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
 
         }
@@ -413,7 +416,7 @@ functionDeclaration :
 statementBlock : 
         '{' '}' { /* 可以 {} 这样而不必 {;} 这样 */
             $$ = new StatementNodesBlock();
-            $$->mStatementList.push_back(new NullStatementNode());
+            $$->addStatementNode(dynamic_cast<StatementNode *>(new NullStatementNode()));
         }
     |   '{' statements '}' {
             $$ = $2;

@@ -12,6 +12,108 @@
 				}
 			],
 			"name" : "VariableDeclarationNode"
+		},
+		{
+			"children" : 
+			[
+				{
+					"name" : "TypeNode"
+				},
+				{
+					"name" : "IdentifierNode"
+				}
+			],
+			"name" : "VariableDeclarationNode"
+		},
+		{
+			"children" : 
+			[
+				{
+					"children" : 
+					[
+						{
+							"name" : "TypeNode"
+						}
+					],
+					"name" : "ReturnType"
+				},
+				{
+					"children" : 
+					[
+						{
+							"name" : "IdentifierNode"
+						}
+					],
+					"name" : "FuncName"
+				},
+				{
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"name" : "TypeNode"
+								},
+								{
+									"name" : "IdentifierNode"
+								}
+							],
+							"name" : "VariableDeclarationNode"
+						},
+						{
+							"children" : 
+							[
+								{
+									"name" : "TypeNode"
+								},
+								{
+									"name" : "IdentifierNode"
+								}
+							],
+							"name" : "VariableDeclarationNode"
+						}
+					],
+					"name" : "Paras"
+				},
+				{
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode"
+										},
+										{
+											"name" : "IdentifierNode"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode"
+										},
+										{
+											"name" : "IdentifierNode"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								}
+							],
+							"name" : "StatementsBlock"
+						}
+					],
+					"name" : "Body"
+				}
+			],
+			"name" : "FunctionDeclarationNode"
 		}
 	],
 	"name" : "CentralBlock"

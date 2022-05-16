@@ -8,5 +8,7 @@ parsetree.txt
 CMakeLists.txt
 compiler
 parsetree.txt
+*.html
+*.json
 test.cpp
 test.exe

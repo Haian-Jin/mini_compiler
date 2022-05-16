@@ -1,2 +1,7 @@
-int a;
-int b;
+int a; 
+double b;
+
+int main(int x, double y) {
+    int t;
+    double s;
+}
