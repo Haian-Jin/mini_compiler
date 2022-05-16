@@ -710,7 +710,27 @@ public:
         Value *OperandV = mHandSide->codeGen();
         if (!OperandV)
             return nullptr;
-        /* todo */
+        bool isFloat = false;
+
+        if (OperandV->getType()->getTypeID() == llvm::Type::DoubleTyID) {
+            isFloat = true;
+        }
+        if (op == "pre++" || op == "pre--" || op == "post++" ||
+            op == "post--" || op == "~") {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "\"" + op + "\" is not supported as an operator");
+        } else if (op == "!") {
+            if (isFloat) {
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "invalid boolean operation with float number");
+            }
+            return Builder.CreateNot(OperandV, "notop");
+        } else if (op == "-") {
+            return isFloat ? Builder.CreateFNeg(OperandV, "fnotop")
+                           : Builder.CreateFNeg(OperandV, "notop");
+        }
     }
 
 private:
@@ -868,9 +888,11 @@ public:
     std::string getNodeTypeName() {
         return std::string("TenaryOperatorNode  ") + (getVariableName());
     }
-    
-    virtual llvm::Value *codeGen() {
 
+    virtual llvm::Value *codeGen() {
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "? ... : is not supported");
     }
 
 private:
@@ -899,8 +921,31 @@ public:
     std::string getNodeTypeName() {
         return std::string("AssignmentNode ") + ("=");
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+
+    virtual llvm::Value *codeGen() {
+        Value *dst = variableTable[mLeftHandSide->getVariableName()];
+        if (!dst)
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "undeclared variable");
+        auto type_l = dst->getType()->getTypeID();
+        Value * R = mRightHandSide->codeGen();
+        auto type_r = R->getType()->getTypeID();
+        if (type_r==type_l) {
+            Builder.CreateStore(R, dst);
+            return R;
+        } else if (type_r == llvm::Type::DoubleTyID) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "Can't assign double to int");
+        } else {
+            R = Builder.CreateSIToFP(R, llvm::Type::getDoubleTy(TheContext));
+            Builder.CreateStore(R, dst);
+            return R;
+        }
+
+    }
+
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide;
