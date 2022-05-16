@@ -332,54 +332,12 @@ paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参�
     ;
 
 paramTypeName :
-    /*
-        type {   // int (*f)(double,char); 不实现这一条，太复杂 
-            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 1, $1);
-        }
-    |   type variableWithNoName { // 无名字的指针变量。不实现这一条，天复杂 
-            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
-        }
-    |   */
         type variable {      // 这一条是要正常实现的，定义函数用的 
             $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
-
         }
     ;
 
-/* 不用管这个，都不实现的。 */
-variableWithNoName :        /* !! 如果要阅读这个的话，请和 variable 相关的产生式一起阅读 !!*/
-        pointerSpecifier {       /* 不实现指针 */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
-        }
-    |   variableWithNoNameCore { 
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
-        }
-    ;
 
-/* 不用管这个，都不实现的。 */
-variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
-        variableWithNoNameCore '[' INT_NUMBER ']' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
-        }
-    |   '(' variableWithNoName ')' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
-    |   variableWithNoNameCore '(' ')' {  /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
-    |   variableWithNoNameCore '(' paramTypes ')' { /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
-        }
-    |   '[' ']' {            /* because it has no name, it must stop some way. Below is some terminators */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
-        }
-    |   '(' ')' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
-        }
-    |   '(' paramTypes ')' { /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
-    ;
 
 /* 初始值，如果要在定义的时候初始化的话，initialValue 就是跟在 = 后面的部分。有时间的话就实现一下初始值，没时间就算了。 */
 initialValue :
