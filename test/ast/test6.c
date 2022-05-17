@@ -1,23 +1,22 @@
 int a;
 
 int main() {
-
-    int x;
-    x = 6;
-    while (1 + 2) {
-        int c;
+    a = 6;
+    while (a < 10) {
+        a = a + 1;
     }
-    if (x) {
-        int d;
-    }
-
-    if (x > 5) {
-        int e;
+    if (a > 10) {
+        a = a + 1;
     } else {
-        int f;
+        a = a + 1;
+    }
+    int i;
+    for (i = 0; i < 10; i = i + 1) {
+        a = a + 1;
     }
 
-    for ( x = 6; x < 10; x = x+1) {
-        int g;
+    if (i < 10) {
+        double b;
     }
+    
 }

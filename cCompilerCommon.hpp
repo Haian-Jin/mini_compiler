@@ -856,19 +856,7 @@ private:
 
 class StructMemberNode : public ExpressionNode{
 public:
-    StructMemberNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node *));
-        }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        //mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-        //mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
-        op = _symbolName;
-        //if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
-    }
-    
+
     StructMemberNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
     
     StructMemberNode(std::string opType, IdentifierNode *lhs, IdentifierNode *rhs, bool isArithmetic=false):ExpressionNode() {
@@ -943,18 +931,6 @@ private:
 };
 class BinaryOperatorNode : public ExpressionNode{
 public:
-    BinaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node *));
-        }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-        mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
-        op = _symbolName;
-        if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
-    }
     
     BinaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
     
@@ -968,15 +944,12 @@ public:
         mRightHandSide = rhs;
         op = opType;
 
-
         if (isArithmetic) // + - * / %
         {
             if(lhs->getType()==Node::TYPE_DOUBLE || rhs->getType()==Node::TYPE_DOUBLE){
                 this->setType(Node::TYPE_DOUBLE);
             }
         }
-
-
 
     }
     
@@ -1096,8 +1069,6 @@ public:
         return std::string("ForStatementNode");
     }
 
-
-
     virtual Json::Value jsonGen() const {
         Json::Value root;
         root["name"] = getTypeName();
@@ -1111,7 +1082,6 @@ public:
     }
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
-
 };
 
 
@@ -1154,19 +1124,14 @@ public:
     StatementNodesBlock * trueBody;           // if (True), do this, cannot be null
     StatementNodesBlock * falseBody;         // else, do this, can be null
 
-
-
     IfStatementNode(ExpressionStatementNode * condition, StatementNodesBlock * trueStatements, StatementNodesBlock * falseStatements=nullptr)
         :StatementNode(), conditionStatement(condition), trueBody(trueStatements), falseBody(falseStatements){
         assert(conditionStatement != nullptr);
         assert(trueBody != nullptr);
-      
-
     }
     virtual std::string getTypeName() const {
         return "NIfStatement";
     }
-
 
     virtual Json::Value jsonGen() const {
         Json::Value root;
@@ -1180,6 +1145,64 @@ public:
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 };
+
+class ReturnStatementNode: public StatementNode{
+public:
+
+    ExpressionNode * returnValue;
+
+    ReturnStatementNode(ExpressionNode * returnV = nullptr)
+        :StatementNode(), returnValue(returnV){
+    }
+    virtual std::string getTypeName() const {
+        return "ReturnStatement";
+    }
+
+    virtual Json::Value jsonGen() const {
+        Json::Value root;
+        root["name"] = getTypeName();
+        if (returnValue != nullptr)
+            root["children"].append(returnValue->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+class ContinueStatementNode: public StatementNode{
+public:
+
+    ContinueStatementNode():StatementNode(){}
+
+    virtual std::string getTypeName() const {
+        return "ContinueStatement";
+    }
+
+    virtual Json::Value jsonGen() const {
+        Json::Value root;
+        root["name"] = getTypeName();
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+class BreakStatementNode: public StatementNode{
+public:
+    BreakStatementNode():StatementNode(){}
+
+    virtual std::string getTypeName() const {
+        return "BreakStatement";
+    }
+
+
+    virtual Json::Value jsonGen() const {
+        Json::Value root;
+        root["name"] = getTypeName();
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+
 
 
 
