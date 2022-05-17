@@ -1,14 +1,25 @@
 #pragma once
-#include<stdio.h>
-#include<stdlib.h>
+#include <json/json.h>
+// #include <llvm/IR/Value.h>
 #include<math.h>
-#include<string.h>
 #include<string>
+#include <cstring>
 #include<iostream>
 #include<vector>
 #include<map>
 #include<cstdarg>
-#include"noError.h"
+#include<assert.h>
+
+
+// #include"noError.h"
+#include <tr1/memory>
+
+using std::shared_ptr;
+using std::make_shared;
+
+
+class CodeGenContext;
+
 
 struct Attribute;
 
@@ -45,19 +56,40 @@ protected:
     std::string mTokenValue; // 终结符对应的字符串。这个是不编号的，输入什么就是什么。
     bool mIsTerminal; // 是否是终结符
     bool mIsNegligible; // 是否可以删掉。比如在规则 expressions : expression ',' expression （举个例子）中，中间的逗号对语义分析是无效的，可以直接把他删了，不影响语法分析树的关键结构。
-    std::vector<Node*> mChildren; // 树结点的孩子。只有非终结符才有孩子。
+    std::vector<Node *> mChildren; // 树结点的孩子。只有非终结符才有孩子。
+    Node::Type NodeType;// 节点的数据类型
+    Node::Kind NodeKind;// 节点的类别
+
+
+    /* 暂时保存 begin */
+
+    std::vector<Node::Type> mTokenArgList;// 参数列表的类型，只有函数能用到
+    std::vector<std::string> mTokenArgListStructTypeName;// 和参数列表配合使用，提供参数的结构体名字（如果是结构体的话）
+    std::vector<int> mArraySizes;// 数组的各个维度的大小，只有数组能用到。如果不是数组，则这个容器的维度是 0。
+    std::string mStructTypeName;// 结构体名字，只有当类型是结构体的时候能用到。注：若类别是 Attribute 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
+    std::string mVariableName;// 变量的名字。
+    int mLineNumber;// 位置（行）
+    int mColumnNumber;// 位置（列）
+    /* 暂时保存 end */
+
+
 public:
+    Node(){};
     // 建立一个非终结符节点，挂接 childrenNumber 个孩子，分别是 ...
     Node(std::string _symbolName, int childrenNumber, ...); 
 
     // 建立一个终结符结点，用在 scanner 里面。
     Node(std::string _tokenValue, bool negligible=false):mIsNegligible(negligible),mSymbolName("I am a terminal, valued "+_tokenValue),mIsTerminal(true),mTokenValue(_tokenValue){}
     
+	virtual void print(std::string prefix) const{}
+	// virtual llvm::Value *codeGen(CodeGenContext &context) { return (llvm::Value *)0; }
+	// virtual Json::Value jsonGen() const { return Json::Value(); }
+
     // 添加一个孩子
     void addChild(Node *newChild);
 
     // 取得第 i 个孩子
-    Node* getChildrenById(int i);
+    Node * getChildrenById(int i);
 
     // 取得孩子的个数
     int getChildrenNumber();
@@ -65,14 +97,6 @@ public:
     // 是否是终结符，是 true 否 false
     bool isTerminal()const;
 
-    // 是否删掉后不影响语法分析树关键信息，是 true 否 false
-    bool isNegligible();
-
-    // 返回非终结符的名字。已弃置不用。
-    std::string getSymbolName()const;
-
-    // 返回终结符的名字。已弃置不用。
-    std::string getTokenValue();
 
     // 返回名字，终结符就返回终结符对应的字符串，非终结符就返回非终结符的名字。
     std::string getName()const;
@@ -80,75 +104,111 @@ public:
     // 打印出以这个节点为根节点的语法分析树。
     void printTree(int depth=0);
 
-    // 删掉所有的不影响语法分析树关键信息的结点，以简化语法分析树。
-    void simplify();
     
-public:
     // 设定节点的数据类型，不能自适应地一同取得结构体名。
-    virtual void setType(Node::Type _type){}
+    // virtual void setType(Node::Type _type){}
+    virtual void setType(Node::Type _type);
+
 
     // 将节点的数据类型设定成和 c 一样。而且如果 c 是结构体，也能一同设定结构体名。
-    virtual void setType(Node* c){}
+    // virtual void setType(Node * c){}
+    virtual void setType(Node * c);
 
     // 取得节点的数据类型
-    virtual Node::Type getType(){}
+    // virtual Node::Type getType(){}
+    virtual Node::Type getType();
+
+
 
     // 取得节点的数据类型的字符串版本，用于输出的时候好看。
-    virtual std::string getTypeString(){}
+    // virtual std::string getTypeString(){}
+    virtual std::string getTypeString();
+
+
 
     // 设定节点的类别。
-    virtual void setKind(Node::Kind _kind){}
+    // virtual void setKind(Node::Kind _kind){}
+    virtual void setKind(Node::Kind _kind);
 
     // 取得节点的类别。
-    virtual Node::Kind getKind(){}
+    // virtual Node::Kind getKind(){}
+    virtual Node::Kind getKind();
 
     // 设定节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和 setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    virtual void setArgList(std::vector<Node::Type> _argList){}
+    // virtual void setArgList(std::vector<Node::Type> _argList){}
+    virtual void setArgList(std::vector<Node::Type> _argList);
 
     // 取得节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和 setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    virtual std::vector<Node::Type> getArgList(){}
+    // virtual std::vector<Node::Type> getArgList(){}
+    virtual std::vector<Node::Type> getArgList();
 
     // 设定节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和 setArgList/getArgList 配合使用，以确定结构体的名字。
-    virtual void setArgListStructName(std::vector<std::string> _structName){}
+    // virtual void setArgListStructName(std::vector<std::string> _structName){}
+    virtual void setArgListStructName(std::vector<std::string> _structName);
 
     // 取得节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和 setArgList/getArgList 配合使用，以确定结构体的名字。
-    virtual std::vector<std::string> getArgListStructName(){}
+    // virtual std::vector<std::string> getArgListStructName(){}
+    virtual std::vector<std::string> getArgListStructName();
 
     // 设定数组的维度和各个维度的大小。只有数组类型的节点才可能用到。
-    virtual void setArraySizes(std::vector<int> _sizes){}
+    // virtual void setArraySizes(std::vector<int> _sizes){}
+    virtual void setArraySizes(std::vector<int> _sizes);
+
+
 
     // 取得数组的维度和各个维度的大小。
-    virtual std::vector<int> getArraySizes(){}
+    // virtual std::vector<int> getArraySizes(){} // jha
+    virtual std::vector<int> getArraySizes(); // jha
 
     // 判定该节点是不是数组，是 true 否 false
-    virtual bool isArray(){}
+    // virtual bool isArray(){} //jha
+    virtual bool isArray() const; //jha
+
+
+    // 判断改节点是不是double, float等type
+    virtual bool isType() const{
+        return Node::NodeKind == Node::KIND_ATTRIBUTE;
+    }
+
 
     // 获得数组的维数（几维数组）。
-    virtual int getArrayDimension(){}
+    // virtual int getArrayDimension(){}
+    virtual int getArrayDimension();
 
     // 设定结构体的名字。只有当数据类型为结构体时才会用到这个。
-    virtual void setStructTypeName(std::string _name){}
+    // virtual void setStructTypeName(std::string _name){}
+    virtual void setStructTypeName(std::string _name);
 
     // 获得结构体的名字。只有当数据类型为结构体时才会用到这个。
-    virtual std::string getStructTypeName(){}
+    // virtual std::string getStructTypeName(){}
+    virtual std::string getStructTypeName();
 
     // 取得变量的名字，只有变量和函数这样的节点才会用到这个。
-    virtual void setVariableName(std::string _name){}
+    // virtual void setVariableName(std::string _name){}
+    virtual void setVariableName(std::string _name);
 
     // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    virtual std::string getVariableName(){}
+    // virtual std::string getVariableName(){}
+    virtual std::string getVariableName() const;
 
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
-    virtual void setPosition(int l,int c){}
+    // virtual void setPosition(int l,int c){}
+    virtual void setPosition(int l,int c);
+
 
     // 把位置设定成和给定节点 c 一样。
-    virtual void setPosition(Node*){}
+    // virtual void setPosition(Node *){}
+    virtual void setPosition(Node *);
+
 
     // 取得行位置
-    virtual int getLineNumber(){}
+    // virtual int getLineNumber(){}
+    virtual int getLineNumber();
+
 
     // 取得列位置
-    virtual int getColumnNumber(){}
+    // virtual int getColumnNumber(){}
+    virtual int getColumnNumber();
 
     // 将给定的属性复制给这个节点。（包括位置）
     virtual void setAttribute(void *p);
@@ -161,214 +221,487 @@ public:
 
     // 将给定的属性复制给这个节点。（包括位置）我承认这个是我写代码写到一半忘记了，又把 setAttribute 拿来重写了一遍...
     virtual void copyFrom(Attribute *c);
+
+
+    // 返回非终结符的名字。已弃置不用。
+    std::string getSymbolName()const;
+
+    // 返回终结符的名字。已弃置不用。
+    std::string getTokenValue();
+
+
+
+    /* defined by jha begins */
+    virtual std::string getNodeTypeName() const{
+        return "!!!";
+    } ;
+    // virtual llvm::Value *codeGen(CodeGenContext &context) { return (llvm::Value *)0;}
+	virtual Json::Value jsonGen() const {return Json::Value();}
+    /* defined by jha ends */
 };
 
-/* 语法分析树节点的属性文法版本。 */
-class AttributivedNode : public Node{
-protected:
-    Node::Type mTokenType;// 节点的数据类型
-    Node::Kind mTokenKind;// 节点的类别
-    std::vector<Node::Type> mTokenArgList;// 参数列表的类型，只有函数能用到
-    std::vector<std::string> mTokenArgListStructTypeName;// 和参数列表配合使用，提供参数的结构体名字（如果是结构体的话）
-    std::vector<int> mArraySizes;// 数组的各个维度的大小，只有数组能用到。如果不是数组，则这个容器的维度是 0。
-    std::string mStructTypeName;// 结构体名字，只有当类型是结构体的时候能用到。注：若类别是 Attribute 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
-    std::string mVariableName;// 变量的名字。
-    int mLineNumber;// 位置（行）
-    int mColumnNumber;// 位置（列）
+
+class ExpressionNode : public Node{
 public:
-    AttributivedNode(std::string _symbolName, int childrenNumber, ...);
-    AttributivedNode(std::string _tokenValue, bool negligible=false):Node(_tokenValue,negligible){}
-    
-    // 设定节点的数据类型，不能自适应地一同取得结构体名。
-    void setType(Node::Type _type);
-
-    // 将节点的数据类型设定成和 c 一样。而且如果 c 是结构体，也能一同设定结构体名。
-    void setType(Node *c);
-
-    // 取得节点的数据类型
-    Node::Type getType();
-
-    // 取得节点的数据类型的字符串版本，用于输出的时候好看。
-    std::string getTypeString();
-
-    // 设定节点的类别。
-    void setKind(Node::Kind _kind);
-
-    // 取得节点的类别。
-    Node::Kind getKind();
-
-    // 设定节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和 setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    void setArgList(std::vector<Node::Type> _argList);
-
-    // 取得节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和 setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    std::vector<Node::Type> getArgList();
-
-    // 设定节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和 setArgList/getArgList 配合使用，以确定结构体的名字。
-    void setArgListStructName(std::vector<std::string> _structName);
-
-    // 取得节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和 setArgList/getArgList 配合使用，以确定结构体的名字。
-    std::vector<std::string> getArgListStructName();
-
-    // 设定数组的维度和各个维度的大小。只有数组类型的节点才可能用到。
-    void setArraySizes(std::vector<int> _sizes);
-
-    // 取得数组的维度和各个维度的大小。
-    std::vector<int> getArraySizes();
-
-    // 判定该节点是不是数组，是 true 否 false
-    bool isArray();
-
-    // 获得数组的维数（几维数组）。
-    int getArrayDimension();
-    // 设定结构体的名字。只有当数据类型为结构体时才会用到这个。
-    void setStructTypeName(std::string _name);
-
-    // 获得结构体的名字。只有当数据类型为结构体时才会用到这个。
-    std::string getStructTypeName();
-
-    // 取得变量的名字，只有变量和函数这样的节点才会用到这个。
-    void setVariableName(std::string _name);
-
-    // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    std::string getVariableName();
-
-    // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
-    void setPosition(int l,int c);
-
-    // 把位置设定成和给定节点 c 一样。
-    void setPosition(Node *c);
-
-    // 取得行位置
-    int getLineNumber();
-
-    // 取得列位置
-    int getColumnNumber();
-};
-
-class ExpressionNode : public AttributivedNode{
-public:
-    ExpressionNode(std::string _symbolName, int childrenNumber, ...):AttributivedNode(_symbolName,0){
+    ExpressionNode(){};
+    ExpressionNode(std::string _symbolName, int childrenNumber, ...):Node(_symbolName,0){
         va_list vl;
         va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+        for(int i=0; i < childrenNumber; i++){
+            mChildren.push_back(va_arg(vl,Node *));
         }
         mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
     }
-    ExpressionNode(std::string _tokenValue, bool negligible=false):AttributivedNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
+    ExpressionNode(std::string _tokenValue, bool negligible=false){};
+    virtual std::string getNodeTypeName() const {
         return "ExpressionNode";
     }
-    Json::Value jsonGen(){
+    virtual Json::Value jsonGen() const{
         Json::Value r;
         r["name"] = getNodeTypeName();
         return r;
     }
 };
 
-class NumberNode : public ExpressionNode{
-public:
-    NumberNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
-        }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-    }
-    NumberNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){
-        mIsInt = true;
-        for(char c:_tokenValue){
-            if(c=='.'){
-                mIsInt = false;
-                break;
-            }
-        }
-        if(mIsInt){
-            sscanf(_tokenValue.c_str(), "%d", &this->mIntValue);
-        }else{
-            sscanf(_tokenValue.c_str(), "%lf", &this->mDoubleValue);
-        }
-    };
-    std::string getNodeTypeName(){
-        return std::string("NumberNode")+(isInt()?" INT":" DOUBLE");
-    }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
+class StatementNode: public Node {
 
-    bool isInt(){
-        return mIsInt;
+public:
+    StatementNode():Node(){}
+
+    virtual std::string getNodeTypeName() const {
+        return "StatementNode";
     }
-    int getIntValue(){
-        return mIsInt?mIntValue:mDoubleValue;
+
+    virtual Json::Value jsonGen() const {
+        Json::Value r;
+        r["name"] = getNodeTypeName();
+        return r;
     }
-    double getDoubleValue(){
-        return mIsInt?mIntValue:mDoubleValue;
-    }
-private:
-    int mIntValue;
-    double mDoubleValue;
-    bool mIsInt;
 };
 
 class IdentifierNode : public ExpressionNode{
 public:
-     IdentifierNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+    IdentifierNode(std::string name, bool isType=false):ExpressionNode(name){
+        assert (name.length() > 0);
+
+        this->mSymbolName = name;
+        if (isType) {
+            this->setKind(Node::KIND_ATTRIBUTE);
+            if (name == "int") {
+                this->setType(Node::TYPE_INT);           
+            } else if (name == "float") {
+                this->setType(Node::TYPE_FLOAT);
+            } else if (name == "double") {
+                this->setType(Node::TYPE_DOUBLE);
+            } else if (name == "char") {
+                this->setType(Node::TYPE_CHAR);
+            } else if (name == "void") {
+                this->setType(Node::TYPE_VOID);
+            } 
         }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-    }
-    IdentifierNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){
-        this->mName = _tokenValue;
     };
-    bool isType(){
-        return AttributivedNode::mTokenKind == Node::KIND_ATTRIBUTE;
+
+
+    bool isType() const{
+        return Node::NodeKind == Node::KIND_ATTRIBUTE;
     }
-    bool isArray(){ 
-        return AttributivedNode::isArray();
+    bool isArray() const{ 
+        return Node::isArray();
     }
 
-    std::string getNodeTypeName(){
-        return std::string("IdentifierNode ")+(mName);
+    virtual std::string getNodeTypeName() const{
+        if (isType()) {
+            return "TypeNode";
+        } else {
+            return "IdentifierNode";
+        }
     }
-    std::string getName(){
-        return mName;
+
+    // std::string getName(){
+    //     return mSymbolName;
+    // }
+    // 用getVariableName
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    virtual Json::Value jsonGen() const {
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        return root;
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
-private:
-    std::string mName;
-    //bool mIsType;
-    //bool mIsArray;
+
 };
+
+
+class IdentifierNodeList : public ExpressionNode{
+public:
+    std::vector<IdentifierNode *> mIdentifierNodeList;
+
+    IdentifierNodeList():ExpressionNode("IdentifierNodeList",0){
+
+    }
+    void addIdentifierNode(IdentifierNode *identifierNode){
+        assert(identifierNode != nullptr);
+        mIdentifierNodeList.push_back(identifierNode);
+    }
+
+    virtual std::string getNodeTypeName() const{
+        return "IdentifierNodeList";
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        return root;
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+};
+
+class AssignmentNode : public ExpressionNode{
+public:
+
+    virtual std::string getNodeTypeName() const{
+        return std::string("AssignmentNode ")+("=");
+    }
+
+    AssignmentNode(IdentifierNode *lhs, ExpressionNode *rhs):ExpressionNode("=",0){
+        assert (lhs != nullptr);
+        assert (rhs != nullptr);
+        mLeftHandSide = lhs;
+        mRightHandSide = rhs;
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mLeftHandSide->jsonGen());
+        root["children"].append(mRightHandSide->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+private:
+    std::string op;
+    IdentifierNode *mLeftHandSide;
+    ExpressionNode *mRightHandSide;
+};
+
+
+class VariableDeclarationNode: public StatementNode  {
+public:
+    const IdentifierNode * type;
+    IdentifierNode * id;
+	AssignmentNode * assignmentExpr = nullptr;
+
+    VariableDeclarationNode(IdentifierNode * inType, IdentifierNode * id, AssignmentNode * assignmentExpr = nullptr):StatementNode(){
+        assert(inType != nullptr);
+        assert(id != nullptr);
+        this->type = inType;
+        this->id = id;
+        this->assignmentExpr = assignmentExpr;
+        this->setKind(Node::KIND_VARIABLE);
+        this->setType(inType->getType());
+    }
+
+
+    virtual std::string getNodeTypeName() const{
+        return "VariableDeclarationNode";
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(type->jsonGen());
+        root["children"].append(id->jsonGen());
+
+        if( assignmentExpr != nullptr){
+            root["children"].append(assignmentExpr->jsonGen());
+        }
+        return root;
+    }
+
+    /* TODO */
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+};
+
+// store all the variable declaration, this is used for function declaration and struct declaraion
+class VarDeclarationList : public StatementNode{
+public:
+
+    std::vector<VariableDeclarationNode * > mVarDeclarationList;
+
+    VarDeclarationList():StatementNode(){}
+
+    virtual std::string getNodeTypeName() const{
+        return "VarDeclarationList";
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mVarDeclarationList.begin(); it != mVarDeclarationList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+        return root;
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+};
+
+
+// store all statements nodes of the same block
+class StatementNodesBlock : public StatementNode{
+public:
+
+    std::vector<StatementNode * > mStatementList;
+
+    StatementNodesBlock():StatementNode(){}
+
+    virtual std::string getNodeTypeName() const{
+        return "StatementsBlock";
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mStatementList.begin(); it != mStatementList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+        return root;
+    }
+
+    void addStatementNode(StatementNode *statementNode){
+        assert(statementNode != nullptr);
+        mStatementList.push_back(statementNode);
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+
+    // input type expression and multiple name identifiers, create multiple declaration nodes
+    void createMultiVarDeclaration(IdentifierNode* type, IdentifierNodeList* nameList) {
+        assert(type != nullptr && nameList != nullptr);
+        assert(type->isType());
+        std::vector<IdentifierNode * > idenNameList = nameList->mIdentifierNodeList; // vector of identifiers, store the name of the variables
+        for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
+            // create a variable declaration
+            StatementNode * varDecl  = new VariableDeclarationNode(type, *it);
+            mStatementList.push_back(varDecl);
+        }
+    }
+
+    // merge two statements block into one same statements block
+    void mergeStatements(StatementNodesBlock * to_merge) {
+        assert(to_merge != nullptr);
+        this->mStatementList.insert(this->mStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+    }
+
+    
+
+};
+
+
+// handle the statement that has only one semicollon
+class NullStatementNode: public StatementNode {
+public:
+    NullStatementNode():StatementNode(){}
+    virtual std::string getNodeTypeName() const {
+        return "NullStatementNode";
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+
+
+
+class DoubleNode : public ExpressionNode{
+public:
+	double value;
+    DoubleNode(std::string _tokenValue):ExpressionNode(_tokenValue){
+        sscanf(_tokenValue.c_str(), "%lf", &this->value);
+
+    }
+
+	virtual std::string getNodeTypeName() const{
+		return "DoubleNode";
+	}
+
+    int getValue(){
+        return this->value;
+    }
+    
+    virtual Json::Value jsonGen() const {
+        Json::Value root;
+        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+        return root;
+    };
+
+	// virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;};
+
+};
+
+class IntNode : public ExpressionNode{
+public:
+    int value;
+
+    IntNode(std::string _tokenValue):ExpressionNode(_tokenValue){
+        sscanf(_tokenValue.c_str(), "%d", &this->value);
+
+    }
+
+    double getValue(){
+        return this->value;
+    }
+
+    virtual std::string getNodeTypeName() const  {
+        return "IntNode";
+    }
+
+    
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+        return root;
+    };
+
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+
+
+class ExpressionStatementNode : public StatementNode{
+public:
+    ExpressionNode * mExpression;
+
+    ExpressionStatementNode(ExpressionNode * expression):StatementNode(){
+        assert(expression != nullptr);
+        this->mExpression = expression;
+    }
+
+    virtual std::string getNodeTypeName() const{
+        return "ExpressionStatementNode";
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mExpression->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+};
+
+
+
+// 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
+class FuncNameAndArgsNode : public ExpressionNode {
+public:
+    IdentifierNode *  mFuncName;
+    VarDeclarationList *  parasList; // used for function agrs
+        // used for function declararion
+    FuncNameAndArgsNode(IdentifierNode * nameIdentifier, VarDeclarationList * args): ExpressionNode(){
+        assert (nameIdentifier != nullptr);
+        this->mFuncName = nameIdentifier;
+        this->parasList = args;
+
+    };
+};
+
+
+class FunctionDeclarationNode : public StatementNode{
+public:
+    IdentifierNode *  type; // return type
+    IdentifierNode *  id; // function name
+    VarDeclarationList *  parasList; // function args, be nullptr if no args
+    StatementNodesBlock *  body; // function body
+
+
+    FunctionDeclarationNode(IdentifierNode *  type, FuncNameAndArgsNode *  name_and_args, StatementNodesBlock *  body):StatementNode(){
+        assert (type != nullptr);
+        assert (name_and_args != nullptr);
+        assert (body != nullptr);
+        assert (type->isType());
+        this->type = type;
+        this->id = name_and_args->mFuncName;
+        this->parasList = name_and_args->parasList;
+        this->body = body;
+    }
+    virtual std::string getNodeTypeName() const{
+        return "FunctionDeclarationNode";
+    }
+
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+
+        Json::Value returnType;
+        returnType["name"] = std::string("ReturnType");
+        returnType["children"].append(type->jsonGen());
+
+
+        Json::Value funcName;
+        funcName["name"] = std::string("FuncName");
+        funcName["children"].append(id->jsonGen());
+
+        Json::Value paras;
+        paras["name"] = std::string("Paras");
+        if (this->parasList != nullptr) {
+            for (auto it = parasList->mVarDeclarationList.begin(); it != parasList->mVarDeclarationList.end(); it++){
+                paras["children"].append((*it)->jsonGen());
+            }
+        }
+
+
+        Json::Value funcBody;
+        funcBody["name"] = std::string("Body");
+        funcBody["children"].append(body->jsonGen());
+
+        root["children"].append(returnType);
+        root["children"].append(funcName);
+        root["children"].append(paras);
+        root["children"].append(funcBody);
+
+
+        return root;
+
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+};
+
+
+
 
 class FunctionCallNode : public ExpressionNode{
 public:
     FunctionCallNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
         va_list vl;
         va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+        for(int i=0; i < childrenNumber; i++){
+            mChildren.push_back(va_arg(vl,Node *));
         }
-        mArguments = new std::vector<ExpressionNode*>();
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        mArguments = new std::vector<ExpressionNode *>();
+        mIsNegligible = (false), mSymbolName = (_symbolName), mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     }
     FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
 
-    std::string getNodeTypeName(){
-        return std::string("FunctionCallNode  ")+(mFunctionName->getName());
+    virtual std::string getNodeTypeName() const{
+        return std::string("FunctionCallNode  ") + (mFunctionName->getName());
     }
-    std::vector<ExpressionNode*> getArguments()const{
+    std::vector<ExpressionNode *> getArguments()const{
         return *mArguments;
     }
     void addArgument(Node *c){
-        mArguments->push_back(dynamic_cast<ExpressionNode*>(c));
+        mArguments->push_back(dynamic_cast<ExpressionNode *>(c));
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
     IdentifierNode *mFunctionName;
-    std::vector<ExpressionNode*> *mArguments;
+    std::vector<ExpressionNode *> *mArguments;
 };
 
 class UnaryOperatorNode : public ExpressionNode{
@@ -376,19 +709,19 @@ public:
     UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
         va_list vl;
         va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+        for(int i=0; i < childrenNumber; i++){
+            mChildren.push_back(va_arg(vl,Node *));
         }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        mHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
+        mIsNegligible = (false), mSymbolName = (_symbolName), mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
+        mHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
         op = _symbolName;
         if(mHandSide==NULL)throw("castfail");
     }
     UnaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("UnaryOperatorNode  ")+(getVariableName());
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
     std::string op;
     ExpressionNode *mHandSide;
@@ -400,19 +733,52 @@ public:
         va_list vl;
         va_start(vl, childrenNumber);
         for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+            mChildren.push_back(va_arg(vl,Node *));
         }
         mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
-        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
+        mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+        mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
         op = _symbolName;
         if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
     }
+    
     BinaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
-        return std::string("BinaryOperatorNode  ")+(getVariableName());
+    
+    BinaryOperatorNode(std::string opType, ExpressionNode *lhs, ExpressionNode *rhs, bool isArithmetic=true):ExpressionNode() {
+        assert(lhs != nullptr);
+        assert(rhs != nullptr);
+        assert(opType != "");
+        this->setType(Node::TYPE_INT);
+        // this->setKind() HERE
+        mLeftHandSide = lhs;
+        mRightHandSide = rhs;
+        op = opType;
+
+
+        if (isArithmetic) // + - * / %
+        {
+            if(lhs->getType()==Node::TYPE_DOUBLE || rhs->getType()==Node::TYPE_DOUBLE){
+                this->setType(Node::TYPE_DOUBLE);
+            }
+        }
+
+
+
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
+    
+    virtual std::string getNodeTypeName() const{
+        return op;
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mLeftHandSide->jsonGen());
+        root["children"].append(mRightHandSide->jsonGen());
+
+        return root;
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide;
@@ -424,48 +790,71 @@ public:
         va_list vl;
         va_start(vl, childrenNumber);
         for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+            mChildren.push_back(va_arg(vl, Node *));
         }
         mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
-        mMidHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
-        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[2]);
+        mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+        mMidHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
+        mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[2]);
         op = _symbolName;
         if(mLeftHandSide==NULL || mRightHandSide==NULL || mMidHandSide==NULL)throw("castfail");
     }
     TenaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
+    virtual std::string getNodeTypeName() const{
         return std::string("TenaryOperatorNode  ")+(getVariableName());
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide, *mMidHandSide;
 };
 
-class AssignmentNode : public ExpressionNode{
+
+
+
+
+// central global Node 
+class GlobalDeclaraionNode : public StatementNode{
 public:
-    AssignmentNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for(int i=0;i<childrenNumber;i++){
-            mChildren.push_back(va_arg(vl,Node*));
+
+    std::vector<StatementNode * > mGlobalStatementList;
+
+    GlobalDeclaraionNode():StatementNode(){}
+
+    // copy from statements block 
+    GlobalDeclaraionNode(StatementNodesBlock* toCopy):StatementNode(){
+        for (auto it = toCopy->mStatementList.begin(); it != toCopy->mStatementList.end(); ++it){
+            mGlobalStatementList.push_back(*it);
         }
-        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
-        mLeftHandSide = dynamic_cast<ExpressionNode*>(mChildren[0]);
-        mRightHandSide = dynamic_cast<ExpressionNode*>(mChildren[1]);
-        this->op = _symbolName;
-        if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
+    } 
+
+    virtual std::string getNodeTypeName() const {
+        return "CentralBlock";
     }
-    AssignmentNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    std::string getNodeTypeName(){
-        return std::string("AssignmentNode ")+("=");
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        for(auto it = mGlobalStatementList.begin(); it != mGlobalStatementList.end(); it++){
+            root["children"].append((*it)->jsonGen());
+        }
+        return root;
     }
-    virtual llvm::Value* codeGen(CodeGenContext& context){}
-private:
-    std::string op;
-    ExpressionNode *mLeftHandSide, *mRightHandSide;
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+
+
+    // merge another global declaration statements block
+    void mergeGlobalStatements(StatementNodesBlock *  to_merge) {
+
+        assert(to_merge != nullptr);
+        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+    }
+
 };
+
+
+
+
+
 
 // 属性。这个是变量的属性，是存在符号表里的，不是语法分析树的属性，它们会有细微的差别。
 struct Attribute{
@@ -548,6 +937,7 @@ bool checkKind(Node *p, Node::Kind kind);
 bool typeMatch(Node *a, Node *b);
 bool typeMatch(std::vector<Node::Type> a, std::vector<Node::Type> b);
 bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s);
-bool typeMatch(Attribute *a, Node* b);
+bool typeMatch(Attribute *a, Node * b);
 std::string type_to_string(Attribute *t);
+
 

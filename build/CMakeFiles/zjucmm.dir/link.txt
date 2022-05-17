@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++14 -ljsoncpp   CMakeFiles/zjucmm.dir/main.cpp.o CMakeFiles/zjucmm.dir/cCompilerCommon.cpp.o CMakeFiles/zjucmm.dir/cParser.cpp.o CMakeFiles/zjucmm.dir/cScanner.cpp.o  -o zjucmm  -lLLVM-10 -ljsoncpp 

@@ -1,18 +1,34 @@
 #include "./cCompilerCommon.hpp"
+#include <iostream>
+#include <fstream>
 extern Node *makeParseTree();
+using std::string;
 int main(){
     csLineCnt++;
-    try{
+    // try{
     Node *treeRoot = makeParseTree();
-    if(treeRoot){
-        treeRoot->printTree();
-        treeRoot->simplify();
-        std::cout<<"\n\nThe simplified tree is:\n\n";
-        treeRoot->printTree();
+    // if(treeRoot){
+    //     treeRoot->printTree();
+    //     // treeRoot->simplify();
+    //     std::cout<<"\n\nThe simplified tree is:\n\n";
+    //     treeRoot->printTree();
+    // }
+    // SymbolTable::viewAllSymbolTable();
+    // }catch(char const *s){
+    //     std::cout<<s;
+    // }
+
+    auto root = treeRoot->jsonGen();
+
+
+    string jsonFile = "./A_tree.json";
+    std::ofstream astJson(jsonFile);
+    if( astJson.is_open() ){
+        astJson << root;
+        astJson.close();
+        std::cout << "json write to " << jsonFile << std::endl;
     }
-    SymbolTable::viewAllSymbolTable();
-    }catch(char const *s){
-        std::cout<<s;
-    }
+
+
     //if(treeRoot->semanticCheck());
 }

@@ -1,5 +1,5 @@
 %{
-#include"./cCompilerCommon.hpp"
+#include "./cCompilerCommon.hpp"
 #include "./cParser.hpp"
 
 void echo(bool negligible=false);
@@ -7,6 +7,7 @@ void echoint();
 void echodouble();
 void echochar();
 void errecho();
+void echoidentifier();
 inline void mkNode(bool negligible);
 extern YYSTYPE yylval;
 static YYSTYPE tempYylval;
@@ -45,7 +46,7 @@ int {
 }
 float {
     echo();
-    csColumnCnt += 5;
+    csColumnCnt+=5;
     return FLOAT;
 }
 double {
@@ -60,7 +61,7 @@ char {
 }
 for {
     echo();
-    csColumnCnt+=4;
+    csColumnCnt+=3;
     return FOR;
 }
 do {
@@ -149,17 +150,17 @@ goto {
 {intNumber} {
     echoint();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return INT_NUMBER;
 }
 {doubleNumber} {
     echodouble();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return DOUBLE_NUMBER;
 }
 {char} {
     echochar();
     csColumnCnt+=strlen(yytext);
-    return NUMBER;
+    return INT_NUMBER;
 }
 \+\= {
     echo();
@@ -239,7 +240,7 @@ goto {
 
 
 {identifier} {
-    echo();
+    echoidentifier();
     csColumnCnt+=strlen(yytext);
     return IDENTIFIER;
 }
@@ -272,30 +273,39 @@ void echo(bool negligible){
     //printf("get: %s\n",yytext);
 }
 void echoint(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_INT);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.intNodePtr = new IntNode(std::string(yytext));
+    yylval.intNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.intNodePtr->setType(Node::TYPE_INT);
+    yylval.intNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.intNodePtr->setVariableName(std::string(yytext));
 }
 void echodouble(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_DOUBLE);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.doubleNodePtr = new DoubleNode(std::string(yytext));
+    yylval.doubleNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.doubleNodePtr->setType(Node::TYPE_DOUBLE);
+    yylval.doubleNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.doubleNodePtr->setVariableName(std::string(yytext));
 }
 void echochar(){
-    yylval.nodePtr = new NumberNode(std::string(yytext));
-    yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
-    yylval.nodePtr->setType(Node::TYPE_CHAR);
-    yylval.nodePtr->setKind(Node::KIND_CONSTANT);
-    yylval.nodePtr->setVariableName(std::string(yytext));
+    yylval.intNodePtr = new IntNode(std::string(yytext));
+    yylval.intNodePtr->setPosition(csLineCnt, csColumnCnt);
+    yylval.intNodePtr->setType(Node::TYPE_CHAR);
+    yylval.intNodePtr->setKind(Node::KIND_CONSTANT);
+    yylval.intNodePtr->setVariableName(std::string(yytext));
 }
 void errecho(){
     printf("ERROR at line %d, column %d: Unsupported Character, '%s' is not supported in our C-- language, scanner will treat it as an empty character.\n", csLineCnt, csColumnCnt-1, yytext);
 }
+
+void echoidentifier(){
+    yylval.identifierNodePtr = new IdentifierNode(std::string(yytext), false);
+    yylval.identifierNodePtr->setPosition(csLineCnt, csColumnCnt);
+}
+
+
+
+
 inline void mkNode(bool negligible){
-    yylval.nodePtr = new IdentifierNode(std::string(yytext), negligible);
+    yylval.nodePtr = new Node(std::string(yytext), negligible);
     yylval.nodePtr->setPosition(csLineCnt, csColumnCnt);
 }

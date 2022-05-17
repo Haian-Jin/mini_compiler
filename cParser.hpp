@@ -71,81 +71,49 @@ extern int yydebug;
     INC = 271,
     DEC = 272,
     IDENTIFIER = 273,
-    NUMBER = 274,
-    STRING = 275,
-    FOR = 276,
-    DO = 277,
-    WHILE = 278,
-    CONTINUE = 279,
-    BREAK = 280,
-    IF = 281,
-    ELSE = 282,
-    SWITCH = 283,
-    CASE = 284,
-    RETURN = 285,
-    STRUCT = 286,
-    INT = 287,
-    DOUBLE = 288,
-    CHAR = 289,
-    PTR = 290,
-    CONST = 291,
-    DEFAULT = 292,
-    FLOAT = 293,
-    STATIC = 294,
-    UNSIGNED = 295,
-    VOID = 296
+    DOUBLE_NUMBER = 274,
+    INT_NUMBER = 275,
+    STRING = 276,
+    FOR = 277,
+    DO = 278,
+    WHILE = 279,
+    CONTINUE = 280,
+    BREAK = 281,
+    IF = 282,
+    ELSE = 283,
+    SWITCH = 284,
+    CASE = 285,
+    RETURN = 286,
+    STRUCT = 287,
+    INT = 288,
+    DOUBLE = 289,
+    CHAR = 290,
+    PTR = 291,
+    CONST = 292,
+    DEFAULT = 293,
+    FLOAT = 294,
+    STATIC = 295,
+    UNSIGNED = 296,
+    VOID = 297
   };
 #endif
-/* Tokens.  */
-#define GOTO 258
-#define ADD_ASSIGN 259
-#define SUB_ASSIGN 260
-#define MUL_ASSIGN 261
-#define DIV_ASSIGN 262
-#define LOGICAL_OR 263
-#define LOGICAL_AND 264
-#define EQ 265
-#define NE 266
-#define GE 267
-#define LE 268
-#define SL 269
-#define SR 270
-#define INC 271
-#define DEC 272
-#define IDENTIFIER 273
-#define NUMBER 274
-#define STRING 275
-#define FOR 276
-#define DO 277
-#define WHILE 278
-#define CONTINUE 279
-#define BREAK 280
-#define IF 281
-#define ELSE 282
-#define SWITCH 283
-#define CASE 284
-#define RETURN 285
-#define STRUCT 286
-#define INT 287
-#define DOUBLE 288
-#define CHAR 289
-#define PTR 290
-#define CONST 291
-#define DEFAULT 292
-#define FLOAT 293
-#define STATIC 294
-#define UNSIGNED 295
-#define VOID 296
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 39 "cParser.y"
+#line 36 "cParser.y"
 
-    Node* nodePtr;
+    Node * nodePtr;
+    DoubleNode * doubleNodePtr;
+    IntNode * intNodePtr;
+    IdentifierNodeList* identifierNodeListPtr;
+    IdentifierNode* identifierNodePtr;
+    VarDeclarationList* varDeclarationListPtr;
+    StatementNodesBlock* statementNodesBlockPtr;
+    GlobalDeclaraionNode * globalDeclaraionNodePtr;
 
-#line 149 "cParser.hpp"
+#line 117 "cParser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
