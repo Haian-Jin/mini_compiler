@@ -17,18 +17,6 @@
 			"children" : 
 			[
 				{
-					"name" : "TypeNode: int"
-				},
-				{
-					"name" : "IdentifierNode: b"
-				}
-			],
-			"name" : "VariableDeclarationNode"
-		},
-		{
-			"children" : 
-			[
-				{
 					"children" : 
 					[
 						{
@@ -47,33 +35,6 @@
 					"name" : "FuncName"
 				},
 				{
-					"children" : 
-					[
-						{
-							"children" : 
-							[
-								{
-									"name" : "TypeNode: int"
-								},
-								{
-									"name" : "IdentifierNode: c"
-								}
-							],
-							"name" : "VariableDeclarationNode"
-						},
-						{
-							"children" : 
-							[
-								{
-									"name" : "TypeNode: double"
-								},
-								{
-									"name" : "IdentifierNode: d"
-								}
-							],
-							"name" : "VariableDeclarationNode"
-						}
-					],
 					"name" : "Paras"
 				},
 				{
@@ -82,72 +43,6 @@
 						{
 							"children" : 
 							[
-								{
-									"children" : 
-									[
-										{
-											"name" : "TypeNode: int"
-										},
-										{
-											"name" : "IdentifierNode: array"
-										}
-									],
-									"name" : "VariableDeclarationNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"children" : 
-											[
-												{
-													"name" : "IntNode:1"
-												},
-												{
-													"children" : 
-													[
-														{
-															"name" : "IntNode:5"
-														},
-														{
-															"name" : "IntNode:6"
-														}
-													],
-													"name" : "*"
-												}
-											],
-											"name" : "+"
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"children" : 
-											[
-												{
-													"children" : 
-													[
-														{
-															"name" : "IdentifierNode: array"
-														},
-														{
-															"name" : "IntNode:4"
-														}
-													],
-													"name" : "[]"
-												},
-												{
-													"name" : "IntNode:2"
-												}
-											],
-											"name" : "ArrayAssignmentNode ="
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
 								{
 									"children" : 
 									[
@@ -170,13 +65,55 @@
 													"name" : "IdentifierNode: x"
 												},
 												{
-													"name" : "IdentifierNode: a"
+													"name" : "IntNode:6"
 												}
 											],
 											"name" : "AssignmentNode ="
 										}
 									],
 									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IntNode:1"
+														},
+														{
+															"name" : "IntNode:2"
+														}
+													],
+													"name" : "+"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "TypeNode: int"
+														},
+														{
+															"name" : "IdentifierNode: c"
+														}
+													],
+													"name" : "VariableDeclarationNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "WhileStatementNode"
 								}
 							],
 							"name" : "StatementsBlock"

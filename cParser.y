@@ -523,7 +523,7 @@ expressionStatement :
 loopStatement : /* for, while, do-while */
         FOR '(' expressionStatement expressionStatement expression ')' statement { /* 不允许 for(int i;i<10;i++) 这样 */
             $5 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($5));
-            $$ = new ForStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<ExpressionStatementNode *>($4), dynamic_cast<ExpressionStatementNode *>($5), dynamic_cast<StatementNodesBlock *>($6));
+            $$ = new ForStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<ExpressionStatementNode *>($4), dynamic_cast<ExpressionStatementNode *>($5), dynamic_cast<StatementNodesBlock *>($7));
         }
     |   WHILE '(' expression ')' statement {
             $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
