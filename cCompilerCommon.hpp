@@ -851,7 +851,8 @@ public:
         }
         FunctionType* functionType = llvm::FunctionType::get(ret, argTypes, false);
         Function* function = llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage, id->getVariableName(), TheModule.get());
-
+        BasicBlock* basicBlock =  BasicBlock::Create(TheContext, "func_entry", function, nullptr);
+        /* TODO:1*/
         return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
@@ -1399,12 +1400,7 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        /*
-        TODO:
-        */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "Not supported yet");
+        
     }
 
     // merge another global declaration statements block
