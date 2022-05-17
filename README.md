@@ -1,16 +1,50 @@
 # mini_compiler
-Final project for the course named Compilers Principle in Zhejiang University
 
-编译方法：
-```
-yacc -d cParser.y -o cParser.cpp
-flex -o cScanner.cpp cScanner.l
-cc cScanner.cpp cParser.cpp cCompilerCommon.cpp main.cpp -o compiler -lm -lstdc++
-```
-使用方法（例）：
-```
-./compiler < ./test/ast/test1.c > parsetree.txt
+Final project for the course  “Compilers Principle” in Zhejiang University.
 
-pytm-cli -i A_tree.json -o demo.html
+We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch, it follows the grammar of standard C language.
 
+## 0.Environment
+
+* Ubuntu 20.04
+* llvm 10.0.0
+* flex 2.6.4
+* 3.5.1
+* libjsoncpp-dev 1.7.4-3.1ubuntu2
+
+## 1. Installation
+
+```shell
+sudo apt-get install flex bison
+sudo apt-get install llvm 
+sudo apt-get install ibjsoncpp-dev flex bison
 ```
+
+## 2. How to Build the ZJUCMM Compiler
+
+```shell
+mkdir build
+cd build
+cmake ..
+make
+```
+You can also run the script `./build.sh` to build the compiler.  
+## 3. How to Use：
+
+* write your C code in ${code_path}, assume 
+
+* compile your code and generate json file for AST
+
+  assume ${code_path} is ./test/ast/test1.c 
+
+  ```
+  ./build/zjucmm < ./test/ast/test1.c 
+  ```
+
+* visualization the AST in a HTML file
+
+  ```shell
+  pytm-cli -i A_tree.json -o demo.html
+  ```
+
+  

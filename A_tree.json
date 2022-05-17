@@ -101,28 +101,25 @@
 											"children" : 
 											[
 												{
-													"name" : "IdentifierNode"
+													"children" : 
+													[
+														{
+															"name" : "IntNode:1"
+														},
+														{
+															"name" : "IntNode:5"
+														}
+													],
+													"name" : "*"
 												},
 												{
-													"name" : "IntNode:1"
+													"name" : "DoubleNode:1.500000"
 												}
 											],
-											"name" : "AssignmentNode ="
+											"name" : "*"
 										}
 									],
 									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"name" : "TypeNode"
-										},
-										{
-											"name" : "IdentifierNode"
-										}
-									],
-									"name" : "VariableDeclarationNode"
 								}
 							],
 							"name" : "StatementsBlock"

@@ -402,7 +402,7 @@ std::string type_to_string(symAttribute *t){
 std::string Node::getSymbolName()const{
     return this->mSymbolName;
 }
-std::string Node::getTokenValue(){
+std::string Node::getTokenValue()const{
     if(!(this->mIsTerminal)){
         return getSymbolName();
     }
