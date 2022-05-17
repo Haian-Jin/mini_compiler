@@ -42,6 +42,7 @@ static void error_functionReturnsArray();
     VarDeclarationList* varDeclarationListPtr;
     StatementNodesBlock* statementNodesBlockPtr;
     GlobalDeclaraionNode * globalDeclaraionNodePtr;
+    std::vector<VarDeclarationList*> * structMemberListPtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -50,13 +51,13 @@ static void error_functionReturnsArray();
 
 
 
-%type<identifierNodeListPtr> initializations 
+%type<identifierNodeListPtr> initializations structMembers
 %type<identifierNodePtr> initialization IDENTIFIER  typeName type
-%type<varDeclarationListPtr> paramTypes
-%type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement
+%type<varDeclarationListPtr> paramTypes 
+%type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement structMemberDeclarations structMemberDeclaration
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 %type<globalDeclaraionNodePtr> cCode0 cCode 
-%type<nodePtr> structTypeName structMemberDeclarations structMemberDeclaration structMembers  pointerSpecifier 
+%type<nodePtr> structTypeName pointerSpecifier 
 %type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration localDeclarations 
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
@@ -124,7 +125,7 @@ declaration :
 
         }
     // TODO
-    /* |   STRUCT IDENTIFIER { // 定义结构体
+     |   STRUCT IDENTIFIER { // 定义结构体
             // 取得结构体名之后，即使为该结构体构建符号表
             $2->setType(Node::TYPE_STRUCT);
             $2->setKind(Node::KIND_ATTRIBUTE);
@@ -133,10 +134,12 @@ declaration :
             symbolTableStack->insert(new Attribute($2));
             symbolTableStack->push(new SymbolTable($2->getStructTypeName()));
         } '{' structMemberDeclarations '}' ';' { 
-            $$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
+            //$$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
+            $$ = new StructDeclarationNode(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($5));
+            // $$->createStructDeclaration(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($5));
             symbolTableStack->pop();
         }
-    |   type initializations error  {
+    /* |   type initializations error  {
             error_missingSemicolon(); 
         } */
     ;
@@ -210,17 +213,19 @@ structTypeName :
 /* 定义结构体的成员变量。这个和 declarations 的不同在于，这里不能定义函数，也不能做初始化。 */
 structMemberDeclarations :
         structMemberDeclaration {
-            $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 1, $1);
+            // $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 1, $1);
+            $$ = $1;
         }
     |   structMemberDeclarations structMemberDeclaration {
             $$ = $1;
-            $$->addChild($2);
+            $$->mergeStatements($2);
         }
     ;
 
 structMemberDeclaration :
         type structMembers ';' {
-            $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 3, $1, $2, $3);
+            // $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 3, $1, $2, $3);
+            $$ = new StatementNodesBlock();
             for(int i=0;i<$2->getChildrenNumber();i++){
                 $2->getChildrenById(i)->setType($1);
             }
@@ -228,19 +233,25 @@ structMemberDeclaration :
                 if($2->getChildrenById(i)->isTerminal() && $2->getChildrenById(i)->getTokenValue().compare(",")==0) continue;
                 if(symbolTableStack->insert(new Attribute($2->getChildrenById(i))) == false){
                     error_duplicatedVariable($2->getChildrenById(i));
+                }else{
+
                 }
             }
+            $$->createMultiVarDeclaration($1,$2);
         }
     ;
 
 structMembers : /* 注：结构体的成员变量不能做初始化 */
         variable {
-            $$ = new Node(nameCounter.getNumberedName("structMembers"), 1, $1);
+            // $$ = new Node(nameCounter.getNumberedName("structMembers"), 1, $1);
+            $$ = new IdentifierNodeList();
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($1));
         }
     |   structMembers ',' variable {
             $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
+            // $$->addChild($2);
+            // $$->addChild($3);
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($3));
         }
     ;
 
@@ -293,20 +304,20 @@ pointerSpecifier :
 variableName :
         IDENTIFIER { /* 一个普通的变量 */
             $$ = $1;
+            $$ = new IdentifierNode($1->getTokenValue(), false);
+            $$->setKind(Node::KIND_VARIABLE);
         }
     |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
+            // $$ = new IdentifierNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
                 error_illegalArraySize($3);
             }else{
-                $$->setKind(Node::KIND_VARIABLE);
-                $$->setVariableName($1->getVariableName());
-                std::vector<int> sizes = $1->getArraySizes();
+                $$ = $1;
+                auto arraySizes = $$->getArraySizes();
                 int newSize;
                 sscanf($3->getTokenValue().c_str(),"%d",&newSize);
-                sizes.push_back(newSize);
-                $$->setArraySizes(sizes);
-                $$->setPosition($1);
+                arraySizes.push_back(newSize);
+                $$->setArraySizes(arraySizes);
             }
         }
     |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
@@ -599,9 +610,11 @@ assignmentExpression :
             if(dynamic_cast<IdentifierNode*>($1)!=NULL)
                 $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
             else if(dynamic_cast<ArrayIndexNode*>($1)!=NULL){
-                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));
-            }else{
+                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));// here??
+            }else if(dynamic_cast<StructMemberNode*>($1)!=NULL){
                 $$ = new StructMemberAssignmentNode(dynamic_cast<StructMemberNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            }else{
+                std::cout<<"Some thing wrong at line "<<csLineCnt<<std::endl;
             }
             /* if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
                 if (!(checkKind($1, Node::KIND_VARIABLE))) {
@@ -1138,6 +1151,12 @@ paramList :
 atomicExpression :
         IDENTIFIER {
             $$ = $1;
+            $$ = new IdentifierNode($1->getTokenValue(), false);
+            if(symbolTableStack->lookUp($1->getTokenValue())==NULL){
+                error_variableNotDeclared($1->getTokenValue());
+            }else{
+                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()));
+            }
             $$->setPosition(csLineCnt, csColumnCnt);
 
         }
