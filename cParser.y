@@ -43,6 +43,7 @@ static void error_functionReturnsArray();
     StatementNodesBlock* statementNodesBlockPtr;
     GlobalDeclaraionNode * globalDeclaraionNodePtr;
     std::vector<VarDeclarationList*> * structMemberListPtr;
+    std::vector<ExpressionNode*> * ExpressionNodeListPtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -62,9 +63,9 @@ static void error_functionReturnsArray();
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
-%type<nodePtr> paramList atomicExpression relationComparisonExpression
+%type<nodePtr> atomicExpression relationComparisonExpression
 %type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
-
+%type<ExpressionNodeListPtr> paramList 
 
 
 
@@ -1094,7 +1095,10 @@ postfixUnaryExpression :
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             $$ = new FunctionCallNode({"()"}, 2, $1, $3);
             $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_FUNCTION))){
+            for(auto i : *$3){
+                dynamic_cast<FunctionCallNode *>($$)->addArgument(i);
+            }
+            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$2);
             }else{
                 std::vector<Node::Type> argList;
@@ -1118,18 +1122,18 @@ postfixUnaryExpression :
                         error_argumentTypeNotMatch(argList,$1,argListStructName);
                     }
                 }
-            }
+            }*/
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
             $$ = new FunctionCallNode({"()"}, 1, $1);
             $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_FUNCTION))){
+            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$$);
             }else {
                 if($1->getArgList().size()!=0){
                     error_argumentNumberNotMatch($1,0);
                 }
-            }
+            }*/
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
@@ -1152,12 +1156,15 @@ postfixUnaryExpression :
 
 paramList :
         assignmentExpression {
-            $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
+            // $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
+            $$ = new std::vector<ExpressionNode*>();
+            $$->push_back(dynamic_cast<ExpressionNode*>($1));
         }
     |   paramList ',' assignmentExpression {/* 这里面不能填 expression，因为 expression 也是用逗号隔开的一串表达式 */
             $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
+            //$$->addChild($2);
+            //$$->addChild($3);
+            $$->push_back(dynamic_cast<ExpressionNode*>($3));
         }
     ;
 
