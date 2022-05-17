@@ -348,22 +348,28 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        Value *value = variableTable[this->getVariableName()];
-        if (!value) {
-            return LogErrorV(this->getVariableName() + " is not defined\n");
-        }
-        if (value->getType()->isPointerTy()) {
-            auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
-            if (arrayPtr->getType()->isArrayTy()) {
-                std::vector<Value *> indices;
-                indices.push_back(ConstantInt::get(
-                    llvm::Type::getInt32Ty(TheContext), 0, false));
-                auto ptr =
-                    Builder.CreateInBoundsGEP(value, indices, "arrayPtr");
-                return ptr;
+        if (!isType()) {
+            Value *value = variableTable[this->getVariableName()];
+            if (!value) {
+                return LogErrorV(this->getVariableName() + " is not defined\n");
             }
+            if (value->getType()->isPointerTy()) {
+                auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
+                if (arrayPtr->getType()->isArrayTy()) {
+                    std::vector<Value *> indices;
+                    indices.push_back(ConstantInt::get(
+                        llvm::Type::getInt32Ty(TheContext), 0, false));
+                    auto ptr =
+                        Builder.CreateInBoundsGEP(value, indices, "arrayPtr");
+                    return ptr;
+                }
+            }
+            return Builder.CreateLoad(value, false, "");
+        } else {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "Keywords can\'t be used as identifier's name");
         }
-        return Builder.CreateLoad(value, false, "");
     }
 };
 
@@ -420,9 +426,30 @@ public:
         return root;
     }
 
-    /* TODO */
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        if (!type->isType()) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "This type is not supported");
+        }
+        std::string ty = type->getSymbolName();
+        Value* res;
+        if (ty == "int" || ty == "char") {
+            res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
+        } else if (ty == "float" || ty == "double") {
+            res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
+        } else {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "This type is not supported");
+        }
+        variableTable[this->id->getVariableName()] = res;
+
+        if(this->assignmentExpr != nullptr) {
+            this->assignmentExpr->codeGen();
+        }
+        return res;
+    }
 };
 
 // store all the variable declaration, this is used for function declaration and
@@ -443,8 +470,11 @@ public:
         }
         return root;
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    
+    virtual Value* codeGen() {
+        
+    }
+
 };
 
 // store all statements nodes of the same block
@@ -929,9 +959,9 @@ public:
                              std::to_string(this->getColumnNumber()) + " " +
                              "undeclared variable");
         auto type_l = dst->getType()->getTypeID();
-        Value * R = mRightHandSide->codeGen();
+        Value *R = mRightHandSide->codeGen();
         auto type_r = R->getType()->getTypeID();
-        if (type_r==type_l) {
+        if (type_r == type_l) {
             Builder.CreateStore(R, dst);
             return R;
         } else if (type_r == llvm::Type::DoubleTyID) {
@@ -943,7 +973,6 @@ public:
             Builder.CreateStore(R, dst);
             return R;
         }
-
     }
 
 private:
