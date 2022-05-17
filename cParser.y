@@ -476,7 +476,7 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
             $$ = $1;
         }
     
-        |   expressionStatement { // 表达式，也是最常见的语句
+    |   expressionStatement { // 表达式，也是最常见的语句
             $$ = new StatementNodesBlock();
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
@@ -487,16 +487,17 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
     // 暂时不做
-    /* |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
+     |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
             // 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 
             // 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
+            // $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
+            $$ = $2;
             symbolTableStack->pop();
-        }     */
-    |   branchStatement {
+        }     
+    /*|   branchStatement {
             $$ = new StatementNodesBlock();
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
-        }
+        }*/
     /*
     |   jumpStatement {
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
