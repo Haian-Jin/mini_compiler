@@ -332,12 +332,54 @@ paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参�
     ;
 
 paramTypeName :
+    /*
+        type {   // int (*f)(double,char); 不实现这一条，太复杂 
+            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 1, $1);
+        }
+    |   type variableWithNoName { // 无名字的指针变量。不实现这一条，天复杂 
+            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
+        }
+    |   */
         type variable {      // 这一条是要正常实现的，定义函数用的 
             $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
+
         }
     ;
 
+/* 不用管这个，都不实现的。 */
+variableWithNoName :        /* !! 如果要阅读这个的话，请和 variable 相关的产生式一起阅读 !!*/
+        pointerSpecifier {       /* 不实现指针 */
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
+        }
+    |   variableWithNoNameCore { 
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
+        }
+    ;
 
+/* 不用管这个，都不实现的。 */
+variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
+        variableWithNoNameCore '[' INT_NUMBER ']' {
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
+        }
+    |   '(' variableWithNoName ')' {
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
+        }
+    |   variableWithNoNameCore '(' ')' {  /* a function taking another function as param... */
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
+        }
+    |   variableWithNoNameCore '(' paramTypes ')' { /* a function taking another function as param... */
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
+        }
+    |   '[' ']' {            /* because it has no name, it must stop some way. Below is some terminators */
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
+        }
+    |   '(' ')' {
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
+        }
+    |   '(' paramTypes ')' { /* a function taking another function as param... */
+            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
+        }
+    ;
 
 /* 初始值，如果要在定义的时候初始化的话，initialValue 就是跟在 = 后面的部分。有时间的话就实现一下初始值，没时间就算了。 */
 initialValue :
@@ -554,8 +596,13 @@ assignmentExpression :
             $$ = $1;
         }
     |   unaryExpression '=' assignmentExpression {
-            $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
-
+            if(dynamic_cast<IdentifierNode*>($1)!=NULL)
+                $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            else if(dynamic_cast<ArrayIndexNode*>($1)!=NULL){
+                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            }else{
+                $$ = new StructMemberAssignmentNode(dynamic_cast<StructMemberNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            }
             /* if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
                 if (!(checkKind($1, Node::KIND_VARIABLE))) {
                     printf("hhhhh");
@@ -997,6 +1044,23 @@ postfixUnaryExpression :
                 auto arraySizes = $$->getArraySizes();
                 arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
                 $$->setArraySizes(arraySizes);
+                Node *p = $$;
+                std::vector<ExpressionNode*> indexList;
+                int dontDead = 0;
+                while(dynamic_cast<IdentifierNode*>(p)==NULL){
+                    dontDead++;
+                    indexList.push_back(dynamic_cast<ExpressionNode*>(p->getChildrenById(1)));
+                    p = p->getChildrenById(0);
+                    if(dontDead>=100){
+                        throw("dead loop");
+                    }
+                }
+                for(int i=0;i<indexList.size()/2;i++){
+                    auto t = indexList[i];
+                    indexList[i] = indexList[indexList.size()-i-1];
+                    indexList[indexList.size()-i-1] = t;
+                }
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(p), indexList);
             }
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
@@ -1040,8 +1104,18 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
-            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
             $$->setPosition($2);
+            if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)) || $1->isArray())
+                error_expressionTypeError($1,$2);
+            else {
+                auto symbolTable = SymbolTable::getSymbolTableByName($1->getStructTypeName());
+            
+                if(symbolTable->lookUp($3->getTokenValue()) == NULL)
+                    error_variableNotDeclaredInStruct($1,$3);
+                
+                $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
+            }
         }
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();

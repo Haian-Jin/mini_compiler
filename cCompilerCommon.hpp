@@ -727,6 +727,184 @@ private:
     ExpressionNode *mHandSide;
 };
 
+class ArrayIndexNode : public ExpressionNode{
+public:
+    ArrayIndexNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node *));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        //mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+        //mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
+        op = _symbolName;
+        //if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
+    }
+    
+    ArrayIndexNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    
+    ArrayIndexNode(std::string opType, ExpressionNode *lhs, std::vector<ExpressionNode*> rhs, bool isArithmetic=false):ExpressionNode() {
+        assert(lhs != nullptr);
+        //assert(rhs != nullptr);
+        assert(opType != "");
+        this->setType(Node::TYPE_INT);
+        // this->setKind() HERE
+        mArrayName = dynamic_cast<IdentifierNode*>(lhs);
+        mArrayIndexs = rhs;
+        op = opType;
+        if (isArithmetic) // + - * / %
+        {
+            /*if(lhs->getType()==Node::TYPE_DOUBLE || rhs->getType()==Node::TYPE_DOUBLE){
+                this->setType(Node::TYPE_DOUBLE);
+            }*/
+        }else{
+            if(lhs->getType()==Node::TYPE_DOUBLE){
+                this->setType(Node::TYPE_DOUBLE);
+            }else{
+                this->setType(Node::TYPE_INT);
+            }
+        }
+    }
+    
+    virtual std::string getNodeTypeName() const{
+        return op;
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mArrayName->jsonGen());
+        for(auto i:mArrayIndexs){
+            root["children"].append(i->jsonGen());
+        }
+        return root;
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+private:
+    std::string op;
+    //ExpressionNode *mLeftHandSide, *mRightHandSide;
+    IdentifierNode *mArrayName;
+    std::vector<ExpressionNode*> mArrayIndexs;
+};
+
+
+class ArrayAssignmentNode : public ExpressionNode{
+public:
+
+    virtual std::string getNodeTypeName() const{
+        return std::string("ArrayAssignmentNode ")+("=");
+    }
+
+    ArrayAssignmentNode(ArrayIndexNode *lhs, ExpressionNode *rhs):ExpressionNode("=",0){
+        assert (lhs != nullptr);
+        assert (rhs != nullptr);
+        mLeftHandSide = lhs;
+        mRightHandSide = rhs;
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mLeftHandSide->jsonGen());
+        root["children"].append(mRightHandSide->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+private:
+    std::string op;
+    ArrayIndexNode *mLeftHandSide;
+    ExpressionNode *mRightHandSide;
+};
+
+
+class StructMemberNode : public ExpressionNode{
+public:
+    StructMemberNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for(int i=0;i<childrenNumber;i++){
+            mChildren.push_back(va_arg(vl,Node *));
+        }
+        mIsNegligible=(false),mSymbolName=(_symbolName),mIsTerminal=(false),mTokenValue=("I am not a terminal.");
+        //mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+        //mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
+        op = _symbolName;
+        //if(mLeftHandSide==NULL || mRightHandSide==NULL)throw("castfail");
+    }
+    
+    StructMemberNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    
+    StructMemberNode(std::string opType, IdentifierNode *lhs, IdentifierNode *rhs, bool isArithmetic=false):ExpressionNode() {
+        assert(lhs != nullptr);
+        assert(rhs != nullptr);
+        assert(opType != "");
+        this->setType(Node::TYPE_INT);
+        // this->setKind() HERE
+        mVariableName = lhs;
+        mMemberName = rhs;
+        op = opType;
+        if (isArithmetic) // + - * / %
+        {
+            if(lhs->getType()==Node::TYPE_DOUBLE || rhs->getType()==Node::TYPE_DOUBLE){
+                this->setType(Node::TYPE_DOUBLE);
+            }
+        }else{
+            
+        }
+    }
+    
+    virtual std::string getNodeTypeName() const{
+        return op;
+    }
+
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mVariableName->jsonGen());
+        root["children"].append(mMemberName->jsonGen());
+
+        return root;
+    }
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    ExpressionNode *getL(){
+        return mVariableName;
+    }
+    ExpressionNode *getR(){
+        return mMemberName;
+    }
+private:
+    std::string op;
+    IdentifierNode *mVariableName, *mMemberName;
+};
+
+class StructMemberAssignmentNode : public ExpressionNode{
+public:
+
+    virtual std::string getNodeTypeName() const{
+        return std::string("ArrayAssignmentNode ")+("=");
+    }
+
+    StructMemberAssignmentNode(StructMemberNode *lhs, ExpressionNode *rhs):ExpressionNode("=",0){
+        assert (lhs != nullptr);
+        assert (rhs != nullptr);
+        mLeftHandSide = lhs;
+        mRightHandSide = rhs;
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mLeftHandSide->jsonGen());
+        root["children"].append(mRightHandSide->jsonGen());
+        return root;
+    }
+
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+private:
+    std::string op;
+    StructMemberNode *mLeftHandSide;
+    ExpressionNode *mRightHandSide;
+};
 class BinaryOperatorNode : public ExpressionNode{
 public:
     BinaryOperatorNode(std::string _symbolName, int childrenNumber, ...):ExpressionNode(_symbolName,0){
@@ -779,6 +957,12 @@ public:
         return root;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    ExpressionNode *getL(){
+        return mLeftHandSide;
+    }
+    ExpressionNode *getR(){
+        return mRightHandSide;
+    }
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide;
