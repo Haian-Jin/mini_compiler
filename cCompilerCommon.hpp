@@ -1,5 +1,6 @@
 #pragma once
 #include <json/json.h>
+//#include "/usr/local/llvm/include/llvm/IR/Value.h"
 #include <llvm/IR/Value.h>
 #include<math.h>
 #include<string>
@@ -306,7 +307,6 @@ public:
     bool isArray() const{ 
         return Node::isArray();
     }
-
     virtual std::string getNodeTypeName() const{
         if (isType()) {
             return std::string("TypeNode: ")+getTokenValue();
@@ -805,7 +805,7 @@ public:
         return root;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
-private:
+public:
     std::string op;
     //ExpressionNode *mLeftHandSide, *mRightHandSide;
     IdentifierNode *mArrayName;
