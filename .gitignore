@@ -9,3 +9,4 @@ parsetree.txt
 test.cpp
 test.exe
 build/*
+.gitignore

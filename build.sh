@@ -3,6 +3,7 @@ if [ ! -d "./build" ]; then
 fi
 
 cd build
+rm -rf ./*
 cmake ..
 make && echo "Build Successful, file in ./build/zjucmm"
 cd ..
