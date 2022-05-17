@@ -592,15 +592,15 @@ static const yytype_int16 yyrline[] =
        0,    81,    81,    87,    90,   100,   103,   121,   145,   146,
      147,   151,   155,   156,   160,   164,   168,   172,   184,   184,
      198,   212,   215,   222,   237,   240,   250,   254,   261,   264,
-     271,   274,   281,   284,   287,   290,   296,   299,   314,   317,
-     320,   326,   330,   345,   388,   391,   398,   401,   410,   417,
-     421,   451,   454,   461,   465,   493,   496,   499,   579,   597,
-     600,   664,   667,   685,   688,   703,   706,   721,   724,   739,
-     742,   757,   760,   775,   778,   791,   806,   809,   822,   835,
-     848,   866,   869,   877,   890,   893,   902,   916,   919,   928,
-     937,   952,   961,   964,   970,   978,   986,   994,  1002,  1012,
-    1015,  1023,  1031,  1046,  1075,  1086,  1090,  1096,  1099,  1109,
-    1114,  1118,  1122,  1126
+     269,   272,   279,   282,   285,   288,   294,   297,   312,   315,
+     318,   324,   328,   335,   344,   347,   354,   357,   366,   373,
+     377,   407,   410,   417,   421,   449,   452,   455,   535,   553,
+     556,   620,   623,   641,   644,   659,   662,   677,   680,   695,
+     698,   713,   716,   731,   734,   747,   762,   765,   778,   791,
+     804,   822,   825,   833,   846,   849,   858,   872,   875,   884,
+     893,   908,   917,   920,   926,   934,   942,   950,   958,   968,
+     971,   979,   987,  1002,  1031,  1042,  1046,  1052,  1055,  1065,
+    1070,  1074,  1078,  1082
 };
 #endif
 
@@ -1801,71 +1801,69 @@ yyreduce:
 
   case 29:
 #line 264 "cParser.y"
-                                  {   /* int a=10; 有初始值, 暂不实现 */
-            /* $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
-            $$->copyFromChild(); */
+                                  {   /* int a=10; 有初始值 暂时不实现 */
         }
-#line 1809 "cParser.cpp"
+#line 1807 "cParser.cpp"
     break;
 
   case 30:
-#line 271 "cParser.y"
+#line 269 "cParser.y"
                                       {  /* int *a; 指针变量，这里不打算实现。 */
            // $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
         }
-#line 1817 "cParser.cpp"
+#line 1815 "cParser.cpp"
     break;
 
   case 31:
-#line 274 "cParser.y"
+#line 272 "cParser.y"
                      { /* 不是指针的变量 */
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 1825 "cParser.cpp"
+#line 1823 "cParser.cpp"
     break;
 
   case 32:
-#line 281 "cParser.y"
+#line 279 "cParser.y"
             { /* a simple pointer */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 1, (yyvsp[0].nodePtr));
         }
-#line 1833 "cParser.cpp"
+#line 1831 "cParser.cpp"
     break;
 
   case 33:
-#line 284 "cParser.y"
+#line 282 "cParser.y"
                              { /* a pointer to another pointer variable */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1841 "cParser.cpp"
+#line 1839 "cParser.cpp"
     break;
 
   case 34:
-#line 287 "cParser.y"
+#line 285 "cParser.y"
                   { /* a pointer to a const variable */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1849 "cParser.cpp"
+#line 1847 "cParser.cpp"
     break;
 
   case 35:
-#line 290 "cParser.y"
+#line 288 "cParser.y"
                                    { /* a pointer to another pointer which is a pointer to a const value */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("pointerSpecifier"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1857 "cParser.cpp"
+#line 1855 "cParser.cpp"
     break;
 
   case 36:
-#line 296 "cParser.y"
+#line 294 "cParser.y"
                    { /* 一个普通的变量 */
             (yyval.nodePtr) = (yyvsp[0].identifierNodePtr);
         }
-#line 1865 "cParser.cpp"
+#line 1863 "cParser.cpp"
     break;
 
   case 37:
-#line 299 "cParser.y"
+#line 297 "cParser.y"
                                         {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("variableName"), 4, (yyvsp[-3].nodePtr), (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
             if(!(checkType((yyvsp[-1].nodePtr),Node::TYPE_INT) && checkKind((yyvsp[-1].nodePtr),Node::KIND_CONSTANT))){
@@ -1881,195 +1879,194 @@ yyreduce:
                 (yyval.nodePtr)->setPosition((yyvsp[-3].nodePtr));
             }
         }
-#line 1885 "cParser.cpp"
+#line 1883 "cParser.cpp"
     break;
 
   case 38:
-#line 314 "cParser.y"
+#line 312 "cParser.y"
                          {              /* 这一条弃之不用，太复杂了 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("variableName"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1893 "cParser.cpp"
+#line 1891 "cParser.cpp"
     break;
 
   case 39:
-#line 317 "cParser.y"
+#line 315 "cParser.y"
                              {           /* 函数定义 */
            (yyval.nodePtr) = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>((yyvsp[-2].nodePtr)), nullptr);
         }
-#line 1901 "cParser.cpp"
+#line 1899 "cParser.cpp"
     break;
 
   case 40:
-#line 320 "cParser.y"
+#line 318 "cParser.y"
                                         {    /* 函数定义 */
             (yyval.nodePtr) = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>((yyvsp[-3].nodePtr)), dynamic_cast<VarDeclarationList *>((yyvsp[-1].varDeclarationListPtr)));
         }
-#line 1909 "cParser.cpp"
+#line 1907 "cParser.cpp"
     break;
 
   case 41:
-#line 326 "cParser.y"
+#line 324 "cParser.y"
                       {
             (yyval.varDeclarationListPtr) = new VarDeclarationList();
             (yyval.varDeclarationListPtr)->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>((yyvsp[0].nodePtr)));
         }
-#line 1918 "cParser.cpp"
+#line 1916 "cParser.cpp"
     break;
 
   case 42:
-#line 330 "cParser.y"
+#line 328 "cParser.y"
                                      {
             (yyval.varDeclarationListPtr) = (yyvsp[-2].varDeclarationListPtr);
             (yyval.varDeclarationListPtr)->mVarDeclarationList.push_back(dynamic_cast<VariableDeclarationNode *>((yyvsp[0].nodePtr)));
         }
-#line 1927 "cParser.cpp"
+#line 1925 "cParser.cpp"
     break;
 
   case 43:
-#line 345 "cParser.y"
+#line 335 "cParser.y"
                       {      // 这一条是要正常实现的，定义函数用的 
             (yyval.nodePtr) = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>((yyvsp[-1].identifierNodePtr)), dynamic_cast<IdentifierNode *>((yyvsp[0].nodePtr)));
-
         }
-#line 1936 "cParser.cpp"
+#line 1933 "cParser.cpp"
     break;
 
   case 44:
-#line 388 "cParser.y"
+#line 344 "cParser.y"
                               {          /* int a[10]={1}; 初始化列表 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValue"), 3, (yyvsp[-2].nodePtr), (yyvsp[-1].nodePtr), (yyvsp[0].nodePtr));
         }
-#line 1944 "cParser.cpp"
+#line 1941 "cParser.cpp"
     break;
 
   case 45:
-#line 391 "cParser.y"
+#line 347 "cParser.y"
                              {          /* int a=5+6; int b=a=3; 普通的初始值 */
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValue"), 1, (yyvsp[0].nodePtr));
     }
-#line 1952 "cParser.cpp"
+#line 1949 "cParser.cpp"
     break;
 
   case 46:
-#line 398 "cParser.y"
+#line 354 "cParser.y"
                      {
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("initialValues"), 1, (yyvsp[0].nodePtr));
         }
-#line 1960 "cParser.cpp"
+#line 1957 "cParser.cpp"
     break;
 
   case 47:
-#line 401 "cParser.y"
+#line 357 "cParser.y"
                                        { /* int a[10]={1,2,3} */
             (yyval.nodePtr) = (yyvsp[-2].nodePtr);
             (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 1970 "cParser.cpp"
+#line 1967 "cParser.cpp"
     break;
 
   case 48:
-#line 410 "cParser.y"
+#line 366 "cParser.y"
                                       {
             (yyval.nodePtr) = new FunctionDeclarationNode(dynamic_cast<IdentifierNode *>((yyvsp[-2].identifierNodePtr)), dynamic_cast<FuncNameAndArgsNode *>((yyvsp[-1].nodePtr)), dynamic_cast<StatementNodesBlock*>((yyvsp[0].statementNodesBlockPtr)));
         }
-#line 1978 "cParser.cpp"
+#line 1975 "cParser.cpp"
     break;
 
   case 49:
-#line 417 "cParser.y"
+#line 373 "cParser.y"
                 { /* 可以 {} 这样而不必 {;} 这样 */
             (yyval.statementNodesBlockPtr) = new StatementNodesBlock();
             (yyval.statementNodesBlockPtr)->addStatementNode(dynamic_cast<StatementNode *>(new NullStatementNode()));
         }
-#line 1987 "cParser.cpp"
+#line 1984 "cParser.cpp"
     break;
 
   case 50:
-#line 421 "cParser.y"
+#line 377 "cParser.y"
                            {
             (yyval.statementNodesBlockPtr) = (yyvsp[-1].statementNodesBlockPtr);
         }
-#line 1995 "cParser.cpp"
+#line 1992 "cParser.cpp"
     break;
 
   case 51:
-#line 451 "cParser.y"
+#line 407 "cParser.y"
                   {
             (yyval.statementNodesBlockPtr) = (yyvsp[0].statementNodesBlockPtr);
         }
-#line 2003 "cParser.cpp"
+#line 2000 "cParser.cpp"
     break;
 
   case 52:
-#line 454 "cParser.y"
+#line 410 "cParser.y"
                              {
             (yyval.statementNodesBlockPtr) = (yyvsp[-1].statementNodesBlockPtr);
             (yyval.statementNodesBlockPtr)->mergeStatements(dynamic_cast<StatementNodesBlock *>((yyvsp[0].statementNodesBlockPtr)));
         }
-#line 2012 "cParser.cpp"
+#line 2009 "cParser.cpp"
     break;
 
   case 53:
-#line 461 "cParser.y"
+#line 417 "cParser.y"
                     {
             (yyval.statementNodesBlockPtr) = (yyvsp[0].statementNodesBlockPtr);
         }
-#line 2020 "cParser.cpp"
+#line 2017 "cParser.cpp"
     break;
 
   case 54:
-#line 465 "cParser.y"
+#line 421 "cParser.y"
                                 { // 表达式，也是最常见的语句
             (yyval.statementNodesBlockPtr) = new StatementNodesBlock();
             (yyval.statementNodesBlockPtr)->addStatementNode(dynamic_cast<StatementNode *>((yyvsp[0].nodePtr)));
         }
-#line 2029 "cParser.cpp"
+#line 2026 "cParser.cpp"
     break;
 
   case 55:
-#line 493 "cParser.y"
+#line 449 "cParser.y"
             { /* 注：空语句是一个 expressionStatement */
             (yyval.nodePtr) = new NullStatementNode();
         }
-#line 2037 "cParser.cpp"
+#line 2034 "cParser.cpp"
     break;
 
   case 56:
-#line 496 "cParser.y"
+#line 452 "cParser.y"
                        {
             (yyval.nodePtr) = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>((yyvsp[-1].nodePtr)));
         }
-#line 2045 "cParser.cpp"
+#line 2042 "cParser.cpp"
     break;
 
   case 57:
-#line 499 "cParser.y"
+#line 455 "cParser.y"
                          {
             error_missingSemicolon();
         }
-#line 2053 "cParser.cpp"
+#line 2050 "cParser.cpp"
     break;
 
   case 58:
-#line 579 "cParser.y"
+#line 535 "cParser.y"
                              {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2061 "cParser.cpp"
+#line 2058 "cParser.cpp"
     break;
 
   case 59:
-#line 597 "cParser.y"
+#line 553 "cParser.y"
                                   {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2069 "cParser.cpp"
+#line 2066 "cParser.cpp"
     break;
 
   case 60:
-#line 600 "cParser.y"
+#line 556 "cParser.y"
                                                  {
             (yyval.nodePtr) = new AssignmentNode(dynamic_cast<IdentifierNode*>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode*>((yyvsp[0].nodePtr)));
 
@@ -2084,19 +2081,19 @@ yyreduce:
             }
 
         }
-#line 2088 "cParser.cpp"
+#line 2085 "cParser.cpp"
     break;
 
   case 61:
-#line 664 "cParser.y"
+#line 620 "cParser.y"
                             {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2096 "cParser.cpp"
+#line 2093 "cParser.cpp"
     break;
 
   case 62:
-#line 667 "cParser.y"
+#line 623 "cParser.y"
                                                                          {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
             (yyval.nodePtr) = new TenaryOperatorNode({"?:"}, 3, (yyvsp[-4].nodePtr), (yyvsp[-2].nodePtr), (yyvsp[0].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2110,19 +2107,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-4].nodePtr),(yyval.nodePtr));
             }
         }
-#line 2114 "cParser.cpp"
+#line 2111 "cParser.cpp"
     break;
 
   case 63:
-#line 685 "cParser.y"
+#line 641 "cParser.y"
                              {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2122 "cParser.cpp"
+#line 2119 "cParser.cpp"
     break;
 
   case 64:
-#line 688 "cParser.y"
+#line 644 "cParser.y"
                                                             {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2133,19 +2130,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2137 "cParser.cpp"
+#line 2134 "cParser.cpp"
     break;
 
   case 65:
-#line 703 "cParser.y"
+#line 659 "cParser.y"
                             {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2145 "cParser.cpp"
+#line 2142 "cParser.cpp"
     break;
 
   case 66:
-#line 706 "cParser.y"
+#line 662 "cParser.y"
                                                              {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2156,19 +2153,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2160 "cParser.cpp"
+#line 2157 "cParser.cpp"
     break;
 
   case 67:
-#line 721 "cParser.y"
+#line 677 "cParser.y"
                                      {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2168 "cParser.cpp"
+#line 2165 "cParser.cpp"
     break;
 
   case 68:
-#line 724 "cParser.y"
+#line 680 "cParser.y"
                                                              {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2179,19 +2176,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2183 "cParser.cpp"
+#line 2180 "cParser.cpp"
     break;
 
   case 69:
-#line 739 "cParser.y"
+#line 695 "cParser.y"
                              {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2191 "cParser.cpp"
+#line 2188 "cParser.cpp"
     break;
 
   case 70:
-#line 742 "cParser.y"
+#line 698 "cParser.y"
                                                               {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2202,19 +2199,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2206 "cParser.cpp"
+#line 2203 "cParser.cpp"
     break;
 
   case 71:
-#line 757 "cParser.y"
+#line 713 "cParser.y"
                                      {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2214 "cParser.cpp"
+#line 2211 "cParser.cpp"
     break;
 
   case 72:
-#line 760 "cParser.y"
+#line 716 "cParser.y"
                                                               {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2225,19 +2222,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2229 "cParser.cpp"
+#line 2226 "cParser.cpp"
     break;
 
   case 73:
-#line 775 "cParser.y"
+#line 731 "cParser.y"
                                      {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2237 "cParser.cpp"
+#line 2234 "cParser.cpp"
     break;
 
   case 74:
-#line 778 "cParser.y"
+#line 734 "cParser.y"
                                                                      {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2251,11 +2248,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2255 "cParser.cpp"
+#line 2252 "cParser.cpp"
     break;
 
   case 75:
-#line 791 "cParser.y"
+#line 747 "cParser.y"
                                                                      {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2266,19 +2263,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2270 "cParser.cpp"
+#line 2267 "cParser.cpp"
     break;
 
   case 76:
-#line 806 "cParser.y"
+#line 762 "cParser.y"
                         {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2278 "cParser.cpp"
+#line 2275 "cParser.cpp"
     break;
 
   case 77:
-#line 809 "cParser.y"
+#line 765 "cParser.y"
                                                          {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2292,11 +2289,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2296 "cParser.cpp"
+#line 2293 "cParser.cpp"
     break;
 
   case 78:
-#line 822 "cParser.y"
+#line 778 "cParser.y"
                                                          {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2310,11 +2307,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2314 "cParser.cpp"
+#line 2311 "cParser.cpp"
     break;
 
   case 79:
-#line 835 "cParser.y"
+#line 791 "cParser.y"
                                                         {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2328,11 +2325,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2332 "cParser.cpp"
+#line 2329 "cParser.cpp"
     break;
 
   case 80:
-#line 848 "cParser.y"
+#line 804 "cParser.y"
                                                         {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2346,19 +2343,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2350 "cParser.cpp"
+#line 2347 "cParser.cpp"
     break;
 
   case 81:
-#line 866 "cParser.y"
+#line 822 "cParser.y"
                                 {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2358 "cParser.cpp"
+#line 2355 "cParser.cpp"
     break;
 
   case 82:
-#line 869 "cParser.y"
+#line 825 "cParser.y"
                                                    {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2367,11 +2364,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2371 "cParser.cpp"
+#line 2368 "cParser.cpp"
     break;
 
   case 83:
-#line 877 "cParser.y"
+#line 833 "cParser.y"
                                                     {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)), false);
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2380,19 +2377,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2384 "cParser.cpp"
+#line 2381 "cParser.cpp"
     break;
 
   case 84:
-#line 890 "cParser.y"
+#line 846 "cParser.y"
                                 {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2392 "cParser.cpp"
+#line 2389 "cParser.cpp"
     break;
 
   case 85:
-#line 893 "cParser.y"
+#line 849 "cParser.y"
                                                             {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2402,11 +2399,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2406 "cParser.cpp"
+#line 2403 "cParser.cpp"
     break;
 
   case 86:
-#line 902 "cParser.y"
+#line 858 "cParser.y"
                                                             {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2416,19 +2413,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2420 "cParser.cpp"
+#line 2417 "cParser.cpp"
     break;
 
   case 87:
-#line 916 "cParser.y"
+#line 872 "cParser.y"
                         {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2428 "cParser.cpp"
+#line 2425 "cParser.cpp"
     break;
 
   case 88:
-#line 919 "cParser.y"
+#line 875 "cParser.y"
                                                      {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2438,11 +2435,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2442 "cParser.cpp"
+#line 2439 "cParser.cpp"
     break;
 
   case 89:
-#line 928 "cParser.y"
+#line 884 "cParser.y"
                                                      {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2452,11 +2449,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2456 "cParser.cpp"
+#line 2453 "cParser.cpp"
     break;
 
   case 90:
-#line 937 "cParser.y"
+#line 893 "cParser.y"
                                                      {
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].nodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
@@ -2466,35 +2463,35 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-2].nodePtr),(yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2470 "cParser.cpp"
+#line 2467 "cParser.cpp"
     break;
 
   case 91:
-#line 952 "cParser.y"
+#line 908 "cParser.y"
                        {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2478 "cParser.cpp"
+#line 2475 "cParser.cpp"
     break;
 
   case 92:
-#line 961 "cParser.y"
+#line 917 "cParser.y"
                               {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2486 "cParser.cpp"
+#line 2483 "cParser.cpp"
     break;
 
   case 93:
-#line 964 "cParser.y"
+#line 920 "cParser.y"
                                {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2494 "cParser.cpp"
+#line 2491 "cParser.cpp"
     break;
 
   case 94:
-#line 970 "cParser.y"
+#line 926 "cParser.y"
                                    {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode(std::string("pre")+(yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2503,11 +2500,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2507 "cParser.cpp"
+#line 2504 "cParser.cpp"
     break;
 
   case 95:
-#line 978 "cParser.y"
+#line 934 "cParser.y"
                                    {/* --a, the same as ++a[i] */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode(std::string("pre")+(yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2516,11 +2513,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2520 "cParser.cpp"
+#line 2517 "cParser.cpp"
     break;
 
   case 96:
-#line 986 "cParser.y"
+#line 942 "cParser.y"
                                    {/* logical NOT */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2529,11 +2526,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2533 "cParser.cpp"
+#line 2530 "cParser.cpp"
     break;
 
   case 97:
-#line 994 "cParser.y"
+#line 950 "cParser.y"
                                    {/* bitwise NOT */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2542,11 +2539,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2546 "cParser.cpp"
+#line 2543 "cParser.cpp"
     break;
 
   case 98:
-#line 1002 "cParser.y"
+#line 958 "cParser.y"
                                    {/* negative */
             (yyvsp[-1].nodePtr) = new UnaryOperatorNode((yyvsp[-1].nodePtr)->getName(), 1, (yyvsp[0].nodePtr));
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
@@ -2554,19 +2551,19 @@ yyreduce:
                 error_expressionTypeError((yyvsp[0].nodePtr),(yyvsp[-1].nodePtr));
             }
         }
-#line 2558 "cParser.cpp"
+#line 2555 "cParser.cpp"
     break;
 
   case 99:
-#line 1012 "cParser.y"
+#line 968 "cParser.y"
                          {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
         }
-#line 2566 "cParser.cpp"
+#line 2563 "cParser.cpp"
     break;
 
   case 100:
-#line 1015 "cParser.y"
+#line 971 "cParser.y"
                                    {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
             (yyvsp[0].nodePtr) = new UnaryOperatorNode(std::string("post")+(yyvsp[0].nodePtr)->getName(), 1, (yyvsp[-1].nodePtr));
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
@@ -2575,11 +2572,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2579 "cParser.cpp"
+#line 2576 "cParser.cpp"
     break;
 
   case 101:
-#line 1023 "cParser.y"
+#line 979 "cParser.y"
                                    {/* a-- */
             (yyvsp[0].nodePtr) = new UnaryOperatorNode(std::string("post")+(yyvsp[0].nodePtr)->getName(), 1, (yyvsp[-1].nodePtr));
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
@@ -2588,11 +2585,11 @@ yyreduce:
                 error_expressionTypeError((yyvsp[-1].nodePtr),(yyvsp[0].nodePtr));
             }
         }
-#line 2592 "cParser.cpp"
+#line 2589 "cParser.cpp"
     break;
 
   case 102:
-#line 1031 "cParser.y"
+#line 987 "cParser.y"
                                                             {/* array a[10], corresponding to prefix ++ */
             (yyval.nodePtr) = new BinaryOperatorNode({"[]"}, 2, (yyvsp[-3].nodePtr), (yyvsp[-1].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2608,11 +2605,11 @@ yyreduce:
                 (yyval.nodePtr)->setArraySizes(arraySizes);
             }
         }
-#line 2612 "cParser.cpp"
+#line 2609 "cParser.cpp"
     break;
 
   case 103:
-#line 1046 "cParser.y"
+#line 1002 "cParser.y"
                                                  {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             (yyval.nodePtr) = new FunctionCallNode({"()"}, 2, (yyvsp[-3].nodePtr), (yyvsp[-1].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2642,11 +2639,11 @@ yyreduce:
                 }
             }
         }
-#line 2646 "cParser.cpp"
+#line 2643 "cParser.cpp"
     break;
 
   case 104:
-#line 1075 "cParser.y"
+#line 1031 "cParser.y"
                                                  {/* function with no params. */
             (yyval.nodePtr) = new FunctionCallNode({"()"}, 1, (yyvsp[-2].nodePtr));
             (yyval.nodePtr)->copyFromChild();
@@ -2658,91 +2655,91 @@ yyreduce:
                 }
             }
         }
-#line 2662 "cParser.cpp"
+#line 2659 "cParser.cpp"
     break;
 
   case 105:
-#line 1086 "cParser.y"
+#line 1042 "cParser.y"
                                                  {/* struct's member (a.val) */
             (yyval.nodePtr) = new BinaryOperatorNode((yyvsp[-1].nodePtr)->getTokenValue(), dynamic_cast<ExpressionNode *>((yyvsp[-2].nodePtr)), dynamic_cast<ExpressionNode *>((yyvsp[0].identifierNodePtr)));
             (yyval.nodePtr)->setPosition((yyvsp[-1].nodePtr));
         }
-#line 2671 "cParser.cpp"
+#line 2668 "cParser.cpp"
     break;
 
   case 106:
-#line 1090 "cParser.y"
+#line 1046 "cParser.y"
                                                      {
             error_missingRightBrancket2();
         }
-#line 2679 "cParser.cpp"
+#line 2676 "cParser.cpp"
     break;
 
   case 107:
-#line 1096 "cParser.y"
+#line 1052 "cParser.y"
                              {
             (yyval.nodePtr) = new Node(nameCounter.getNumberedName("paramList"), 1, (yyvsp[0].nodePtr));
         }
-#line 2687 "cParser.cpp"
+#line 2684 "cParser.cpp"
     break;
 
   case 108:
-#line 1099 "cParser.y"
+#line 1055 "cParser.y"
                                            {/* 这里面不能填 expression，因为 expression 也是用逗号隔开的一串表达式 */
             (yyval.nodePtr) = (yyvsp[-2].nodePtr);
             (yyval.nodePtr)->addChild((yyvsp[-1].nodePtr));
             (yyval.nodePtr)->addChild((yyvsp[0].nodePtr));
         }
-#line 2697 "cParser.cpp"
+#line 2694 "cParser.cpp"
     break;
 
   case 109:
-#line 1109 "cParser.y"
+#line 1065 "cParser.y"
                    {
             (yyval.nodePtr) = (yyvsp[0].identifierNodePtr);
             (yyval.nodePtr)->setPosition(csLineCnt, csColumnCnt);
 
         }
-#line 2707 "cParser.cpp"
+#line 2704 "cParser.cpp"
     break;
 
   case 110:
-#line 1114 "cParser.y"
+#line 1070 "cParser.y"
                       {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
             (yyval.nodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 2716 "cParser.cpp"
+#line 2713 "cParser.cpp"
     break;
 
   case 111:
-#line 1118 "cParser.y"
+#line 1074 "cParser.y"
                    {
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
             (yyval.nodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 2725 "cParser.cpp"
+#line 2722 "cParser.cpp"
     break;
 
   case 112:
-#line 1122 "cParser.y"
+#line 1078 "cParser.y"
                { /* 这个就不实现了吧 */
             (yyval.nodePtr) = (yyvsp[0].nodePtr);
             (yyval.nodePtr)->setPosition(csLineCnt, csColumnCnt);
         }
-#line 2734 "cParser.cpp"
+#line 2731 "cParser.cpp"
     break;
 
   case 113:
-#line 1126 "cParser.y"
+#line 1082 "cParser.y"
                            {
             (yyval.nodePtr) = (yyvsp[-1].nodePtr);
         }
-#line 2742 "cParser.cpp"
+#line 2739 "cParser.cpp"
     break;
 
 
-#line 2746 "cParser.cpp"
+#line 2743 "cParser.cpp"
 
       default: break;
     }
@@ -2974,7 +2971,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1132 "cParser.y"
+#line 1088 "cParser.y"
 
 int yyerror(std::string s){
     noError = false;

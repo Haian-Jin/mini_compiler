@@ -123,6 +123,42 @@
 										}
 									],
 									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "DoubleNode:1.000000"
+																},
+																{
+																	"name" : "DoubleNode:5.200000"
+																}
+															],
+															"name" : "+"
+														},
+														{
+															"name" : "IntNode:2"
+														}
+													],
+													"name" : "+"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
 								}
 							],
 							"name" : "StatementsBlock"

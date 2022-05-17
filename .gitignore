@@ -2,10 +2,9 @@ cParser.cpp
 cParser.hpp
 cScanner.cpp
 parsetree.txt
-/.idea
-/.vscode
+/.idea/*
+/.vscode/*
 /cmake-build-debug
-CMakeLists.txt
 compiler
 parsetree.txt
 *.html
