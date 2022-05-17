@@ -708,19 +708,31 @@ public:
         for(int i=0; i < childrenNumber; i++){
             mChildren.push_back(va_arg(vl,Node *));
         }
+        mFunctionName = dynamic_cast<IdentifierNode*>(mChildren[0]);
         mArguments = new std::vector<ExpressionNode *>();
         mIsNegligible = (false), mSymbolName = (_symbolName), mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     }
-    FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
+    FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible),mArguments(new std::vector<ExpressionNode *>()){};
 
-    virtual std::string getNodeTypeName() const{
-        return std::string("FunctionCallNode  ") + (mFunctionName->getName());
-    }
     std::vector<ExpressionNode *> getArguments()const{
         return *mArguments;
     }
     void addArgument(Node *c){
+        assert(dynamic_cast<ExpressionNode *>(c)!=NULL);
         mArguments->push_back(dynamic_cast<ExpressionNode *>(c));
+    }
+    virtual std::string getNodeTypeName() const {
+        return std::string("FunctionNode: ") + mFunctionName->getTokenValue();
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value r;
+        r["name"] = getNodeTypeName();
+        //r["children"].append(mFunctionName->jsonGen());
+        for(auto i : *mArguments){
+            std::cout<<"oo\n";
+            r["children"].append(i->jsonGen());
+        }
+        return r;
     }
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
 private:
