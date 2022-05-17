@@ -1175,6 +1175,7 @@ public:
         root["children"].append(trueBody->jsonGen());
         if(falseBody != nullptr)
             root["children"].append(falseBody->jsonGen());
+        return root;
     }
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}

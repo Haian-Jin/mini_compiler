@@ -17,5 +17,7 @@ int main() {
         int f;
     }
 
-    
+    for ( x = 6; x < 10; x = x+1) {
+        int g;
+    }
 }

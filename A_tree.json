@@ -114,6 +114,186 @@
 										}
 									],
 									"name" : "WhileStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: x"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "TypeNode: int"
+														},
+														{
+															"name" : "IdentifierNode: d"
+														}
+													],
+													"name" : "VariableDeclarationNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "NIfStatement"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: x"
+														},
+														{
+															"name" : "IntNode:5"
+														}
+													],
+													"name" : ">"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "TypeNode: int"
+														},
+														{
+															"name" : "IdentifierNode: e"
+														}
+													],
+													"name" : "VariableDeclarationNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "TypeNode: int"
+														},
+														{
+															"name" : "IdentifierNode: f"
+														}
+													],
+													"name" : "VariableDeclarationNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "NIfStatement"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: x"
+														},
+														{
+															"name" : "IntNode:6"
+														}
+													],
+													"name" : "AssignmentNode ="
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: x"
+														},
+														{
+															"name" : "IntNode:10"
+														}
+													],
+													"name" : "<"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: x"
+														},
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: x"
+																},
+																{
+																	"name" : "IntNode:1"
+																}
+															],
+															"name" : "+"
+														}
+													],
+													"name" : "AssignmentNode ="
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "TypeNode: int"
+														},
+														{
+															"name" : "IdentifierNode: g"
+														}
+													],
+													"name" : "VariableDeclarationNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "ForStatementNode"
 								}
 							],
 							"name" : "StatementsBlock"
