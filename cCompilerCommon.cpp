@@ -149,7 +149,7 @@ std::string Node::getStructTypeName(){
 void Node::setVariableName(std::string _name){
     this->mVariableName = _name;
 }
-std::string Node::getVariableName(){
+std::string Node::getVariableName() const{
     return mVariableName;
 }
 void Node::setPosition(int l, int c) {

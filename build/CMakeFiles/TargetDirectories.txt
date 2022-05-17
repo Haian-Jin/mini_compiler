@@ -1,0 +1,4 @@
+/home/haian/learning/Compiler_Principle/mini_compiler/build/CMakeFiles/edit_cache.dir
+/home/haian/learning/Compiler_Principle/mini_compiler/build/CMakeFiles/rebuild_cache.dir
+/home/haian/learning/Compiler_Principle/mini_compiler/build/CMakeFiles/zjucmm.dir
+/home/haian/learning/Compiler_Principle/mini_compiler/build/CMakeFiles/intrinsics_gen.dir

@@ -261,9 +261,7 @@ initialization :
         variable {                       /* int a; 没有初始值 */
             $$ = dynamic_cast<IdentifierNode*>($1);
         }
-    |   variable '=' initialValue {   /* int a=10; 有初始值, 暂不实现 */
-            /* $$ = new Node(nameCounter.getNumberedName("initialization"), 3, $1, $2, $3);
-            $$->copyFromChild(); */
+    |   variable '=' initialValue {   /* int a=10; 有初始值 暂时不实现 */
         }
     ;
 
@@ -461,10 +459,14 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
         declaration {
             $$ = $1;
         }
-    // TODO
-    /* |   expressionStatement { // 表达式，也是最常见的语句
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+    
+        |   expressionStatement { // 表达式，也是最常见的语句
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
+    
+    // TODO
+    /* 
     |   loopStatement { // 循环
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
@@ -490,7 +492,7 @@ expressionStatement :
             $$ = new NullStatementNode();
         }
     |   expression ';' {
-            $$ = new Node(nameCounter.getNumberedName("expressionStatement"), 2, $1, $2);
+            $$ = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($1));
         }
     |   expression error {
             error_missingSemicolon();
@@ -573,16 +575,18 @@ jumpStatement :
 
 expression : 
         assignmentExpression {
-            $$ = new Node(nameCounter.getNumberedName("expression"), 1, $1);
-            $$->copyFrom($1);
+            $$ = $1;
         }
+    // 暂时先不实现 TODO
+    /* 
     |   expression ',' assignmentExpression {
             $$ = $1;
             $$->addChild($2);
             $$->addChild($3);
-            /* 一串逗号分隔的表达式的值，是最后一个表达式的值。 */
+            // 一串逗号分隔的表达式的值，是最后一个表达式的值。
             $$->copyFrom($$->getChildrenById($$->getChildrenNumber()-1));
         }
+    */
     ;
 
 /* PRIORITY 14: "=, +=, -=, ..." assignment */
@@ -592,17 +596,26 @@ assignmentExpression :
             $$ = $1;
         }
     |   unaryExpression '=' assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
-                error_expressionTypeError($1,$2,$3);
+            if(dynamic_cast<IdentifierNode*>($1)!=NULL)
+                $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            else if(dynamic_cast<ArrayIndexNode*>($1)!=NULL){
+                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));
+            }else{
+                $$ = new StructMemberAssignmentNode(dynamic_cast<StructMemberNode*>($1), dynamic_cast<ExpressionNode*>($3));
             }
+            /* if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
+                if (!(checkKind($1, Node::KIND_VARIABLE))) {
+                    printf("hhhhh");
+                }
+                error_expressionTypeError($1,$2,$3);
+            } */
             if(!typeMatch($1, $3)){
                 error_typeMismatch($1);
             }
+
         }
-    |   unaryExpression ADD_ASSIGN assignmentExpression {
+    // 暂时只实现= TODO
+    /* |   unaryExpression ADD_ASSIGN assignmentExpression {
             $2 = new AssignmentNode($2->getName(), 2, $1, $3);
             $$ = $2;
             $$->copyFromChild();
@@ -645,7 +658,7 @@ assignmentExpression :
             if(!typeMatch($1,$3)){
                 error_typeMismatch($1);
             }
-        }
+        } */
     ;
 
 /* PRIORITY 13: "?:" tenary conditional operator */
@@ -676,9 +689,9 @@ logicalOrExpression :
             $$ = $1;
         }
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -694,9 +707,9 @@ logicalAndExpression :
             $$ = $1;
         }
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -712,9 +725,9 @@ bitwiseOrExpression :
             $$ = $1;
         }
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -730,9 +743,9 @@ bitwiseExclusiveOrExpression :
             $$ = $1;
         }
     |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -748,9 +761,9 @@ bitwiseAndExpression :
             $$ = $1;
         }
     |   bitwiseAndExpression '&' equalityComparisonExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -766,9 +779,9 @@ equalityComparisonExpression :
             $$ = $1;
         }
     |   equalityComparisonExpression EQ relationComparisonExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             /*if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -779,9 +792,9 @@ equalityComparisonExpression :
             }
         }
     |   equalityComparisonExpression NE relationComparisonExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
@@ -797,9 +810,9 @@ relationComparisonExpression :
             $$ = $1;
         }
     |   relationComparisonExpression '<' shiftExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -810,9 +823,9 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression '>' shiftExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -823,9 +836,9 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression LE shiftExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -836,9 +849,9 @@ relationComparisonExpression :
             }
         }
     |   relationComparisonExpression GE shiftExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
@@ -857,17 +870,17 @@ shiftExpression :
             $$ = $1;
         }
     |   shiftExpression SL arithmeticAddExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($1);
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
     |   shiftExpression SR arithmeticAddExpression  {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($1);
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
+            $$->setPosition($2);
+
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
@@ -881,23 +894,19 @@ arithmeticAddExpression :
             $$ = $1;
         }
     |   arithmeticAddExpression '+' arithmeticMulExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($3);
-            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
-                $$->setType(Node::TYPE_DOUBLE);
-            }
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$->setPosition($2);
+
+            // 不知道要不要留
             if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
     |   arithmeticAddExpression '-' arithmeticMulExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($3);
-            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
-                $$->setType(Node::TYPE_DOUBLE);
-            }
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$->setPosition($2);
+
+            // 不知道要不要留
             if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
@@ -911,34 +920,28 @@ arithmeticMulExpression :
             $$ = $1;
         }
     |   arithmeticMulExpression '*' castedExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($3);
-            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
-                $$->setType(Node::TYPE_DOUBLE);
-            }
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$->setPosition($2);
+
+            // 不知道要不要留
             if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
     |   arithmeticMulExpression '/' castedExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($3);
-            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
-                $$->setType(Node::TYPE_DOUBLE);
-            }
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$->setPosition($2);
+
+            // 不知道要不要留
             if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
         }
     |   arithmeticMulExpression '%' castedExpression {
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFrom($3);
-            if($1->getType()==Node::TYPE_DOUBLE || $3->getType()==Node::TYPE_DOUBLE){
-                $$->setType(Node::TYPE_DOUBLE);
-            }
+            $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
+            $$->setPosition($2);
+
+            // 不知道要不要留
             if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
@@ -951,13 +954,7 @@ arithmeticMulExpression :
 castedExpression :
        unaryExpression {
             $$ = $1;
-        }/*
-    |   '(' type ')' castedExpression {
-            $$ = new Node("castedExpression", 2, $2, $4);
         }
-    |   '(' type variableWithNoName ')' castedExpression {
-            $$ = new Node("castedExpression", 3, $2, $3, $5);
-        }*/
     ;
 
 /* PRIORITY 1: "++, --, !, ~" unary operator, and ". ->" */
@@ -1047,6 +1044,23 @@ postfixUnaryExpression :
                 auto arraySizes = $$->getArraySizes();
                 arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
                 $$->setArraySizes(arraySizes);
+                Node *p = $$;
+                std::vector<ExpressionNode*> indexList;
+                int dontDead = 0;
+                while(dynamic_cast<IdentifierNode*>(p)==NULL){
+                    dontDead++;
+                    indexList.push_back(dynamic_cast<ExpressionNode*>(p->getChildrenById(1)));
+                    p = p->getChildrenById(0);
+                    if(dontDead>=100){
+                        throw("dead loop");
+                    }
+                }
+                for(int i=0;i<indexList.size()/2;i++){
+                    auto t = indexList[i];
+                    indexList[i] = indexList[indexList.size()-i-1];
+                    indexList[indexList.size()-i-1] = t;
+                }
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(p), indexList);
             }
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
@@ -1090,10 +1104,8 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
-            Node *t = $2;
-            $2 = new BinaryOperatorNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $2->setPosition(t);
+            $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
+            $$->setPosition($2);
             if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)) || $1->isArray())
                 error_expressionTypeError($1,$2);
             else {
@@ -1104,13 +1116,7 @@ postfixUnaryExpression :
                 
                 $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
             }
-        }/*
-    |   postfixUnaryExpression PTR IDENTIFIER    {/* struct's member, pointer (a->val) *//*
-            $2 = new BinaryOperatorNode($2->getName(), 1, $1);
-            $$ = $2;
-
-        } 
-    */
+        }
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();
         }
@@ -1132,23 +1138,20 @@ paramList :
 atomicExpression :
         IDENTIFIER {
             $$ = $1;
-            /* if(!symbolTableStack->lookUp($1->getTokenValue()())){
-                error_variableNotDeclared($1->getTokenValue()());
-                $$->setKind(Node::KIND_VARIABLE);
-                $$->setType(Node::TYPE_INT);
-            }else{
-                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()()));
-                $$->setPosition(csLineCnt, csColumnCnt);
-            } */
+            $$->setPosition(csLineCnt, csColumnCnt);
+
         }
     |   DOUBLE_NUMBER {
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   INT_NUMBER {
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   STRING { /* 这个就不实现了吧 */
             $$ = $1;
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   '(' expression ')' {
             $$ = $2;
