@@ -9,6 +9,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include <stack>
 
 // #include"noError.h"
 #include <json/json.h>
@@ -27,9 +28,10 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<Module> TheModule;
 static std::unordered_map<std::string, Value *> variableTable;
+static std::unordered_map<std::string, std::unordered_map<std::string, Value *>*> variableTables;
+static std::stack<std::unordered_map<std::string, Value *>*> tableStack;
 
 struct symAttribute;
-
 Value *LogErrorV(const char *Str);
 
 Value *LogErrorV(std::string str);
@@ -349,7 +351,11 @@ public:
 
     virtual llvm::Value *codeGen() {
         if (!isType()) {
-            Value *value = variableTable[this->getVariableName()];
+            Value *value = nullptr;
+            if(tableStack.empty())
+                value = variableTable[this->getVariableName()];
+            else
+                value = (*(tableStack.top()))[this->getVariableName()];
             if (!value) {
                 return LogErrorV(this->getVariableName() + " is not defined\n");
             }
@@ -416,7 +422,11 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        Value *dst = variableTable[mLeftHandSide->getVariableName()];
+        Value *dst = nullptr;
+        if (tableStack.empty())
+            dst = variableTable[mLeftHandSide->getVariableName()];
+        else
+            dst = (*(tableStack.top()))[mLeftHandSide->getVariableName()];
         if (!dst)
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
@@ -496,8 +506,10 @@ public:
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "This type is not supported");
             }
-            variableTable[this->id->getVariableName()] = res;
-
+            if (tableStack.empty())
+                variableTable[this->id->getVariableName()] = res;
+            else
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
             if (this->assignmentExpr != nullptr) {
                 this->assignmentExpr->codeGen();
             }
@@ -505,17 +517,23 @@ public:
         } else {
             auto dimsize = this->getArraySizes();
             uint64_t array_size = 1;
-            for (int a:dimsize) {
-                array_size*=a;
+            for (int a : dimsize) {
+                array_size *= a;
             }
-            Value* ArraySize = ConstantInt::get(llvm::Type::getInt32Ty(TheContext), array_size,
-                                false);
+            Value *ArraySize = ConstantInt::get(
+                llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (ty == "int" || ty == "char") {
-                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext), ArraySize, "arrtemp");
+                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
+                                           ArraySize, "arrtemp");
             } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext), ArraySize, "arrtemp");
+                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
+                                           ArraySize, "arrtemp");
             }
-            variableTable[this->id->getVariableName()] = res;
+            if (tableStack.empty())
+                variableTable[this->id->getVariableName()] = res;
+            else
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
+            return res;
         }
     }
 };
@@ -539,7 +557,14 @@ public:
         return root;
     }
 
-    virtual Value *codeGen() {}
+    virtual Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
 };
 
 // store all statements nodes of the same block
@@ -619,6 +644,15 @@ public:
         //}
         return root;
     }
+
+    virtual Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
 };
 
 // handle the statement that has only one semicollon
@@ -632,8 +666,11 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        return Builder.CreateAdd(
+            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true),
+            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true));
+    }
 };
 
 class DoubleNode : public ExpressionNode {
@@ -702,8 +739,7 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual Value *codeGen() { return this->mExpression->codeGen(); }
 };
 
 // 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
@@ -777,8 +813,49 @@ public:
 
         return root;
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO: change the table of the values
+        */
+        std::vector<llvm::Type *> argTypes;
+
+        auto temp = parasList->mVarDeclarationList;
+
+        for (auto &i : temp) {
+            std::string ty = i->id->getSymbolName();
+            if (ty == "int" || ty == "char") {
+                argTypes.push_back(llvm::Type::getInt32Ty(TheContext));
+            } else if (ty == "float" || ty == "double") {
+                argTypes.push_back(llvm::Type::getDoubleTy(TheContext));
+            } else {
+                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "A type is not supported in the parameters");
+            }
+        }
+
+        llvm::Type * ret;
+
+        std::string ty = this->id->getSymbolName();
+        if (ty == "int" || ty == "char") {
+            ret = (llvm::Type::getInt32Ty(TheContext));
+        } else if (ty == "float" || ty == "double") {
+            ret = (llvm::Type::getDoubleTy(TheContext));
+        } else if (ty == "void"){
+            ret = llvm::Type::getVoidTy(TheContext);
+        } else {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                 std::to_string(this->getColumnNumber()) + " " +
+                                 "Return type is not supported");
+        }
+        FunctionType* functionType = llvm::FunctionType::get(ret, argTypes, false);
+        Function* function = llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage, id->getVariableName(), TheModule.get());
+
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
 };
 
 class FunctionCallNode : public ExpressionNode {
@@ -940,8 +1017,15 @@ public:
         }
         return root;
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
+
 private:
     std::string op;
     // ExpressionNode *mLeftHandSide, *mRightHandSide;
@@ -970,8 +1054,15 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
+
 private:
     std::string op;
     ArrayIndexNode *mLeftHandSide;
@@ -1029,8 +1120,16 @@ public:
 
         return root;
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
+
     ExpressionNode *getL() { return mVariableName; }
     ExpressionNode *getR() { return mMemberName; }
 
@@ -1060,8 +1159,15 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
+
 private:
     std::string op;
     StructMemberNode *mLeftHandSide;
@@ -1184,7 +1290,6 @@ public:
                                  "invalid boolean operation with float number");
             }
             return Builder.CreateAShr(Left, Right, "shrop");
-            /* todo */
         } else if (op == "<<") {
             if (isFloat) {
                 return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
@@ -1292,8 +1397,15 @@ public:
         }
         return root;
     }
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+
+    virtual llvm::Value *codeGen() {
+        /*
+        TODO:
+        */
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "Not supported yet");
+    }
 
     // merge another global declaration statements block
     void mergeGlobalStatements(StatementNodesBlock *to_merge) {
