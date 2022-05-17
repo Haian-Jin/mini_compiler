@@ -174,7 +174,7 @@ typeName :
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   structTypeName { /* TODO */
-            $$ = new IdentifierNode($1->getTokenValue(), true);
+            $$ = new IdentifierNode($1->getStructTypeName(), true);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($1->getStructTypeName());
