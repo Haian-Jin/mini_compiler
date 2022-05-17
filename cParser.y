@@ -245,12 +245,14 @@ structMembers : /* 注：结构体的成员变量不能做初始化 */
         variable {
             // $$ = new Node(nameCounter.getNumberedName("structMembers"), 1, $1);
             $$ = new IdentifierNodeList();
+            //std::cout<<"1"<<std::endl;
             $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($1));
         }
     |   structMembers ',' variable {
             $$ = $1;
             // $$->addChild($2);
             // $$->addChild($3);
+            //std::cout<<"2"<<std::endl;
             $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($3));
         }
     ;
@@ -260,11 +262,13 @@ structMembers : /* 注：结构体的成员变量不能做初始化 */
 initializations :
         initialization {
             $$ = new IdentifierNodeList();
-            $$->addIdentifierNode($1);
+            //std::cout<<"3"<<std::endl;
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($1));
         }
     |   initializations ',' initialization {
             $$ = $1;
-            $$->addIdentifierNode($3);
+            //std::cout<<"4"<<std::endl;
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($3));
         }
     ;
 
@@ -1045,6 +1049,16 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
+            if(dynamic_cast<IdentifierNode*>($1)!=NULL){
+                std::vector<ExpressionNode*> indexList;
+                indexList.push_back(dynamic_cast<ExpressionNode*>($3));
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>($1), indexList);
+            }else{
+                std::vector<ExpressionNode*> indexList = dynamic_cast<ArrayIndexNode*>($1)->mArrayIndexs;
+                indexList.push_back(dynamic_cast<ExpressionNode*>($3));
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(dynamic_cast<ArrayIndexNode*>($1)->mArrayName), indexList);
+            }
+            /*
             $$ = new BinaryOperatorNode({"[]"}, 2, $1, $3);
             $$->copyFromChild();
             if(!$1->isArray()){
@@ -1053,7 +1067,7 @@ postfixUnaryExpression :
                 if(!checkType($3, Node::TYPE_INT)){
                     error_expressionTypeError($3,$$);
                 }
-                /* 减少一个维度 */
+                /* 减少一个维度 *//*
                 auto arraySizes = $$->getArraySizes();
                 arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
                 $$->setArraySizes(arraySizes);
@@ -1073,8 +1087,9 @@ postfixUnaryExpression :
                     indexList[i] = indexList[indexList.size()-i-1];
                     indexList[indexList.size()-i-1] = t;
                 }
+                std::cout<<"ChangedIntoArray\n";
                 $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(p), indexList);
-            }
+            }*/
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             $$ = new FunctionCallNode({"()"}, 2, $1, $3);
