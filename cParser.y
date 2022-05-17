@@ -43,6 +43,7 @@ static void error_functionReturnsArray();
     StatementNodesBlock* statementNodesBlockPtr;
     GlobalDeclaraionNode * globalDeclaraionNodePtr;
     std::vector<VarDeclarationList*> * structMemberListPtr;
+    std::vector<ExpressionNode*> * ExpressionNodeListPtr;
 }
 
 %token GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC IDENTIFIER DOUBLE_NUMBER INT_NUMBER STRING 
@@ -62,9 +63,9 @@ static void error_functionReturnsArray();
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
-%type<nodePtr> paramList atomicExpression relationComparisonExpression
+%type<nodePtr> atomicExpression relationComparisonExpression
 %type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
-
+%type<ExpressionNodeListPtr> paramList 
 
 
 
@@ -98,7 +99,7 @@ cCode :
 /* 在我们的语言中，定义分为全局和局部两种。全局定义是放在任何 statement block（语句块）之外的。 */
 
 globalDeclaration :
-        declaration { /* 全局的变量定义，兼定义结构体。 */
+        declaration { /* 全局的变量定义，兼定义结构。 */
             $$ = $1;
         }
     |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */
@@ -173,7 +174,7 @@ typeName :
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
     |   structTypeName { /* TODO */
-            $$ = new IdentifierNode($1->getTokenValue(), true);
+            $$ = new IdentifierNode($1->getStructTypeName(), true);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($1->getStructTypeName());
@@ -213,7 +214,6 @@ structTypeName :
 /* 定义结构体的成员变量。这个和 declarations 的不同在于，这里不能定义函数，也不能做初始化。 */
 structMemberDeclarations :
         structMemberDeclaration {
-            // $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 1, $1);
             $$ = $1;
         }
     |   structMemberDeclarations structMemberDeclaration {
@@ -243,14 +243,11 @@ structMemberDeclaration :
 
 structMembers : /* 注：结构体的成员变量不能做初始化 */
         variable {
-            // $$ = new Node(nameCounter.getNumberedName("structMembers"), 1, $1);
             $$ = new IdentifierNodeList();
             $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($1));
         }
     |   structMembers ',' variable {
             $$ = $1;
-            // $$->addChild($2);
-            // $$->addChild($3);
             $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($3));
         }
     ;
@@ -260,11 +257,11 @@ structMembers : /* 注：结构体的成员变量不能做初始化 */
 initializations :
         initialization {
             $$ = new IdentifierNodeList();
-            $$->addIdentifierNode($1);
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($1));
         }
     |   initializations ',' initialization {
             $$ = $1;
-            $$->addIdentifierNode($3);
+            $$->addIdentifierNode(dynamic_cast<IdentifierNode*>($3));
         }
     ;
 
@@ -470,32 +467,32 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
         declaration {
             $$ = $1;
         }
-    
-        |   expressionStatement { // 表达式，也是最常见的语句
+    |   expressionStatement { // 表达式，也是最常见的语句
             $$ = new StatementNodesBlock();
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
-    
-    // TODO
-    /* 
     |   loopStatement { // 循环
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
     |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
             // 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 
             // 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
+            // $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
+            $$ = $2;
             symbolTableStack->pop();
-        }    
+        }     
     |   branchStatement {
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
     |   jumpStatement {
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
     |   error ';' {
         error_wrongStatement();
-    } */
+    } 
     ;
 
 expressionStatement :
@@ -512,14 +509,18 @@ expressionStatement :
 
 loopStatement : /* for, while, do-while */
         FOR '(' expressionStatement expressionStatement expression ')' statement { /* 不允许 for(int i;i<10;i++) 这样 */
-            $$ = new Node(nameCounter.getNumberedName("loopStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
+            $5 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($5));
+            $$ = new ForStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<ExpressionStatementNode *>($4), dynamic_cast<ExpressionStatementNode *>($5), dynamic_cast<StatementNodesBlock *>($7));
         }
     |   WHILE '(' expression ')' statement {
-            $$ = new Node(nameCounter.getNumberedName("loopStatement"), 5, $1, $2, $3, $4, $5);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new WhileStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5));
         }
+    // do-while暂不实现
     |   DO statement WHILE '(' expression ')' ';' {
             $$ = new Node(nameCounter.getNumberedName("loopStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
         }
+    
     |   WHILE '(' expression error { error_missingRightBrancket(); } ')' statement /* error recovery */
     |   WHILE '(' error { error_wrongExpression; } ')' statement { 
 
@@ -529,10 +530,12 @@ loopStatement : /* for, while, do-while */
 /* 分支跳转语句 */
 branchStatement :
         IF '(' expression ')' statement {
-            $$ = new Node(nameCounter.getNumberedName("branchStatement"), 5, $1, $2, $3, $4, $5);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new IfStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5));  
         }
     |   IF '(' expression ')' statement ELSE statement { /* （else悬挂问题）这一条和上一条不能颠倒。 */
-            $$ = new Node(nameCounter.getNumberedName("branchStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new IfStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5), dynamic_cast<StatementNodesBlock *>($7));
         }
     |   SWITCH '(' expression ')' caseBlock /* 我们不打算实现 SWITCH-CASE，因为太复杂了 */
     |   error  ELSE statement {
@@ -554,29 +557,22 @@ caseStatements :
 /* 无条件跳转语句 */
 jumpStatement :
         RETURN ';' { /* 函数返回，这里要检查返回类型 */
-            $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 2, $1, $2);
-            /* TODO: check if the type of return value matches the function */
-            if(symbolTableStack->lookUp(symbolTableStack->top()->getName())->type != Node::TYPE_VOID){
-                error_returnValueTypeMismatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), symbolTableStack->lookUp(symbolTableStack->top()->getName())->type);
-            }
+            $$ = new ReturnStatementNode();
         }
     |   RETURN expression ';' { /* 函数返回，这里要检查返回类型 */
-            $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 3, $1, $2, $3);
-            /* 因为这个语句出现时，符号表栈顶附近必定是一个函数的符号表。这个时候只需要先查到该函数的符号表的名字，然后再在全局符号表中看这个名字的类型即可。 */
-            /* 因为符号表名和函数名永远是一样的。（在我们的设计中） */
-            if(!typeMatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), $2)){
-                error_returnValueTypeMismatch(symbolTableStack->lookUp(symbolTableStack->top()->getName()), $2);
-            }
+            $$ = new ReturnStatementNode(dynamic_cast<ExpressionNode *>($2));
         }
     |   CONTINUE ';' { /* 循环控制 */
-            $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 2, $1, $2);
+            $$ = new ContinueStatementNode();
         }
     |   BREAK ';' { /* 循环控制 */
-            $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 2, $1, $2);
+            $$ = new BreakStatementNode();
         }
-    |   GOTO IDENTIFIER ';' { /* 太复杂了，不实现 */
+    /*
+    |   GOTO IDENTIFIER ';' { // 太复杂了，不实现 
             $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 3, $1, $2, $3);
         }
+    */
     ; 
 
 
@@ -1045,6 +1041,16 @@ postfixUnaryExpression :
             }
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
+            if(dynamic_cast<IdentifierNode*>($1)!=NULL){
+                std::vector<ExpressionNode*> indexList;
+                indexList.push_back(dynamic_cast<ExpressionNode*>($3));
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>($1), indexList);
+            }else{
+                std::vector<ExpressionNode*> indexList = dynamic_cast<ArrayIndexNode*>($1)->mArrayIndexs;
+                indexList.push_back(dynamic_cast<ExpressionNode*>($3));
+                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(dynamic_cast<ArrayIndexNode*>($1)->mArrayName), indexList);
+            }
+            /*
             $$ = new BinaryOperatorNode({"[]"}, 2, $1, $3);
             $$->copyFromChild();
             if(!$1->isArray()){
@@ -1053,7 +1059,7 @@ postfixUnaryExpression :
                 if(!checkType($3, Node::TYPE_INT)){
                     error_expressionTypeError($3,$$);
                 }
-                /* 减少一个维度 */
+                /* 减少一个维度 *//*
                 auto arraySizes = $$->getArraySizes();
                 arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
                 $$->setArraySizes(arraySizes);
@@ -1073,13 +1079,17 @@ postfixUnaryExpression :
                     indexList[i] = indexList[indexList.size()-i-1];
                     indexList[indexList.size()-i-1] = t;
                 }
+                std::cout<<"ChangedIntoArray\n";
                 $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(p), indexList);
-            }
+            }*/
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             $$ = new FunctionCallNode({"()"}, 2, $1, $3);
             $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_FUNCTION))){
+            for(auto i : *$3){
+                dynamic_cast<FunctionCallNode *>($$)->addArgument(i);
+            }
+            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$2);
             }else{
                 std::vector<Node::Type> argList;
@@ -1103,18 +1113,18 @@ postfixUnaryExpression :
                         error_argumentTypeNotMatch(argList,$1,argListStructName);
                     }
                 }
-            }
+            }*/
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
             $$ = new FunctionCallNode({"()"}, 1, $1);
             $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_FUNCTION))){
+            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
                 error_expressionTypeError($1,$$);
             }else {
                 if($1->getArgList().size()!=0){
                     error_argumentNumberNotMatch($1,0);
                 }
-            }
+            }*/
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
@@ -1137,12 +1147,15 @@ postfixUnaryExpression :
 
 paramList :
         assignmentExpression {
-            $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
+            // $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
+            $$ = new std::vector<ExpressionNode*>();
+            $$->push_back(dynamic_cast<ExpressionNode*>($1));
         }
     |   paramList ',' assignmentExpression {/* 这里面不能填 expression，因为 expression 也是用逗号隔开的一串表达式 */
             $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
+            //$$->addChild($2);
+            //$$->addChild($3);
+            $$->push_back(dynamic_cast<ExpressionNode*>($3));
         }
     ;
 
