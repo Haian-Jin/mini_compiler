@@ -1,7 +1,4 @@
-cParser.cpp
-cParser.hpp
-cScanner.cpp
-parsetree.txt
+
 /.idea/*
 /.vscode/*
 /cmake-build-debug
