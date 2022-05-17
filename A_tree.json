@@ -5,10 +5,10 @@
 			"children" : 
 			[
 				{
-					"name" : "TypeNode"
+					"name" : "TypeNode: int"
 				},
 				{
-					"name" : "IdentifierNode"
+					"name" : "IdentifierNode: a"
 				}
 			],
 			"name" : "VariableDeclarationNode"
@@ -17,10 +17,61 @@
 			"children" : 
 			[
 				{
-					"name" : "TypeNode"
+					"name" : "TypeNode: double"
 				},
 				{
-					"name" : "IdentifierNode"
+					"name" : "IdentifierNode: b"
+				}
+			],
+			"name" : "VariableDeclarationNode"
+		},
+		{
+			"children" : 
+			[
+				{
+					"name" : "TypeNode: NODE"
+				},
+				{
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"name" : "TypeNode: int"
+								},
+								{
+									"name" : "IdentifierNode: ma"
+								}
+							],
+							"name" : "VariableDeclarationNode"
+						},
+						{
+							"children" : 
+							[
+								{
+									"name" : "TypeNode: double"
+								},
+								{
+									"name" : "IdentifierNode: mb"
+								}
+							],
+							"name" : "VariableDeclarationNode"
+						}
+					],
+					"name" : "StatementsBlock"
+				}
+			],
+			"name" : "StructDeclarationBlockNODE"
+		},
+		{
+			"children" : 
+			[
+				{
+					"name" : "TypeNode: structTypeName[0]"
+				},
+				{
+					"name" : "IdentifierNode: c"
 				}
 			],
 			"name" : "VariableDeclarationNode"
@@ -32,7 +83,7 @@
 					"children" : 
 					[
 						{
-							"name" : "TypeNode"
+							"name" : "TypeNode: int"
 						}
 					],
 					"name" : "ReturnType"
@@ -41,7 +92,7 @@
 					"children" : 
 					[
 						{
-							"name" : "IdentifierNode"
+							"name" : "IdentifierNode: main"
 						}
 					],
 					"name" : "FuncName"
@@ -53,10 +104,10 @@
 							"children" : 
 							[
 								{
-									"name" : "TypeNode"
+									"name" : "TypeNode: int"
 								},
 								{
-									"name" : "IdentifierNode"
+									"name" : "IdentifierNode: x"
 								}
 							],
 							"name" : "VariableDeclarationNode"
@@ -65,10 +116,10 @@
 							"children" : 
 							[
 								{
-									"name" : "TypeNode"
+									"name" : "TypeNode: double"
 								},
 								{
-									"name" : "IdentifierNode"
+									"name" : "IdentifierNode: y"
 								}
 							],
 							"name" : "VariableDeclarationNode"
@@ -86,10 +137,10 @@
 									"children" : 
 									[
 										{
-											"name" : "TypeNode"
+											"name" : "TypeNode: int"
 										},
 										{
-											"name" : "IdentifierNode"
+											"name" : "IdentifierNode: t"
 										}
 									],
 									"name" : "VariableDeclarationNode"
@@ -101,22 +152,106 @@
 											"children" : 
 											[
 												{
+													"name" : "IdentifierNode: t"
+												},
+												{
+													"name" : "IntNode:1"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: double"
+										},
+										{
+											"name" : "IdentifierNode: a"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: a"
+												},
+												{
 													"children" : 
 													[
 														{
-															"name" : "IntNode:1"
+															"children" : 
+															[
+																{
+																	"name" : "DoubleNode:1.000000"
+																},
+																{
+																	"name" : "DoubleNode:5.200000"
+																}
+															],
+															"name" : "+"
 														},
 														{
-															"name" : "IntNode:5"
+															"name" : "IntNode:2"
 														}
 													],
-													"name" : "*"
-												},
-												{
-													"name" : "DoubleNode:1.500000"
+													"name" : "+"
 												}
 											],
-											"name" : "*"
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: b"
+												},
+												{
+													"name" : "IntNode:10"
+												}
+											],
+											"name" : "[]"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: c"
+														},
+														{
+															"name" : "IdentifierNode: ma"
+														}
+													],
+													"name" : "."
+												},
+												{
+													"name" : "IntNode:1"
+												}
+											],
+											"name" : "StructMemberAssignmentNode ="
 										}
 									],
 									"name" : "ExpressionStatementNode"
