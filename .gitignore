@@ -8,3 +8,4 @@ parsetree.txt
 *.json
 test.cpp
 test.exe
+build/*

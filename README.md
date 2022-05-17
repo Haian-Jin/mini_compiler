@@ -2,7 +2,7 @@
 
 Final project for the course  “Compilers Principle” in Zhejiang University.
 
-We build a complier named `zjucmm` ( short for ZJU C minus minus) f rom scratch, it follows the grammar of standard C language.
+We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch, it follows the grammar of standard C language.
 
 ## 0.Environment
 
@@ -28,7 +28,7 @@ cd build
 cmake ..
 make
 ```
-
+You can also run the script `./build.sh` to build the compiler.  
 ## 3. How to Use：
 
 * write your C code in ${code_path}, assume 
