@@ -227,7 +227,7 @@ public:
     std::string getSymbolName()const;
 
     // 返回终结符的名字。已弃置不用。
-    std::string getTokenValue();
+    std::string getTokenValue()const;
 
 
 
@@ -311,9 +311,9 @@ public:
 
     virtual std::string getNodeTypeName() const{
         if (isType()) {
-            return "TypeNode";
+            return std::string("TypeNode: ")+getTokenValue();
         } else {
-            return "IdentifierNode";
+            return std::string("IdentifierNode: ")+getTokenValue();
         }
     }
 
@@ -447,6 +447,7 @@ public:
 };
 
 
+
 // store all statements nodes of the same block
 class StatementNodesBlock : public StatementNode{
 public:
@@ -497,6 +498,31 @@ public:
 
 };
 
+class StructDeclarationNode : public StatementNodesBlock{
+protected:
+    IdentifierNode *mStructName;
+    StatementNodesBlock *mMembers;
+public:
+    StructDeclarationNode(IdentifierNode *name, StatementNodesBlock* members){
+        mStructName=name;
+        mMembers=members;
+    }
+    void createStructDeclaration(IdentifierNode *structName, StatementNodesBlock *structMembers){
+
+    }
+    virtual std::string getNodeTypeName() const{
+        return std::string("StructDeclarationBlock")+mStructName->getTokenValue();
+    }
+    virtual Json::Value jsonGen() const{
+        Json::Value root;
+        root["name"] = getNodeTypeName();
+        root["children"].append(mStructName->jsonGen());
+        //for(auto it = mStatementList.begin(); it != mStatementList.end(); it++){
+            root["children"].append(mMembers->jsonGen()/*(*it)->jsonGen()*/);
+        //}
+        return root;
+    }
+};
 
 // handle the statement that has only one semicollon
 class NullStatementNode: public StatementNode {
@@ -882,7 +908,7 @@ class StructMemberAssignmentNode : public ExpressionNode{
 public:
 
     virtual std::string getNodeTypeName() const{
-        return std::string("ArrayAssignmentNode ")+("=");
+        return std::string("StructMemberAssignmentNode ")+("=");
     }
 
     StructMemberAssignmentNode(StructMemberNode *lhs, ExpressionNode *rhs):ExpressionNode("=",0){
@@ -1030,7 +1056,11 @@ public:
     void mergeGlobalStatements(StatementNodesBlock *  to_merge) {
 
         assert(to_merge != nullptr);
-        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+        if(dynamic_cast<StructDeclarationNode*>(to_merge)==NULL)
+            this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+        else{
+            this->mGlobalStatementList.push_back(to_merge);
+        }
     }
 
 };
