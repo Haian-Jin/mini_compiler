@@ -1,6 +1,6 @@
 #pragma once
 #include <json/json.h>
-// #include <llvm/IR/Value.h>
+#include <llvm/IR/Value.h>
 #include<math.h>
 #include<string>
 #include <cstring>
@@ -10,8 +10,6 @@
 #include<cstdarg>
 #include<assert.h>
 
-
-// #include"noError.h"
 #include <tr1/memory>
 
 using std::shared_ptr;
