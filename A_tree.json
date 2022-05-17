@@ -17,61 +17,10 @@
 			"children" : 
 			[
 				{
-					"name" : "TypeNode: double"
+					"name" : "TypeNode: int"
 				},
 				{
 					"name" : "IdentifierNode: b"
-				}
-			],
-			"name" : "VariableDeclarationNode"
-		},
-		{
-			"children" : 
-			[
-				{
-					"name" : "TypeNode: NODE"
-				},
-				{
-					"children" : 
-					[
-						{
-							"children" : 
-							[
-								{
-									"name" : "TypeNode: int"
-								},
-								{
-									"name" : "IdentifierNode: ma"
-								}
-							],
-							"name" : "VariableDeclarationNode"
-						},
-						{
-							"children" : 
-							[
-								{
-									"name" : "TypeNode: double"
-								},
-								{
-									"name" : "IdentifierNode: mb"
-								}
-							],
-							"name" : "VariableDeclarationNode"
-						}
-					],
-					"name" : "StatementsBlock"
-				}
-			],
-			"name" : "StructDeclarationBlockNODE"
-		},
-		{
-			"children" : 
-			[
-				{
-					"name" : "TypeNode: structTypeName[0]"
-				},
-				{
-					"name" : "IdentifierNode: c"
 				}
 			],
 			"name" : "VariableDeclarationNode"
@@ -107,7 +56,7 @@
 									"name" : "TypeNode: int"
 								},
 								{
-									"name" : "IdentifierNode: x"
+									"name" : "IdentifierNode: c"
 								}
 							],
 							"name" : "VariableDeclarationNode"
@@ -119,7 +68,7 @@
 									"name" : "TypeNode: double"
 								},
 								{
-									"name" : "IdentifierNode: y"
+									"name" : "IdentifierNode: d"
 								}
 							],
 							"name" : "VariableDeclarationNode"
@@ -140,7 +89,7 @@
 											"name" : "TypeNode: int"
 										},
 										{
-											"name" : "IdentifierNode: t"
+											"name" : "IdentifierNode: array"
 										}
 									],
 									"name" : "VariableDeclarationNode"
@@ -152,13 +101,22 @@
 											"children" : 
 											[
 												{
-													"name" : "IdentifierNode: t"
+													"name" : "IntNode:1"
 												},
 												{
-													"name" : "IntNode:1"
+													"children" : 
+													[
+														{
+															"name" : "IntNode:5"
+														},
+														{
+															"name" : "IntNode:6"
+														}
+													],
+													"name" : "*"
 												}
 											],
-											"name" : "AssignmentNode ="
+											"name" : "+"
 										}
 									],
 									"name" : "ExpressionStatementNode"
@@ -167,10 +125,37 @@
 									"children" : 
 									[
 										{
-											"name" : "TypeNode: double"
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: array"
+														},
+														{
+															"name" : "IntNode:4"
+														}
+													],
+													"name" : "[]"
+												},
+												{
+													"name" : "IntNode:2"
+												}
+											],
+											"name" : "ArrayAssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
 										},
 										{
-											"name" : "IdentifierNode: a"
+											"name" : "IdentifierNode: x"
 										}
 									],
 									"name" : "VariableDeclarationNode"
@@ -182,76 +167,13 @@
 											"children" : 
 											[
 												{
-													"name" : "IdentifierNode: a"
+													"name" : "IdentifierNode: x"
 												},
 												{
-													"children" : 
-													[
-														{
-															"children" : 
-															[
-																{
-																	"name" : "DoubleNode:1.000000"
-																},
-																{
-																	"name" : "DoubleNode:5.200000"
-																}
-															],
-															"name" : "+"
-														},
-														{
-															"name" : "IntNode:2"
-														}
-													],
-													"name" : "+"
+													"name" : "IdentifierNode: a"
 												}
 											],
 											"name" : "AssignmentNode ="
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"children" : 
-											[
-												{
-													"name" : "IdentifierNode: b"
-												},
-												{
-													"name" : "IntNode:10"
-												}
-											],
-											"name" : "[]"
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"children" : 
-											[
-												{
-													"children" : 
-													[
-														{
-															"name" : "IdentifierNode: c"
-														},
-														{
-															"name" : "IdentifierNode: ma"
-														}
-													],
-													"name" : "."
-												},
-												{
-													"name" : "IntNode:1"
-												}
-											],
-											"name" : "StructMemberAssignmentNode ="
 										}
 									],
 									"name" : "ExpressionStatementNode"

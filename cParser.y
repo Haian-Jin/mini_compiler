@@ -99,7 +99,7 @@ cCode :
 /* 在我们的语言中，定义分为全局和局部两种。全局定义是放在任何 statement block（语句块）之外的。 */
 
 globalDeclaration :
-        declaration { /* 全局的变量定义，兼定义结构体。 */
+        declaration { /* 全局的变量定义，兼定义结构。 */
             $$ = $1;
         }
     |   functionDeclaration { /* 语法上，所有的函数都必须要定义在全局。 */
@@ -481,26 +481,30 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
     
-    // TODO
-    /* 
+   
     |   loopStatement { // 循环
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
-    |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
+    // 暂时不做
+    /* |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
             // 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 
             // 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
             symbolTableStack->pop();
-        }    
+        }     */
     |   branchStatement {
-            $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
+            $$ = new StatementNodesBlock();
+            $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
+    /*
     |   jumpStatement {
             $$ = new Node(nameCounter.getNumberedName("statement"), 1, $1);
         }
+    */
     |   error ';' {
         error_wrongStatement();
-    } */
+    } 
     ;
 
 expressionStatement :
@@ -517,14 +521,18 @@ expressionStatement :
 
 loopStatement : /* for, while, do-while */
         FOR '(' expressionStatement expressionStatement expression ')' statement { /* 不允许 for(int i;i<10;i++) 这样 */
-            $$ = new Node(nameCounter.getNumberedName("loopStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
+            $5 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($5));
+            $$ = new ForStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<ExpressionStatementNode *>($4), dynamic_cast<ExpressionStatementNode *>($5), dynamic_cast<StatementNodesBlock *>($6));
         }
     |   WHILE '(' expression ')' statement {
-            $$ = new Node(nameCounter.getNumberedName("loopStatement"), 5, $1, $2, $3, $4, $5);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new WhileStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5));
         }
+    // do-while暂不实现
     |   DO statement WHILE '(' expression ')' ';' {
             $$ = new Node(nameCounter.getNumberedName("loopStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
         }
+    
     |   WHILE '(' expression error { error_missingRightBrancket(); } ')' statement /* error recovery */
     |   WHILE '(' error { error_wrongExpression; } ')' statement { 
 
@@ -534,10 +542,12 @@ loopStatement : /* for, while, do-while */
 /* 分支跳转语句 */
 branchStatement :
         IF '(' expression ')' statement {
-            $$ = new Node(nameCounter.getNumberedName("branchStatement"), 5, $1, $2, $3, $4, $5);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new IfStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5));  
         }
     |   IF '(' expression ')' statement ELSE statement { /* （else悬挂问题）这一条和上一条不能颠倒。 */
-            $$ = new Node(nameCounter.getNumberedName("branchStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
+            $3 = new ExpressionStatementNode(dynamic_cast<ExpressionNode *>($3));
+            $$ = new IfStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5), dynamic_cast<StatementNodesBlock *>($7));
         }
     |   SWITCH '(' expression ')' caseBlock /* 我们不打算实现 SWITCH-CASE，因为太复杂了 */
     |   error  ELSE statement {
