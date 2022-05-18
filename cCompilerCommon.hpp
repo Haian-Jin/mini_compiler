@@ -863,25 +863,25 @@ public:
 
     virtual llvm::Value *codeGen() {
         std::vector<llvm::Type *> argTypes;
+        if(parasList) {
+            auto temp = parasList->mVarDeclarationList;
 
-        auto temp = parasList->mVarDeclarationList;
-
-        for (auto &i : temp) {
-            std::string ty = i->id->getSymbolName();
-            if (ty == "int" || ty == "char") {
-                argTypes.push_back(llvm::Type::getInt32Ty(TheContext));
-            } else if (ty == "float" || ty == "double") {
-                argTypes.push_back(llvm::Type::getDoubleTy(TheContext));
-            } else {
-                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-                                 std::to_string(this->getColumnNumber()) + " " +
-                                 "A type is not supported in the parameters");
+            for (auto &i: temp) {
+                std::string ty = i->id->getSymbolName();
+                if (ty == "int" || ty == "char") {
+                    argTypes.push_back(llvm::Type::getInt32Ty(TheContext));
+                } else if (ty == "float" || ty == "double") {
+                    argTypes.push_back(llvm::Type::getDoubleTy(TheContext));
+                } else {
+                    return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                      std::to_string(this->getColumnNumber()) + " " +
+                                      "A type is not supported in the parameters");
+                }
             }
         }
-
         llvm::Type *ret;
 
-        std::string ty = this->id->getSymbolName();
+        std::string ty = this->type->getSymbolName();
         if (ty == "int" || ty == "char") {
             ret = (llvm::Type::getInt32Ty(TheContext));
         } else if (ty == "float" || ty == "double") {
@@ -890,8 +890,8 @@ public:
             ret = llvm::Type::getVoidTy(TheContext);
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-                             std::to_string(this->getColumnNumber()) + " " +
-                             "Return type is not supported");
+                             std::to_string(this->getColumnNumber()) + " " + ty +
+                             " type is not supported");
         }
         FunctionType *functionType =
             llvm::FunctionType::get(ret, argTypes, false);
@@ -900,20 +900,21 @@ public:
             id->getVariableName(), TheModule.get());
         BasicBlock *basicBlock =
             BasicBlock::Create(TheContext, "func_entry", function, nullptr);
-
-        std::unordered_map<std::string, Value *> *argTable =
-            new std::unordered_map<std::string, Value *>;
-        tableStack.push(argTable);
-        variableTables[this->id->getVariableName()] = argTable;
-        auto iter_proto = temp.begin();
-        for (auto &iter_func : function->args()) {
-            iter_func.setName((*iter_proto)->id->getVariableName());
-            Value *arg = (*iter_proto)->codeGen();
-            Builder.CreateStore(&iter_func, arg, false);
-            // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
-            iter_proto++;
+        if(parasList) {
+            auto temp = parasList->mVarDeclarationList;
+            auto *argTable =
+                    new std::unordered_map<std::string, Value *>;
+            tableStack.push(argTable);
+            variableTables[this->id->getVariableName()] = argTable;
+            auto iter_proto = temp.begin();
+            for (auto &iter_func: function->args()) {
+                iter_func.setName((*iter_proto)->id->getVariableName());
+                Value *arg = (*iter_proto)->codeGen();
+                Builder.CreateStore(&iter_func, arg, false);
+                // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
+                iter_proto++;
+            }
         }
-
         this->body->codeGen();
 
         tableStack.pop();
@@ -1443,10 +1444,10 @@ public:
 
     virtual llvm::Value *codeGen() {
         Value *ret = nullptr;
-        std::vector<Type*> sysArgs;
         FunctionType* mainFuncType = FunctionType::get(llvm::Type::getVoidTy(TheContext),  false);
         Function* mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main");
         BasicBlock* block = BasicBlock::Create(TheContext, "entry");
+        Builder.SetInsertPoint(block);
         for (auto &iter : mGlobalStatementList) {
             ret = iter->codeGen();
         }
