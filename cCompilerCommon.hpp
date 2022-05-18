@@ -331,9 +331,9 @@ public:
     bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
     bool isArray() const { return Node::isArray(); }
 
-    bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
-    bool isArray() const { return Node::isArray(); }
-    virtual std::string getNodeTypeName() const {
+
+    virtual std::string getNodeTypeName() const{
+
         if (isType()) {
             return std::string("TypeNode: ") + getTokenValue();
         } else {
@@ -359,8 +359,12 @@ public:
             Value *value = nullptr;
             if (tableStack.empty())
                 value = variableTable[this->getVariableName()];
-            else
-                value = (*(tableStack.top()))[this->getVariableName()];
+            else{
+                value = ( tableStack.top()->find(this->getVariableName())==tableStack.top()->end() ) ? 
+                        ( (*(tableStack.top()))[this->getVariableName()] ) :
+                        ( variableTable[this->getVariableName()] )
+                        ;;}
+
             if (!value) {
                 return LogErrorV(this->getVariableName() + " is not defined\n");
             }
@@ -434,7 +438,11 @@ public:
         if (tableStack.empty())
             dst = variableTable[mLeftHandSide->getVariableName()];
         else
-            dst = (*(tableStack.top()))[mLeftHandSide->getVariableName()];
+            dst = ( tableStack.top()->find(this->getVariableName())==tableStack.top()->end() ) ? 
+                        ( (*(tableStack.top()))[this->getVariableName()] ) :
+                        ( variableTable[this->getVariableName()] )
+                        ;
+            
         if (!dst)
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
@@ -517,7 +525,10 @@ public:
             if (tableStack.empty())
                 variableTable[this->id->getVariableName()] = res;
             else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
+                if(tableStack.top()->find(this->id->getVariableName()) == tableStack.top()->end())
+                    variableTable[this->id->getVariableName()] = res;
+                else
+                    (*(tableStack.top()))[this->id->getVariableName()] = res;
             if (this->assignmentExpr != nullptr) {
                 this->assignmentExpr->codeGen();
             }
@@ -540,7 +551,10 @@ public:
             if (tableStack.empty())
                 variableTable[this->id->getVariableName()] = res;
             else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
+                if(tableStack.top()->find(this->id->getVariableName()) == tableStack.top()->end())
+                    variableTable[this->id->getVariableName()] = res;
+                else
+                    (*(tableStack.top()))[this->id->getVariableName()] = res;
             return res;
         }
     }
@@ -1066,7 +1080,7 @@ public:
                          "Not supported yet");
     }
 
-private:
+//private:
     std::string op;
     // ExpressionNode *mLeftHandSide, *mRightHandSide;
     IdentifierNode *mArrayName;
@@ -1524,8 +1538,29 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+
+     virtual llvm::Value* codeGen(/*CodeGenContext& context*/){
+        std::cout<<"Generating IF statement.\n";
+        auto conditionExpressionValue = conditionStatement->codeGen();
+        if(!conditionExpressionValue) return nullptr;
+
+        auto theFunction = Builder.GetInsertBlock()->getParent();
+
+        auto trueBlock = llvm::BasicBlock::Create(TheContext, "then", Builder.GetInsertBlock()->getParent());
+        auto falseBlock = llvm::BasicBlock::Create(TheContext, "else");
+
+        if(this->falseBody){
+            Builder.CreateCondBr(conditionExpressionValue, trueBlock, falseBlock);
+        }else{
+
+        }
+
+        Builder.SetInsertPoint(trueBlock);
+
+
+
+        return (llvm::Value *)0;
+    }
 };
 
 class ReturnStatementNode : public StatementNode {
@@ -1545,6 +1580,7 @@ public:
     }
 
     virtual llvm::Value *codeGen() { return returnValue->codeGen(); }
+
 };
 class ContinueStatementNode : public StatementNode {
 public:
