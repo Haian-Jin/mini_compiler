@@ -37,10 +37,7 @@ static std::stack<std::unordered_map<std::string, Value *> *> tableStack;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
-Value *LogErrorVV(std::string str) {
-    std::cout << str << std::endl;
-    return nullptr;
-}
+Value *LogErrorVV(std::string str);
 /*
     命名器，输入一个字符串，输出它的带编号版本。用于输出parse
    tree的时候给各个节点命名。

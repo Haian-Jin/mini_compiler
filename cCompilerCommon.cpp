@@ -408,3 +408,7 @@ std::string Node::getTokenValue()const{
     }
     return this->mTokenValue;
 }
+Value *LogErrorVV(std::string str) {
+    std::cout << str << std::endl;
+    return nullptr;
+}
