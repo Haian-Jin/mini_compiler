@@ -1443,6 +1443,10 @@ public:
 
     virtual llvm::Value *codeGen() {
         Value *ret = nullptr;
+        std::vector<Type*> sysArgs;
+        FunctionType* mainFuncType = FunctionType::get(llvm::Type::getVoidTy(TheContext),  false);
+        Function* mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main");
+        BasicBlock* block = BasicBlock::Create(TheContext, "entry");
         for (auto &iter : mGlobalStatementList) {
             ret = iter->codeGen();
         }

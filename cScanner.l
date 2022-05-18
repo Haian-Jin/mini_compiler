@@ -18,7 +18,7 @@ static YYSTYPE tempYylval;
 intNumber (([1-9][0-9]*)|[0-9])|(0x[0-9a-fA-F]+)|(0[0-7]*)
 identifier [a-zA-Z_][a-zA-Z0-9_]*
 doubleNumber {intNumber}\.{intNumber}
-emptyChar [ \t\n]
+emptyChar [ \t\n\r]
 char \'.\'|\'\\.\' 
 string \"[^\"]*\"
 
