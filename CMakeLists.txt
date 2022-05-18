@@ -24,7 +24,7 @@ string(STRIP "${LLVM_LINK_LIBRARIES}" LLVM_LINK_LIBRARIES)
 
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ljsoncpp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ljsoncpp ")
 add_custom_command(
     OUTPUT cScanner.cpp
     COMMAND flex -o cScanner.cpp  ${CMAKE_CURRENT_LIST_DIR}/cScanner.l 

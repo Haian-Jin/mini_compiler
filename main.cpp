@@ -28,6 +28,7 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
+    
 
 
     //if(treeRoot->semanticCheck());
