@@ -8,9 +8,9 @@
 #include <llvm/IR/Value.h>
 #include <map>
 #include <math.h>
+#include <stack>
 #include <string>
 #include <vector>
-#include <stack>
 
 // #include"noError.h"
 #include <json/json.h>
@@ -29,8 +29,10 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<Module> TheModule;
 static std::unordered_map<std::string, Value *> variableTable;
-static std::unordered_map<std::string, std::unordered_map<std::string, Value *>*> variableTables;
-static std::stack<std::unordered_map<std::string, Value *>*> tableStack;
+static std::unordered_map<std::string,
+                          std::unordered_map<std::string, Value *> *>
+    variableTables;
+static std::stack<std::unordered_map<std::string, Value *> *> tableStack;
 
 struct symAttribute;
 Value *LogErrorV(const char *Str);
@@ -329,13 +331,9 @@ public:
     bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
     bool isArray() const { return Node::isArray(); }
 
-    bool isType() const{
-        return Node::NodeKind == Node::KIND_ATTRIBUTE;
-    }
-    bool isArray() const{ 
-        return Node::isArray();
-    }
-    virtual std::string getNodeTypeName() const{
+    bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
+    bool isArray() const { return Node::isArray(); }
+    virtual std::string getNodeTypeName() const {
         if (isType()) {
             return std::string("TypeNode: ") + getTokenValue();
         } else {
@@ -359,7 +357,7 @@ public:
     virtual llvm::Value *codeGen() {
         if (!isType()) {
             Value *value = nullptr;
-            if(tableStack.empty())
+            if (tableStack.empty())
                 value = variableTable[this->getVariableName()];
             else
                 value = (*(tableStack.top()))[this->getVariableName()];
@@ -403,8 +401,11 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                         std::to_string(this->getColumnNumber()) + " " +
+                         "I'm not sure this should be made a codeGen");
+    }
 };
 
 class AssignmentNode : public ExpressionNode {
@@ -565,12 +566,9 @@ public:
     }
 
     virtual Value *codeGen() {
-        /*
-        TODO:
-        */
         return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
-                         "Not supported yet");
+                         "No need to codeGen this");
     }
 };
 
@@ -597,9 +595,6 @@ public:
         mStatementList.push_back(statementNode);
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
-
     // input type expression and multiple name identifiers, create multiple
     // declaration nodes
     void createMultiVarDeclaration(IdentifierNode *type,
@@ -623,6 +618,11 @@ public:
                                     to_merge->mStatementList.begin(),
                                     to_merge->mStatementList.end());
     }
+
+    virtual Value* codeGen() {
+        /* TODO: */
+    }
+
 };
 
 class StructDeclarationNode : public StatementNodesBlock {
@@ -746,7 +746,10 @@ public:
         return root;
     }
 
-    virtual Value *codeGen() { return this->mExpression->codeGen(); }
+    virtual Value *codeGen() { 
+        this->mExpression->codeGen();
+        return nullptr;
+    }
 };
 
 // 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
@@ -822,9 +825,6 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        /*
-        TODO: change the table of the values
-        */
         std::vector<llvm::Type *> argTypes;
 
         auto temp = parasList->mVarDeclarationList;
@@ -842,27 +842,46 @@ public:
             }
         }
 
-        llvm::Type * ret;
+        llvm::Type *ret;
 
         std::string ty = this->id->getSymbolName();
         if (ty == "int" || ty == "char") {
             ret = (llvm::Type::getInt32Ty(TheContext));
         } else if (ty == "float" || ty == "double") {
             ret = (llvm::Type::getDoubleTy(TheContext));
-        } else if (ty == "void"){
+        } else if (ty == "void") {
             ret = llvm::Type::getVoidTy(TheContext);
         } else {
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                                 std::to_string(this->getColumnNumber()) + " " +
-                                 "Return type is not supported");
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "Return type is not supported");
         }
-        FunctionType* functionType = llvm::FunctionType::get(ret, argTypes, false);
-        Function* function = llvm::Function::Create(functionType, llvm::GlobalValue::ExternalLinkage, id->getVariableName(), TheModule.get());
-        BasicBlock* basicBlock =  BasicBlock::Create(TheContext, "func_entry", function, nullptr);
-        /* TODO:1*/
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "Not supported yet");
+        FunctionType *functionType =
+            llvm::FunctionType::get(ret, argTypes, false);
+        Function *function = llvm::Function::Create(
+            functionType, llvm::GlobalValue::ExternalLinkage,
+            id->getVariableName(), TheModule.get());
+        BasicBlock *basicBlock =
+            BasicBlock::Create(TheContext, "func_entry", function, nullptr);
+
+        std::unordered_map<std::string, Value *> *argTable =
+            new std::unordered_map<std::string, Value *>;
+        tableStack.push(argTable);
+        variableTables[this->id->getVariableName()] = argTable;
+        auto iter_proto = temp.begin();
+        for (auto &iter_func : function->args()) {
+            iter_func.setName((*iter_proto)->id->getVariableName());
+            Value *arg = (*iter_proto)->codeGen();
+            Builder.CreateStore(&iter_func, arg, false);
+            // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
+            iter_proto++;
+        }
+
+        Value *toRet = this->body->codeGen();
+        Builder.CreateRet(toRet);
+        tableStack.pop();
+
+        return function;
     }
 };
 
@@ -875,29 +894,29 @@ public:
         for (int i = 0; i < childrenNumber; i++) {
             mChildren.push_back(va_arg(vl, Node *));
         }
-        mFunctionName = dynamic_cast<IdentifierNode*>(mChildren[0]);
+        mFunctionName = dynamic_cast<IdentifierNode *>(mChildren[0]);
         mArguments = new std::vector<ExpressionNode *>();
         mIsNegligible = (false), mSymbolName = (_symbolName),
         mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     }
-    FunctionCallNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible),mArguments(new std::vector<ExpressionNode *>()){};
+    FunctionCallNode(std::string _tokenValue, bool negligible = false)
+        : ExpressionNode(_tokenValue, negligible),
+          mArguments(new std::vector<ExpressionNode *>()){};
 
-    std::vector<ExpressionNode *> getArguments()const{
-        return *mArguments;
-    }
-    void addArgument(Node *c){
-        assert(dynamic_cast<ExpressionNode *>(c)!=NULL);
+    std::vector<ExpressionNode *> getArguments() const { return *mArguments; }
+    void addArgument(Node *c) {
+        assert(dynamic_cast<ExpressionNode *>(c) != NULL);
         mArguments->push_back(dynamic_cast<ExpressionNode *>(c));
     }
     virtual std::string getNodeTypeName() const {
         return std::string("FunctionNode: ") + mFunctionName->getTokenValue();
     }
-    virtual Json::Value jsonGen() const{
+    virtual Json::Value jsonGen() const {
         Json::Value r;
         r["name"] = getNodeTypeName();
-        //r["children"].append(mFunctionName->jsonGen());
-        for(auto i : *mArguments){
-            std::cout<<"oo\n";
+        // r["children"].append(mFunctionName->jsonGen());
+        for (auto i : *mArguments) {
+            std::cout << "oo\n";
             r["children"].append(i->jsonGen());
         }
         return r;
@@ -921,7 +940,7 @@ public:
 
         return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
     }
-    
+
 private:
     IdentifierNode *mFunctionName;
     std::vector<ExpressionNode *> *mArguments;
@@ -1092,10 +1111,12 @@ private:
 
 class StructMemberNode : public ExpressionNode {
 public:
+    StructMemberNode(std::string _tokenValue, bool negligible = false)
+        : ExpressionNode(_tokenValue, negligible){};
 
-    StructMemberNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    
-    StructMemberNode(std::string opType, IdentifierNode *lhs, IdentifierNode *rhs, bool isArithmetic=false):ExpressionNode() {
+    StructMemberNode(std::string opType, IdentifierNode *lhs,
+                     IdentifierNode *rhs, bool isArithmetic = false)
+        : ExpressionNode() {
         assert(lhs != nullptr);
         assert(rhs != nullptr);
         assert(opType != "");
@@ -1179,10 +1200,12 @@ private:
 };
 class BinaryOperatorNode : public ExpressionNode {
 public:
-    
-    BinaryOperatorNode(std::string _tokenValue, bool negligible=false):ExpressionNode(_tokenValue,negligible){};
-    
-    BinaryOperatorNode(std::string opType, ExpressionNode *lhs, ExpressionNode *rhs, bool isArithmetic=true):ExpressionNode() {
+    BinaryOperatorNode(std::string _tokenValue, bool negligible = false)
+        : ExpressionNode(_tokenValue, negligible){};
+
+    BinaryOperatorNode(std::string opType, ExpressionNode *lhs,
+                       ExpressionNode *rhs, bool isArithmetic = true)
+        : ExpressionNode() {
         assert(lhs != nullptr);
         assert(rhs != nullptr);
         assert(opType != "");
@@ -1199,12 +1222,9 @@ public:
                 this->setType(Node::TYPE_DOUBLE);
             }
         }
+    }
 
-    }
-    
-    virtual std::string getNodeTypeName() const{
-        return op;
-    }
+    virtual std::string getNodeTypeName() const { return op; }
 
     virtual std::string getNodeTypeName() const { return op; }
 
@@ -1352,11 +1372,6 @@ public:
                          std::to_string(this->getColumnNumber()) + " " +
                          "? ... : is not supported");
     }
-    TenaryOperatorNode(std::string _tokenValue, bool negligible = false)
-        : ExpressionNode(_tokenValue, negligible){};
-    virtual std::string getNodeTypeName() const {
-        return std::string("TenaryOperatorNode  ") + (getVariableName());
-    }
 
 private:
     std::string op;
@@ -1390,7 +1405,11 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        
+        Value* ret = nullptr;
+        for(auto &iter:mGlobalStatementList) {
+            ret = iter->codeGen();
+        }
+        return ret;
     }
 
     // merge another global declaration statements block
@@ -1407,17 +1426,21 @@ public:
     }
 };
 
-
-class ForStatementNode: public StatementNode{
+class ForStatementNode : public StatementNode {
 public:
     // for (initialStatement; conditionStatement; progressStatement)
-    ExpressionStatementNode * initialStatement;
-    ExpressionStatementNode * conditionStatement; 
-    ExpressionStatementNode * progressStatement; 
-    StatementNodesBlock *  forBody;
+    ExpressionStatementNode *initialStatement;
+    ExpressionStatementNode *conditionStatement;
+    ExpressionStatementNode *progressStatement;
+    StatementNodesBlock *forBody;
 
-    ForStatementNode(ExpressionStatementNode * initial, ExpressionStatementNode * condition, ExpressionStatementNode * progress, StatementNodesBlock *  body)
-        :StatementNode(), initialStatement(initial), conditionStatement(condition), progressStatement(progress), forBody(body){
+    ForStatementNode(ExpressionStatementNode *initial,
+                     ExpressionStatementNode *condition,
+                     ExpressionStatementNode *progress,
+                     StatementNodesBlock *body)
+        : StatementNode(), initialStatement(initial),
+          conditionStatement(condition), progressStatement(progress),
+          forBody(body) {
         assert(initialStatement != nullptr);
         assert(conditionStatement != nullptr);
         assert(progressStatement != nullptr);
@@ -1440,19 +1463,19 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
+    // *)0;}
 };
 
-
-
-class WhileStatementNode: public StatementNode{
+class WhileStatementNode : public StatementNode {
 public:
     // for (initialStatement; conditionStatement; progressStatement)
-    ExpressionStatementNode * conditionStatement; 
-    StatementNodesBlock *  whileBody;
+    ExpressionStatementNode *conditionStatement;
+    StatementNodesBlock *whileBody;
 
-    WhileStatementNode(ExpressionStatementNode * condition, StatementNodesBlock * body)
-        :StatementNode(), conditionStatement(condition), whileBody(body){
+    WhileStatementNode(ExpressionStatementNode *condition,
+                       StatementNodesBlock *body)
+        : StatementNode(), conditionStatement(condition), whileBody(body) {
         assert(conditionStatement != nullptr);
         assert(whileBody != nullptr);
     }
@@ -1471,51 +1494,47 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
-
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
+    // *)0;}
 };
 
-
-class IfStatementNode: public StatementNode{
+class IfStatementNode : public StatementNode {
 public:
+    ExpressionStatementNode *conditionStatement;
+    StatementNodesBlock *trueBody;  // if (True), do this, cannot be null
+    StatementNodesBlock *falseBody; // else, do this, can be null
 
-    ExpressionStatementNode * conditionStatement;
-    StatementNodesBlock * trueBody;           // if (True), do this, cannot be null
-    StatementNodesBlock * falseBody;         // else, do this, can be null
-
-    IfStatementNode(ExpressionStatementNode * condition, StatementNodesBlock * trueStatements, StatementNodesBlock * falseStatements=nullptr)
-        :StatementNode(), conditionStatement(condition), trueBody(trueStatements), falseBody(falseStatements){
+    IfStatementNode(ExpressionStatementNode *condition,
+                    StatementNodesBlock *trueStatements,
+                    StatementNodesBlock *falseStatements = nullptr)
+        : StatementNode(), conditionStatement(condition),
+          trueBody(trueStatements), falseBody(falseStatements) {
         assert(conditionStatement != nullptr);
         assert(trueBody != nullptr);
     }
-    virtual std::string getTypeName() const {
-        return "NIfStatement";
-    }
+    virtual std::string getTypeName() const { return "NIfStatement"; }
 
     virtual Json::Value jsonGen() const {
         Json::Value root;
         root["name"] = getTypeName();
         root["children"].append(conditionStatement->jsonGen());
         root["children"].append(trueBody->jsonGen());
-        if(falseBody != nullptr)
+        if (falseBody != nullptr)
             root["children"].append(falseBody->jsonGen());
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
+    // *)0;}
 };
 
-class ReturnStatementNode: public StatementNode{
+class ReturnStatementNode : public StatementNode {
 public:
+    ExpressionNode *returnValue;
 
-    ExpressionNode * returnValue;
-
-    ReturnStatementNode(ExpressionNode * returnV = nullptr)
-        :StatementNode(), returnValue(returnV){
-    }
-    virtual std::string getTypeName() const {
-        return "ReturnStatement";
-    }
+    ReturnStatementNode(ExpressionNode *returnV = nullptr)
+        : StatementNode(), returnValue(returnV) {}
+    virtual std::string getTypeName() const { return "ReturnStatement"; }
 
     virtual Json::Value jsonGen() const {
         Json::Value root;
@@ -1525,16 +1544,13 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    virtual llvm::Value *codeGen() { return returnValue->codeGen(); }
 };
-class ContinueStatementNode: public StatementNode{
+class ContinueStatementNode : public StatementNode {
 public:
+    ContinueStatementNode() : StatementNode() {}
 
-    ContinueStatementNode():StatementNode(){}
-
-    virtual std::string getTypeName() const {
-        return "ContinueStatement";
-    }
+    virtual std::string getTypeName() const { return "ContinueStatement"; }
 
     virtual Json::Value jsonGen() const {
         Json::Value root;
@@ -1542,16 +1558,14 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
+    // *)0;}
 };
-class BreakStatementNode: public StatementNode{
+class BreakStatementNode : public StatementNode {
 public:
-    BreakStatementNode():StatementNode(){}
+    BreakStatementNode() : StatementNode() {}
 
-    virtual std::string getTypeName() const {
-        return "BreakStatement";
-    }
-
+    virtual std::string getTypeName() const { return "BreakStatement"; }
 
     virtual Json::Value jsonGen() const {
         Json::Value root;
@@ -1559,11 +1573,9 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value *)0;}
+    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
+    // *)0;}
 };
-
-
-
 
 // 属性。这个是变量的属性，是存在符号表里的，不是语法分析树的属性，它们会有细微的差别。
 struct symAttribute {
