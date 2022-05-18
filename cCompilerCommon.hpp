@@ -52,6 +52,31 @@ public:
     std::string getNumberedName(std::string name);
 };
 
+// 将各类型转换为boolean
+static Value *CastBool(Value *cond) {
+    if (cond->getType()->getTypeID() == Type::IntegerTyID) {
+        cond = Builder.CreateIntCast(cond, Type::getInt1Ty(TheContext), true);
+        return Builder.CreateICmpNE(
+            cond, ConstantInt::get(Type::getInt1Ty(TheContext), 0, true));
+    } else if (cond->getType()->getTypeID() == Type::DoubleTyID) {
+        return Builder.CreateFCmpONE(cond,
+                                     ConstantFP::get(TheContext, APFloat(0.0)));
+    } else {
+        return cond;
+    }
+}
+
+//获取block内临时变量表
+static std::unordered_map<std::string, Value *> *inheritTable() {
+    std::unordered_map<std::string, Value *> *codeTable;
+    if (tableStack.empty()) {
+        codeTable = new std::unordered_map<std::string, Value *>(variableTable);
+    } else {
+        codeTable =
+            new std::unordered_map<std::string, Value *>(*(tableStack.top()));
+    }
+    return codeTable;
+}
 /*
     语法分析树的结点。（不是抽象语法树）
     为属性文法做了一定的适配，有 AttributivedNode
@@ -331,8 +356,7 @@ public:
     bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
     bool isArray() const { return Node::isArray(); }
 
-
-    virtual std::string getNodeTypeName() const{
+    virtual std::string getNodeTypeName() const {
 
         if (isType()) {
             return std::string("TypeNode: ") + getTokenValue();
@@ -359,11 +383,13 @@ public:
             Value *value = nullptr;
             if (tableStack.empty())
                 value = variableTable[this->getVariableName()];
-            else{
-                value = ( tableStack.top()->find(this->getVariableName())==tableStack.top()->end() ) ? 
-                        ( (*(tableStack.top()))[this->getVariableName()] ) :
-                        ( variableTable[this->getVariableName()] )
-                        ;;}
+            else {
+                value = (tableStack.top()->find(this->getVariableName()) ==
+                         tableStack.top()->end())
+                            ? ((*(tableStack.top()))[this->getVariableName()])
+                            : (variableTable[this->getVariableName()]);
+                ;
+            }
 
             if (!value) {
                 return LogErrorV(this->getVariableName() + " is not defined\n");
@@ -438,11 +464,11 @@ public:
         if (tableStack.empty())
             dst = variableTable[mLeftHandSide->getVariableName()];
         else
-            dst = ( tableStack.top()->find(this->getVariableName())==tableStack.top()->end() ) ? 
-                        ( (*(tableStack.top()))[this->getVariableName()] ) :
-                        ( variableTable[this->getVariableName()] )
-                        ;
-            
+            dst = (tableStack.top()->find(this->getVariableName()) ==
+                   tableStack.top()->end())
+                      ? ((*(tableStack.top()))[this->getVariableName()])
+                      : (variableTable[this->getVariableName()]);
+
         if (!dst)
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
@@ -525,10 +551,7 @@ public:
             if (tableStack.empty())
                 variableTable[this->id->getVariableName()] = res;
             else
-                if(tableStack.top()->find(this->id->getVariableName()) == tableStack.top()->end())
-                    variableTable[this->id->getVariableName()] = res;
-                else
-                    (*(tableStack.top()))[this->id->getVariableName()] = res;
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
             if (this->assignmentExpr != nullptr) {
                 this->assignmentExpr->codeGen();
             }
@@ -551,10 +574,7 @@ public:
             if (tableStack.empty())
                 variableTable[this->id->getVariableName()] = res;
             else
-                if(tableStack.top()->find(this->id->getVariableName()) == tableStack.top()->end())
-                    variableTable[this->id->getVariableName()] = res;
-                else
-                    (*(tableStack.top()))[this->id->getVariableName()] = res;
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
             return res;
         }
     }
@@ -633,10 +653,13 @@ public:
                                     to_merge->mStatementList.end());
     }
 
-    virtual Value* codeGen() {
-        /* TODO: */
-    }
+    virtual Value *codeGen() {
 
+        for (auto &iter : mStatementList) {
+            iter->codeGen();
+        }
+        return nullptr;
+    }
 };
 
 class StructDeclarationNode : public StatementNodesBlock {
@@ -760,7 +783,7 @@ public:
         return root;
     }
 
-    virtual Value *codeGen() { 
+    virtual Value *codeGen() {
         this->mExpression->codeGen();
         return nullptr;
     }
@@ -891,8 +914,8 @@ public:
             iter_proto++;
         }
 
-        Value *toRet = this->body->codeGen();
-        Builder.CreateRet(toRet);
+        this->body->codeGen();
+
         tableStack.pop();
 
         return function;
@@ -1080,7 +1103,7 @@ public:
                          "Not supported yet");
     }
 
-//private:
+    // private:
     std::string op;
     // ExpressionNode *mLeftHandSide, *mRightHandSide;
     IdentifierNode *mArrayName;
@@ -1419,8 +1442,8 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        Value* ret = nullptr;
-        for(auto &iter:mGlobalStatementList) {
+        Value *ret = nullptr;
+        for (auto &iter : mGlobalStatementList) {
             ret = iter->codeGen();
         }
         return ret;
@@ -1477,8 +1500,46 @@ public:
         return root;
     }
 
-    // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
-    // *)0;}
+    virtual llvm::Value *codeGen() {
+        Function* theFunction = Builder.GetInsertBlock()->getParent();
+
+        BasicBlock* loopBody = BasicBlock::Create(TheContext, "forbody", theFunction);
+        BasicBlock* after = BasicBlock::Create(TheContext, "forcont");
+
+        if(this->initialStatement) {
+            this->initialStatement->codeGen();
+        }
+
+        Value* cond = this->conditionStatement->codeGen();
+        if(!cond) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "lack of condition");
+        }
+
+        Builder.CreateCondBr(CastBool(cond), loopBody, after);
+
+        Builder.SetInsertPoint(loopBody);
+
+        auto tempTable = inheritTable();
+        tableStack.push(tempTable);
+
+        this->forBody->codeGen();
+
+        tableStack.pop();
+
+        if (this->progressStatement) {
+            this->progressStatement->codeGen();
+        }
+
+        cond = this->conditionStatement->codeGen();
+        Builder.CreateCondBr(CastBool(cond), loopBody, after);
+
+        theFunction->getBasicBlockList().push_back(after);
+        Builder.SetInsertPoint(after);
+
+        return nullptr;
+    }
 };
 
 class WhileStatementNode : public StatementNode {
@@ -1510,6 +1571,38 @@ public:
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
     // *)0;}
+    virtual llvm::Value *codeGen() {
+        Function* theFunction = Builder.GetInsertBlock()->getParent();
+
+        BasicBlock* loopBody = BasicBlock::Create(TheContext, "whilebody", theFunction);
+        BasicBlock* after = BasicBlock::Create(TheContext, "whilecont");
+
+        Value* cond = this->conditionStatement->codeGen();
+        if(!cond) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "lack of condition");
+        }
+
+        Builder.CreateCondBr(CastBool(cond), loopBody, after);
+
+        Builder.SetInsertPoint(loopBody);
+
+        auto tempTable = inheritTable();
+        tableStack.push(tempTable);
+
+        this->whileBody->codeGen();
+
+        tableStack.pop();
+
+        cond = this->conditionStatement->codeGen();
+        Builder.CreateCondBr(CastBool(cond), loopBody, after);
+
+        theFunction->getBasicBlockList().push_back(after);
+        Builder.SetInsertPoint(after);
+
+        return nullptr;
+    }
 };
 
 class IfStatementNode : public StatementNode {
@@ -1538,28 +1631,59 @@ public:
         return root;
     }
 
-
-     virtual llvm::Value* codeGen(/*CodeGenContext& context*/){
-        std::cout<<"Generating IF statement.\n";
+    virtual llvm::Value *codeGen() {
         auto conditionExpressionValue = conditionStatement->codeGen();
-        if(!conditionExpressionValue) return nullptr;
+        if (!conditionExpressionValue)
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "lack of condition");
 
         auto theFunction = Builder.GetInsertBlock()->getParent();
 
-        auto trueBlock = llvm::BasicBlock::Create(TheContext, "then", Builder.GetInsertBlock()->getParent());
+        auto trueBlock = llvm::BasicBlock::Create(
+            TheContext, "then", Builder.GetInsertBlock()->getParent());
         auto falseBlock = llvm::BasicBlock::Create(TheContext, "else");
-
-        if(this->falseBody){
-            Builder.CreateCondBr(conditionExpressionValue, trueBlock, falseBlock);
-        }else{
-
+        auto mergeBlock = llvm::BasicBlock::Create(TheContext, "ifcont");
+        if (this->falseBody) {
+            Builder.CreateCondBr(CastBool(conditionExpressionValue), trueBlock,
+                                 falseBlock);
+        } else {
+            Builder.CreateCondBr(CastBool(conditionExpressionValue), trueBlock,
+                                 mergeBlock);
         }
 
         Builder.SetInsertPoint(trueBlock);
 
+        auto tempTable = inheritTable();
+        tableStack.push(tempTable);
 
+        this->trueBody->codeGen();
 
-        return (llvm::Value *)0;
+        tableStack.pop();
+
+        trueBlock = Builder.GetInsertBlock();
+        if (trueBlock->getTerminator() == nullptr) {
+            Builder.CreateBr(mergeBlock);
+        }
+
+        if (this->falseBody) {
+            theFunction->getBasicBlockList().push_back(falseBlock);
+            Builder.SetInsertPoint(falseBlock);
+
+            auto tempTable = inheritTable();
+            tableStack.push(tempTable);
+
+            this->falseBody->codeGen();
+
+            tableStack.pop();
+
+            Builder.CreateBr(mergeBlock);
+        }
+
+        theFunction->getBasicBlockList().push_back(mergeBlock);
+        Builder.SetInsertPoint(mergeBlock);
+
+        return nullptr;
     }
 };
 
@@ -1579,8 +1703,11 @@ public:
         return root;
     }
 
-    virtual llvm::Value *codeGen() { return returnValue->codeGen(); }
-
+    virtual llvm::Value *codeGen() {
+        Value *ret = returnValue->codeGen();
+        Builder.CreateRet(ret);
+        return nullptr;
+    }
 };
 class ContinueStatementNode : public StatementNode {
 public:
