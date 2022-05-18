@@ -35,9 +35,12 @@ static std::unordered_map<std::string,
 static std::stack<std::unordered_map<std::string, Value *> *> tableStack;
 
 struct symAttribute;
-Value *LogErrorV(const char *Str);
+// Value *LogErrorVV(const char *Str);
 
-Value *LogErrorV(std::string str);
+Value *LogErrorVV(std::string str) {
+    std::cout << str << std::endl;
+    return nullptr;
+}
 /*
     命名器，输入一个字符串，输出它的带编号版本。用于输出parse
    tree的时候给各个节点命名。
@@ -392,7 +395,7 @@ public:
             }
 
             if (!value) {
-                return LogErrorV(this->getVariableName() + " is not defined\n");
+                return LogErrorVV(this->getVariableName() + " is not defined\n");
             }
             if (value->getType()->isPointerTy()) {
                 auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
@@ -407,7 +410,7 @@ public:
             }
             return Builder.CreateLoad(value, false, "");
         } else {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "Keywords can\'t be used as identifier's name");
         }
@@ -432,7 +435,7 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "I'm not sure this should be made a codeGen");
     }
@@ -470,7 +473,7 @@ public:
                       : (variableTable[this->getVariableName()]);
 
         if (!dst)
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "undeclared variable");
         auto type_l = dst->getType()->getTypeID();
@@ -480,7 +483,7 @@ public:
             Builder.CreateStore(R, dst);
             return R;
         } else if (type_r == llvm::Type::DoubleTyID) {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "Can't assign double to int");
         } else {
@@ -532,7 +535,7 @@ public:
 
     virtual llvm::Value *codeGen() {
         if (!type->isType()) {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "This type is not supported");
         }
@@ -544,7 +547,7 @@ public:
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
             } else {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "This type is not supported");
             }
@@ -600,7 +603,7 @@ public:
     }
 
     virtual Value *codeGen() {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "No need to codeGen this");
     }
@@ -693,7 +696,7 @@ public:
         /*
         TODO:
         */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
     }
@@ -873,7 +876,7 @@ public:
             } else if (ty == "float" || ty == "double") {
                 argTypes.push_back(llvm::Type::getDoubleTy(TheContext));
             } else {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "A type is not supported in the parameters");
             }
@@ -889,7 +892,7 @@ public:
         } else if (ty == "void") {
             ret = llvm::Type::getVoidTy(TheContext);
         } else {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "Return type is not supported");
         }
@@ -963,9 +966,9 @@ public:
         Function *CalleeF =
             TheModule->getFunction(mFunctionName->getVariableName());
         if (!CalleeF)
-            return LogErrorV(mFunctionName->getVariableName() + "not declared");
+            return LogErrorVV(mFunctionName->getVariableName() + "not declared");
         if (CalleeF->arg_size() != (*mArguments).size()) {
-            return LogErrorV("Incorrect # arguments passed");
+            return LogErrorVV("Incorrect # arguments passed");
         }
 
         std::vector<Value *> ArgsV;
@@ -1016,12 +1019,12 @@ public:
         }
         if (op == "pre++" || op == "pre--" || op == "post++" ||
             op == "post--" || op == "~") {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "\"" + op + "\" is not supported as an operator");
         } else if (op == "!") {
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid boolean operation with float number");
             }
@@ -1098,7 +1101,7 @@ public:
         /*
         TODO:
         */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
     }
@@ -1135,7 +1138,7 @@ public:
         /*
         TODO:
         */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
     }
@@ -1187,7 +1190,7 @@ public:
         /*
         TODO:
         */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
     }
@@ -1225,7 +1228,7 @@ public:
         /*
         TODO:
         */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "Not supported yet");
     }
@@ -1261,7 +1264,7 @@ public:
         }
     }
 
-    virtual std::string getNodeTypeName() const { return op; }
+    
 
     virtual std::string getNodeTypeName() const { return op; }
 
@@ -1296,21 +1299,21 @@ public:
 
         if (op == "&&") { // and operation
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid boolean operation with float number");
             }
             return Builder.CreateAnd(Left, Right, "andop");
         } else if (op == "||") { // or operation
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid boolean operation with float number");
             }
             return Builder.CreateOr(Left, Right, "orop");
         } else if (op == "^" || op == "|" ||
                    op == "&") { // bitwise operation, but not supported
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "bit operation is not supported");
         } else if (op == "==") {
@@ -1333,14 +1336,14 @@ public:
                            : Builder.CreateICmpSLE(Left, Right, "ileop");
         } else if (op == ">>") {
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid boolean operation with float number");
             }
             return Builder.CreateAShr(Left, Right, "shrop");
         } else if (op == "<<") {
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid boolean operation with float number");
             }
@@ -1359,13 +1362,13 @@ public:
                            : Builder.CreateSDiv(Left, Right, "divop");
         } else if (op == "%") {
             if (isFloat) {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                  std::to_string(this->getColumnNumber()) + " " +
                                  "invalid \"%\" operation with float number");
             }
             return Builder.CreateSRem(Left, Right, "smodop");
         } else {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "\"" + op + "\" is not supported as an operator");
         }
@@ -1405,7 +1408,7 @@ public:
     }
 
     virtual llvm::Value *codeGen() {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "? ... : is not supported");
     }
@@ -1512,7 +1515,7 @@ public:
 
         Value* cond = this->conditionStatement->codeGen();
         if(!cond) {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "lack of condition");
         }
@@ -1579,7 +1582,7 @@ public:
 
         Value* cond = this->conditionStatement->codeGen();
         if(!cond) {
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "lack of condition");
         }
@@ -1634,7 +1637,7 @@ public:
     virtual llvm::Value *codeGen() {
         auto conditionExpressionValue = conditionStatement->codeGen();
         if (!conditionExpressionValue)
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "lack of condition");
 
@@ -1839,14 +1842,14 @@ bool typeMatch(std::vector<Node::Type> a, Node *c, std::vector<std::string> s);
 bool typeMatch(symAttribute *a, Node *b);
 std::string type_to_string(symAttribute *t);
 
-std::unique_ptr<ExpressionNode> LogError(const char *str) {
-    fprintf(stderr, "LogError: %s\n", str);
-    return nullptr;
-}
+// std::unique_ptr<ExpressionNode> LogError(const char *str) {
+//     fprintf(stderr, "LogError: %s\n", str);
+//     return nullptr;
+// }
 
-Value *LogErrorV(std::string str) { return LogErrorV(str.c_str()); }
+// Value *LogErrorVV(std::string str) { return LogErrorVV(str.c_str()); }
 
-Value *LogErrorV(const char *Str) {
-    LogError(Str);
-    return nullptr;
-}
+// Value *LogErrorVV(const char *Str) {
+//     LogError(Str);
+//     return nullptr;
+// }
