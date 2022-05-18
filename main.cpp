@@ -1,6 +1,9 @@
 #include "./cCompilerCommon.hpp"
 #include <iostream>
 #include <fstream>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/IRPrintingPasses.h>
+#include <llvm/Support/raw_ostream.h>
 extern Node *makeParseTree();
 using std::string;
 int main(){
@@ -28,8 +31,10 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
-    
-
+    treeRoot->codeGen();
+    llvm::legacy::PassManager passManager;
+    passManager.add(createPrintModulePass(outs()));
+    passManager.run(*(TheModule.get()));
 
     //if(treeRoot->semanticCheck());
 }
