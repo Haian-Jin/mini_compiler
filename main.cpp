@@ -32,8 +32,8 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
-
+    printf("1\n");
     treeRoot->codeGen();
-    TheModule->print(errs(), nullptr);
+//    TheModule->print(errs(), nullptr);
 //    if(treeRoot->semanticCheck());
 }
