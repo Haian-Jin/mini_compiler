@@ -35,6 +35,36 @@
 									"children" : 
 									[
 										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: t"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: t"
+												},
+												{
+													"name" : "IntNode:1"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
 											"name" : "IntNode:0"
 										}
 									],

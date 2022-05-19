@@ -34,6 +34,7 @@ int main(){
     }
     printf("1\n");
     treeRoot->codeGen();
+    printf("2\n");
 //    TheModule->print(errs(), nullptr);
 //    if(treeRoot->semanticCheck());
 }
