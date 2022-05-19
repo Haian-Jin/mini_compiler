@@ -34,6 +34,7 @@ static std::unordered_map<std::string,
         std::unordered_map<std::string, Value *> *>
         variableTables;
 static std::stack<std::unordered_map<std::string, Value *> *> tableStack;
+static std::stack<llvm::Function*> funcTable;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
@@ -53,6 +54,8 @@ public:
 
     std::string getNumberedName(std::string name);
 };
+
+llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, llvm::StringRef VarName, llvm::Type* type);
 
 // 将各类型转换为boolean
 static Value *CastBool(Value *cond) {
@@ -551,9 +554,10 @@ public:
         Value *res;
         if (!this->id->isArray()) {
             if (ty == "int" || ty == "char") {
-                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
+//                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext), 0, this->id->getVariableName().c_str());
+                CreateEntryBlockAlloca(funcTable.top(), StringRef(this->id->getVariableName()), llvm::Type::getInt32Ty(TheContext));
             } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
+                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext), 0, this->id->getVariableName());
             } else {
                 return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                   std::to_string(this->getColumnNumber()) + " " +
@@ -577,10 +581,10 @@ public:
                     llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (ty == "int" || ty == "char") {
                 res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
-                                           ArraySize, "arrtemp");
+                                           ArraySize, this->id->getVariableName());
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
-                                           ArraySize, "arrtemp");
+                                           ArraySize, this->id->getVariableName());
             }
             if (tableStack.empty())
                 variableTable[this->id->getVariableName()] = res;
@@ -917,10 +921,11 @@ public:
         FunctionType *functionType =
                 llvm::FunctionType::get(ret, argTypes, false);
         Function *function = llvm::Function::Create(
-                functionType, llvm::GlobalValue::ExternalLinkage,
+                functionType, llvm::GlobalValue::InternalLinkage,
                 id->getVariableName(), TheModule.get());
+        funcTable.push(function);
         BasicBlock *basicBlock =
-                BasicBlock::Create(TheContext, "func_entry", function, nullptr);
+                BasicBlock::Create(TheContext, "entry", function);
         Builder.SetInsertPoint(basicBlock);
         if (parasList) {
             auto temp = parasList->mVarDeclarationList;
@@ -940,6 +945,7 @@ public:
 
         this->body->codeGen();
 
+        funcTable.pop();
         tableStack.pop();
 
         return function;
@@ -1481,7 +1487,7 @@ public:
 
     virtual llvm::Value *codeGen() {
         Value *ret = nullptr;
-        TheModule = std::make_unique<Module>("test", TheContext);;
+
 //        FunctionType *mainFuncType = FunctionType::get(llvm::Type::getVoidTy(TheContext), false);
 //        Function *mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main");
 //        BasicBlock *block = BasicBlock::Create(TheContext, "entry", mainFunc);

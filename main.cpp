@@ -32,9 +32,10 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
+    TheModule = std::make_unique<Module>("test", TheContext);
     printf("1\n");
     treeRoot->codeGen();
     printf("2\n");
-//    TheModule->print(errs(), nullptr);
+    TheModule->print(llvm::errs(), nullptr);
 //    if(treeRoot->semanticCheck());
 }
