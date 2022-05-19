@@ -35,7 +35,7 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
-    printf("begin codeGen\n");
+//    printf("begin codeGen\n");
     treeRoot->codeGen();//std::cout<<"a\n";
     //llvm::raw_os_ostream errs();
     /*
@@ -66,6 +66,6 @@ int main(){
     //aaw->printInfoComment()
     //errs()<<"foo\n";
     //TheModule->dump();=-
-    printf("print finished\n");
+//    printf("print finished\n");
 //    if(treeRoot->semanticCheck());
 }

@@ -23,17 +23,20 @@
 #include <unordered_map>
 
 using namespace llvm;
-using std::make_shared;
-using std::shared_ptr;
+
+struct Type_and_Address {
+    llvm::Type::TypeID type;
+    llvm::Value *address;
+};
 
 extern llvm::LLVMContext TheContext;
 extern llvm::IRBuilder<> Builder;//(TheContext);
 extern Module *TheModule;// = new Module(llvm::StringRef(),TheContext);
-extern std::unordered_map<std::string, Value *> variableTable;
+extern std::unordered_map<std::string, Type_and_Address> variableTable;
 extern std::unordered_map<std::string,
-        std::unordered_map<std::string, Value *> *>
+        std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
-extern std::stack<std::unordered_map<std::string, Value *> *> tableStack;
+extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
@@ -69,13 +72,13 @@ static Value *CastBool(Value *cond) {
 }
 
 //获取block内临时变量表
-static std::unordered_map<std::string, Value *> *inheritTable() {
-    std::unordered_map<std::string, Value *> *codeTable;
+static std::unordered_map<std::string, Type_and_Address> *inheritTable() {
+    std::unordered_map<std::string, Type_and_Address> *codeTable;
     if (tableStack.empty()) {
-        codeTable = new std::unordered_map<std::string, Value *>(variableTable);
+        codeTable = new std::unordered_map<std::string, Type_and_Address>(variableTable);
     } else {
         codeTable =
-                new std::unordered_map<std::string, Value *>(*(tableStack.top()));
+                new std::unordered_map<std::string, Type_and_Address>(*(tableStack.top()));
     }
     return codeTable;
 }
@@ -250,8 +253,8 @@ public:
     virtual void setVariableName(std::string _name);
 
     // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    // virtual std::string getVariableName(){}
-    virtual std::string getVariableName() const{return "aa";};
+    // virtual std::string getSymbolName(){}
+//    virtual std::string getSymbolName() const{return getSymbolName();};
 
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
     // virtual void setPosition(int l,int c){}
@@ -336,8 +339,9 @@ public:
         r["name"] = getNodeTypeName();
         return r;
     }
-    virtual llvm::Value* codeGen(){
-        std::cout<<"error codeGen\n";
+
+    virtual llvm::Value *codeGen() {
+        std::cout << "error codeGen\n";
     }
 };
 
@@ -380,7 +384,7 @@ public:
     // std::string getName(){
     //     return mSymbolName;
     // }
-    // 用getVariableName
+    // 用getSymbolName
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
     // *)0;}
@@ -393,19 +397,25 @@ public:
     virtual llvm::Value *codeGen() {
         if (!isType()) {
             Value *value = nullptr;
-            if (tableStack.empty())
-                value = variableTable[this->getVariableName()];
-            else {
-                value = (tableStack.top()->find(this->getVariableName()) ==
+            llvm::Type::TypeID type;
+            if (tableStack.empty()) {
+                value = variableTable[this->getSymbolName()].address;
+                type = variableTable[this->getSymbolName()].type;
+            } else {
+                value = (tableStack.top()->find(this->getSymbolName()) !=
                          tableStack.top()->end())
-                        ? ((*(tableStack.top()))[this->getVariableName()])
-                        : (variableTable[this->getVariableName()]);;
+                        ? ((*(tableStack.top()))[this->getSymbolName()].address)
+                        : (variableTable[this->getSymbolName()].address);
+                type = (tableStack.top()->find(this->getSymbolName()) !=
+                        tableStack.top()->end())
+                       ? ((*(tableStack.top()))[this->getSymbolName()].type)
+                       : (variableTable[this->getSymbolName()].type);
             }
 
             if (!value) {
-                return LogErrorVV(this->getVariableName() + " is not defined\n");
+                return LogErrorVV(this->getSymbolName() + " is not defined\n");
             }
-            if (value->getType()->isPointerTy()) {
+            if (type == llvm::Type::PointerTyID) {
                 auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
                 if (arrayPtr->getType()->isArrayTy()) {
                     std::vector<Value *> indices;
@@ -475,20 +485,27 @@ public:
 
     virtual llvm::Value *codeGen() {
         Value *dst = nullptr;
-        if (tableStack.empty())
-            dst = variableTable[mLeftHandSide->getVariableName()];
-        else
-            dst = (tableStack.top()->find(this->getVariableName()) ==
+        llvm::Type::TypeID type_l;
+        if (tableStack.empty()) {
+            dst = variableTable[mLeftHandSide->getSymbolName()].address;
+            type_l = variableTable[mLeftHandSide->getSymbolName()].type;
+        } else {
+            dst = (tableStack.top()->find(mLeftHandSide->getSymbolName()) !=
                    tableStack.top()->end())
-                  ? ((*(tableStack.top()))[this->getVariableName()])
-                  : (variableTable[this->getVariableName()]);
-
+                  ? ((*(tableStack.top()))[mLeftHandSide->getSymbolName()].address)
+                  : (variableTable[mLeftHandSide->getSymbolName()].address);
+            type_l = (tableStack.top()->find(mLeftHandSide->getSymbolName()) !=
+                      tableStack.top()->end())
+                     ? ((*(tableStack.top()))[mLeftHandSide->getSymbolName()].type)
+                     : (variableTable[mLeftHandSide->getSymbolName()].type);
+        }
         if (!dst)
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                               std::to_string(this->getColumnNumber()) + " " +
                               "undeclared variable");
-        auto type_l = dst->getType()->getTypeID();
+//        auto type_l = dst->getType()->getTypeID();
         Value *R = mRightHandSide->codeGen();
+
         auto type_r = R->getType()->getTypeID();
         if (type_r == type_l) {
             Builder.CreateStore(R, dst);
@@ -553,22 +570,40 @@ public:
         std::string ty = type->getSymbolName();
         //std::cout<<"typeName: "<<ty<<std::endl;
         Value *res;
+        llvm::Type::TypeID tor;
         if (!this->id->isArray()) {
-            if (ty == "int" || ty == "char") {
-                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
-            } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
+            if (tableStack.empty()) {
+                if (ty == "int" || ty == "char") {
+                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt32Ty(TheContext), false, llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                    tor = llvm::Type::IntegerTyID;
+                } else if (ty == "float" || ty == "double") {
+                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getDoubleTy(TheContext), false, llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                    tor = llvm::Type::DoubleTyID;
+                } else {
+                    return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                      std::to_string(this->getColumnNumber()) + " " +
+                                      "This type is not supported");
+                }
+                Type_and_Address ret = {tor, res};
+                variableTable[this->id->getSymbolName()] = ret;
             } else {
-                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-                                  std::to_string(this->getColumnNumber()) + " " +
-                                  "This type is not supported");
-            }
-            if (tableStack.empty())
-                variableTable[this->id->getVariableName()] = res;
-            else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
-            if (this->assignmentExpr != nullptr) {
-                this->assignmentExpr->codeGen();
+                if (ty == "int" || ty == "char") {
+                    res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
+                    tor = llvm::Type::IntegerTyID;
+                } else if (ty == "float" || ty == "double") {
+                    res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
+                    tor = llvm::Type::DoubleTyID;
+                } else {
+                    return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                      std::to_string(this->getColumnNumber()) + " " +
+                                      "This type is not supported");
+                }
+                Type_and_Address ret = {tor, res};
+                (*(tableStack.top()))[this->id->getSymbolName()] = ret;
+
+                if (this->assignmentExpr != nullptr) {
+                    this->assignmentExpr->codeGen();
+                }
             }
             return res;
         } else {
@@ -582,14 +617,16 @@ public:
             if (ty == "int" || ty == "char") {
                 res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
                                            ArraySize, "arrtemp");
+                tor = llvm::Type::IntegerTyID;
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
                                            ArraySize, "arrtemp");
+                tor = llvm::Type::DoubleTyID;
             }
             if (tableStack.empty())
-                variableTable[this->id->getVariableName()] = res;
+                variableTable[this->id->getSymbolName()] = {tor, res};
             else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
+                (*(tableStack.top()))[this->id->getSymbolName()] = {tor, res};
             return res;
         }
     }
@@ -892,7 +929,7 @@ public:
             auto temp = parasList->mVarDeclarationList;
 
             for (auto &i: temp) {
-                std::string ty = i->id->getSymbolName();
+                std::string ty = i->type->getSymbolName();
                 if (ty == "int" || ty == "char") {
                     argTypes.push_back(llvm::Type::getInt32Ty(TheContext));
                 } else if (ty == "float" || ty == "double") {
@@ -920,25 +957,26 @@ public:
         }
         FunctionType *functionType =
                 llvm::FunctionType::get(ret, argTypes, false);
-        //std::cout<<"functionName: "<<id->getVariableName()<<'\n';
+        //std::cout<<"functionName: "<<id->getSymbolName()<<'\n';
         Function *function = llvm::Function::Create(
                 functionType, llvm::GlobalValue::ExternalLinkage,
-                id->getVariableName(), TheModule);
+                id->getSymbolName(), TheModule);
         BasicBlock *basicBlock =
-                BasicBlock::Create(TheContext, "func_entry", function, nullptr);
+                BasicBlock::Create(TheContext, id->getSymbolName(), function, nullptr);
         Builder.SetInsertPoint(basicBlock);
+        auto *argTable =
+                new std::unordered_map<std::string, Type_and_Address>;
+        tableStack.push(argTable);
+        variableTables[this->id->getSymbolName()] = argTable;
         if (parasList) {
             auto temp = parasList->mVarDeclarationList;
-            auto *argTable =
-                    new std::unordered_map<std::string, Value *>;
-            tableStack.push(argTable);
-            variableTables[this->id->getVariableName()] = argTable;
+
             auto iter_proto = temp.begin();
             for (auto &iter_func: function->args()) {
-                iter_func.setName((*iter_proto)->id->getVariableName());
+                iter_func.setName((*iter_proto)->id->getSymbolName());
                 Value *arg = (*iter_proto)->codeGen();
                 Builder.CreateStore(&iter_func, arg, false);
-                // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
+                // (*argTable)[(*iter_proto)->id->getSymbolName()] = arg;
                 iter_proto++;
             }
         }
@@ -994,9 +1032,9 @@ public:
 
     llvm::Value *codeGen() override {
         Function *CalleeF =
-                TheModule->getFunction(mFunctionName->getVariableName());
+                TheModule->getFunction(mFunctionName->getSymbolName());
         if (!CalleeF)
-            return LogErrorVV(mFunctionName->getVariableName() + "not declared");
+            return LogErrorVV(mFunctionName->getSymbolName() + "not declared");
         if (CalleeF->arg_size() != (*mArguments).size()) {
             return LogErrorVV("Incorrect # arguments passed");
         }
@@ -1037,7 +1075,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     virtual std::string getNodeTypeName() const {
-        return std::string("UnaryOperatorNode  ") + (getVariableName());
+        return std::string("UnaryOperatorNode  ") + (getSymbolName());
     }
 
     llvm::Value *codeGen() override {
@@ -1329,7 +1367,7 @@ public:
             } else if (!(Right->getType()->getTypeID() ==
                          llvm::Type::DoubleTyID)) {
                 Right = Builder.CreateSIToFP(
-                        Left, llvm::Type::getDoubleTy(TheContext), "ftmp");
+                        Right, llvm::Type::getDoubleTy(TheContext), "ftmp");
             }
         }
 
@@ -1443,7 +1481,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     std::string getNodeTypeName() {
-        return std::string("TenaryOperatorNode  ") + (getVariableName());
+        return std::string("TenaryOperatorNode  ") + (getSymbolName());
     }
 
     virtual llvm::Value *codeGen() {
@@ -1817,7 +1855,7 @@ struct symAttribute {
     symAttribute() {}
 
     symAttribute(Node *p)
-            : name(p->getVariableName()), type(p->getType()), kind(p->getKind()),
+            : name(p->getSymbolName()), type(p->getType()), kind(p->getKind()),
               argList(p->getArgList()), arraySizes(p->getArraySizes()),
               structTypeName(p->getStructTypeName()),
               lineNumber(p->getLineNumber()), columnNumber(p->getColumnNumber()),

@@ -57,7 +57,7 @@ void Node::copyFromChild(){
     this->setArgListStructName(mChildren[0]->getArgListStructName());
     this->setArraySizes(mChildren[0]->getArraySizes());
     this->setStructTypeName(mChildren[0]->getStructTypeName());
-    this->setVariableName(mChildren[0]->getVariableName());
+    this->setVariableName(mChildren[0]->getSymbolName());
     this->setPosition(mChildren[0]->getLineNumber(), mChildren[0]->getColumnNumber());
 }
 void Node::copyFrom(Node *c){
@@ -67,7 +67,7 @@ void Node::copyFrom(Node *c){
     this->setArgListStructName(c->getArgListStructName());
     this->setArraySizes(c->getArraySizes());
     this->setStructTypeName(c->getStructTypeName());
-    this->setVariableName(c->getVariableName());
+    this->setVariableName(c->getSymbolName());
     this->setPosition(c->getLineNumber(), c->getColumnNumber());
 }
 
@@ -149,7 +149,7 @@ std::string Node::getStructTypeName(){
 void Node::setVariableName(std::string _name){
     this->mVariableName = _name;
 }/*
-std::string Node::getVariableName() const{
+std::string Node::getSymbolName() const{
     return mVariableName;
 }*/
 void Node::setPosition(int l, int c) {
@@ -416,8 +416,8 @@ Value *LogErrorVV(std::string str) {
 llvm::LLVMContext TheContext;
 llvm::IRBuilder<> Builder(TheContext);
 Module *TheModule = new Module(llvm::StringRef(),TheContext);
-std::unordered_map<std::string, Value *> variableTable;
+std::unordered_map<std::string, Type_and_Address> variableTable;
 std::unordered_map<std::string,
-        std::unordered_map<std::string, Value *> *>
+        std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
-std::stack<std::unordered_map<std::string, Value *> *> tableStack;
+std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
