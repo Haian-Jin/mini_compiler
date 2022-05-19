@@ -26,15 +26,14 @@ using namespace llvm;
 using std::make_shared;
 using std::shared_ptr;
 
-static llvm::LLVMContext TheContext;
-static llvm::IRBuilder<> Builder(TheContext);
-static std::unique_ptr<Module> TheModule;
-static std::unordered_map<std::string, Value *> variableTable;
-static std::unordered_map<std::string,
+extern llvm::LLVMContext TheContext;
+extern llvm::IRBuilder<> Builder;//(TheContext);
+extern Module *TheModule;// = new Module(llvm::StringRef(),TheContext);
+extern std::unordered_map<std::string, Value *> variableTable;
+extern std::unordered_map<std::string,
         std::unordered_map<std::string, Value *> *>
         variableTables;
-static std::stack<std::unordered_map<std::string, Value *> *> tableStack;
-static std::stack<llvm::Function*> funcTable;
+extern std::stack<std::unordered_map<std::string, Value *> *> tableStack;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
@@ -54,8 +53,6 @@ public:
 
     std::string getNumberedName(std::string name);
 };
-
-llvm::AllocaInst *CreateEntryBlockAlloca(llvm::Function *TheFunction, llvm::StringRef VarName, llvm::Type* type);
 
 // 将各类型转换为boolean
 static Value *CastBool(Value *cond) {
@@ -253,8 +250,8 @@ public:
     virtual void setVariableName(std::string _name);
 
     // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    // virtual std::string getSymbolName(){}
-    virtual std::string getSymbolName() const;
+    // virtual std::string getVariableName(){}
+    virtual std::string getVariableName() const{return "aa";};
 
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
     // virtual void setPosition(int l,int c){}
@@ -286,6 +283,7 @@ public:
     virtual void copyFrom(symAttribute *c);
 
     // 返回非终结符的名字。已弃置不用。
+    std::string getSymbolName() const;
 
     // 返回终结符的名字。已弃置不用。
     std::string getTokenValue() const;
@@ -338,6 +336,9 @@ public:
         r["name"] = getNodeTypeName();
         return r;
     }
+    virtual llvm::Value* codeGen(){
+        std::cout<<"error codeGen\n";
+    }
 };
 
 class IdentifierNode : public ExpressionNode {
@@ -379,7 +380,7 @@ public:
     // std::string getName(){
     //     return mSymbolName;
     // }
-    // 用getSymbolName
+    // 用getVariableName
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
     // *)0;}
@@ -393,16 +394,16 @@ public:
         if (!isType()) {
             Value *value = nullptr;
             if (tableStack.empty())
-                value = variableTable[this->getSymbolName()];
+                value = variableTable[this->getVariableName()];
             else {
-                value = (tableStack.top()->find(this->getSymbolName()) ==
+                value = (tableStack.top()->find(this->getVariableName()) ==
                          tableStack.top()->end())
-                        ? ((*(tableStack.top()))[this->getSymbolName()])
-                        : (variableTable[this->getSymbolName()]);;
+                        ? ((*(tableStack.top()))[this->getVariableName()])
+                        : (variableTable[this->getVariableName()]);;
             }
 
             if (!value) {
-                return LogErrorVV(this->getSymbolName() + " is not defined\n");
+                return LogErrorVV(this->getVariableName() + " is not defined\n");
             }
             if (value->getType()->isPointerTy()) {
                 auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
@@ -475,12 +476,12 @@ public:
     virtual llvm::Value *codeGen() {
         Value *dst = nullptr;
         if (tableStack.empty())
-            dst = variableTable[mLeftHandSide->getSymbolName()];
+            dst = variableTable[mLeftHandSide->getVariableName()];
         else
-            dst = (tableStack.top()->find(this->getSymbolName()) ==
+            dst = (tableStack.top()->find(this->getVariableName()) ==
                    tableStack.top()->end())
-                  ? ((*(tableStack.top()))[this->getSymbolName()])
-                  : (variableTable[this->getSymbolName()]);
+                  ? ((*(tableStack.top()))[this->getVariableName()])
+                  : (variableTable[this->getVariableName()]);
 
         if (!dst)
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -550,22 +551,22 @@ public:
                               "This type is not supported");
         }
         std::string ty = type->getSymbolName();
+        //std::cout<<"typeName: "<<ty<<std::endl;
         Value *res;
         if (!this->id->isArray()) {
             if (ty == "int" || ty == "char") {
-//                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext), 0, this->id->getSymbolName().c_str());
-                CreateEntryBlockAlloca(funcTable.top(), StringRef(this->id->getSymbolName()), llvm::Type::getInt32Ty(TheContext));
+                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
             } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext), 0, this->id->getSymbolName());
+                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
             } else {
                 return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                   std::to_string(this->getColumnNumber()) + " " +
                                   "This type is not supported");
             }
             if (tableStack.empty())
-                variableTable[this->id->getSymbolName()] = res;
+                variableTable[this->id->getVariableName()] = res;
             else
-                (*(tableStack.top()))[this->id->getSymbolName()] = res;
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
             if (this->assignmentExpr != nullptr) {
                 this->assignmentExpr->codeGen();
             }
@@ -580,15 +581,15 @@ public:
                     llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (ty == "int" || ty == "char") {
                 res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
-                                           ArraySize, this->id->getSymbolName());
+                                           ArraySize, "arrtemp");
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
-                                           ArraySize, this->id->getSymbolName());
+                                           ArraySize, "arrtemp");
             }
             if (tableStack.empty())
-                variableTable[this->id->getSymbolName()] = res;
+                variableTable[this->id->getVariableName()] = res;
             else
-                (*(tableStack.top()))[this->id->getSymbolName()] = res;
+                (*(tableStack.top()))[this->id->getVariableName()] = res;
             return res;
         }
     }
@@ -919,32 +920,31 @@ public:
         }
         FunctionType *functionType =
                 llvm::FunctionType::get(ret, argTypes, false);
+        //std::cout<<"functionName: "<<id->getVariableName()<<'\n';
         Function *function = llvm::Function::Create(
-                functionType, llvm::GlobalValue::InternalLinkage,
-                id->getSymbolName(), TheModule.get());
-        funcTable.push(function);
+                functionType, llvm::GlobalValue::ExternalLinkage,
+                id->getVariableName(), TheModule);
         BasicBlock *basicBlock =
-                BasicBlock::Create(TheContext, "entry", function);
+                BasicBlock::Create(TheContext, "func_entry", function, nullptr);
         Builder.SetInsertPoint(basicBlock);
         if (parasList) {
             auto temp = parasList->mVarDeclarationList;
             auto *argTable =
                     new std::unordered_map<std::string, Value *>;
             tableStack.push(argTable);
-            variableTables[this->id->getSymbolName()] = argTable;
+            variableTables[this->id->getVariableName()] = argTable;
             auto iter_proto = temp.begin();
             for (auto &iter_func: function->args()) {
-                iter_func.setName((*iter_proto)->id->getSymbolName());
+                iter_func.setName((*iter_proto)->id->getVariableName());
                 Value *arg = (*iter_proto)->codeGen();
                 Builder.CreateStore(&iter_func, arg, false);
-                // (*argTable)[(*iter_proto)->id->getSymbolName()] = arg;
+                // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
                 iter_proto++;
             }
         }
 
         this->body->codeGen();
 
-        funcTable.pop();
         tableStack.pop();
 
         return function;
@@ -994,9 +994,9 @@ public:
 
     llvm::Value *codeGen() override {
         Function *CalleeF =
-                TheModule->getFunction(mFunctionName->getSymbolName());
+                TheModule->getFunction(mFunctionName->getVariableName());
         if (!CalleeF)
-            return LogErrorVV(mFunctionName->getSymbolName() + "not declared");
+            return LogErrorVV(mFunctionName->getVariableName() + "not declared");
         if (CalleeF->arg_size() != (*mArguments).size()) {
             return LogErrorVV("Incorrect # arguments passed");
         }
@@ -1037,7 +1037,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     virtual std::string getNodeTypeName() const {
-        return std::string("UnaryOperatorNode  ") + (getSymbolName());
+        return std::string("UnaryOperatorNode  ") + (getVariableName());
     }
 
     llvm::Value *codeGen() override {
@@ -1443,7 +1443,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     std::string getNodeTypeName() {
-        return std::string("TenaryOperatorNode  ") + (getSymbolName());
+        return std::string("TenaryOperatorNode  ") + (getVariableName());
     }
 
     virtual llvm::Value *codeGen() {
@@ -1486,7 +1486,7 @@ public:
 
     virtual llvm::Value *codeGen() {
         Value *ret = nullptr;
-
+        TheModule = new Module("test", TheContext);; // ERROR HERE BUG
 //        FunctionType *mainFuncType = FunctionType::get(llvm::Type::getVoidTy(TheContext), false);
 //        Function *mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main");
 //        BasicBlock *block = BasicBlock::Create(TheContext, "entry", mainFunc);
@@ -1817,7 +1817,7 @@ struct symAttribute {
     symAttribute() {}
 
     symAttribute(Node *p)
-            : name(p->getSymbolName()), type(p->getType()), kind(p->getKind()),
+            : name(p->getVariableName()), type(p->getType()), kind(p->getKind()),
               argList(p->getArgList()), arraySizes(p->getArraySizes()),
               structTypeName(p->getStructTypeName()),
               lineNumber(p->getLineNumber()), columnNumber(p->getColumnNumber()),
