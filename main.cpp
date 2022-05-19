@@ -5,6 +5,7 @@
 #include <llvm/IR/IRPrintingPasses.h>
 #include <llvm/Support/raw_ostream.h>
 extern Node *makeParseTree();
+extern std::unique_ptr<Module> TheModule;
 using std::string;
 int main(){
     csLineCnt++;
@@ -31,10 +32,8 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
-    treeRoot->codeGen();
-    llvm::legacy::PassManager passManager;
-    passManager.add(createPrintModulePass(outs()));
-    passManager.run(*(TheModule.get()));
 
-    //if(treeRoot->semanticCheck());
+    treeRoot->codeGen();
+    TheModule->print(errs(), nullptr);
+//    if(treeRoot->semanticCheck());
 }
