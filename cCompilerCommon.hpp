@@ -253,8 +253,8 @@ public:
     virtual void setVariableName(std::string _name);
 
     // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    // virtual std::string getVariableName(){}
-    virtual std::string getVariableName() const;
+    // virtual std::string getSymbolName(){}
+    virtual std::string getSymbolName() const;
 
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
     // virtual void setPosition(int l,int c){}
@@ -286,7 +286,6 @@ public:
     virtual void copyFrom(symAttribute *c);
 
     // 返回非终结符的名字。已弃置不用。
-    std::string getSymbolName() const;
 
     // 返回终结符的名字。已弃置不用。
     std::string getTokenValue() const;
@@ -380,7 +379,7 @@ public:
     // std::string getName(){
     //     return mSymbolName;
     // }
-    // 用getVariableName
+    // 用getSymbolName
 
     // virtual llvm::Value* codeGen(CodeGenContext& context){return (llvm::Value
     // *)0;}
@@ -394,16 +393,16 @@ public:
         if (!isType()) {
             Value *value = nullptr;
             if (tableStack.empty())
-                value = variableTable[this->getVariableName()];
+                value = variableTable[this->getSymbolName()];
             else {
-                value = (tableStack.top()->find(this->getVariableName()) ==
+                value = (tableStack.top()->find(this->getSymbolName()) ==
                          tableStack.top()->end())
-                        ? ((*(tableStack.top()))[this->getVariableName()])
-                        : (variableTable[this->getVariableName()]);;
+                        ? ((*(tableStack.top()))[this->getSymbolName()])
+                        : (variableTable[this->getSymbolName()]);;
             }
 
             if (!value) {
-                return LogErrorVV(this->getVariableName() + " is not defined\n");
+                return LogErrorVV(this->getSymbolName() + " is not defined\n");
             }
             if (value->getType()->isPointerTy()) {
                 auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
@@ -476,12 +475,12 @@ public:
     virtual llvm::Value *codeGen() {
         Value *dst = nullptr;
         if (tableStack.empty())
-            dst = variableTable[mLeftHandSide->getVariableName()];
+            dst = variableTable[mLeftHandSide->getSymbolName()];
         else
-            dst = (tableStack.top()->find(this->getVariableName()) ==
+            dst = (tableStack.top()->find(this->getSymbolName()) ==
                    tableStack.top()->end())
-                  ? ((*(tableStack.top()))[this->getVariableName()])
-                  : (variableTable[this->getVariableName()]);
+                  ? ((*(tableStack.top()))[this->getSymbolName()])
+                  : (variableTable[this->getSymbolName()]);
 
         if (!dst)
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -554,19 +553,19 @@ public:
         Value *res;
         if (!this->id->isArray()) {
             if (ty == "int" || ty == "char") {
-//                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext), 0, this->id->getVariableName().c_str());
-                CreateEntryBlockAlloca(funcTable.top(), StringRef(this->id->getVariableName()), llvm::Type::getInt32Ty(TheContext));
+//                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext), 0, this->id->getSymbolName().c_str());
+                CreateEntryBlockAlloca(funcTable.top(), StringRef(this->id->getSymbolName()), llvm::Type::getInt32Ty(TheContext));
             } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext), 0, this->id->getVariableName());
+                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext), 0, this->id->getSymbolName());
             } else {
                 return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                   std::to_string(this->getColumnNumber()) + " " +
                                   "This type is not supported");
             }
             if (tableStack.empty())
-                variableTable[this->id->getVariableName()] = res;
+                variableTable[this->id->getSymbolName()] = res;
             else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
+                (*(tableStack.top()))[this->id->getSymbolName()] = res;
             if (this->assignmentExpr != nullptr) {
                 this->assignmentExpr->codeGen();
             }
@@ -581,15 +580,15 @@ public:
                     llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (ty == "int" || ty == "char") {
                 res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
-                                           ArraySize, this->id->getVariableName());
+                                           ArraySize, this->id->getSymbolName());
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
-                                           ArraySize, this->id->getVariableName());
+                                           ArraySize, this->id->getSymbolName());
             }
             if (tableStack.empty())
-                variableTable[this->id->getVariableName()] = res;
+                variableTable[this->id->getSymbolName()] = res;
             else
-                (*(tableStack.top()))[this->id->getVariableName()] = res;
+                (*(tableStack.top()))[this->id->getSymbolName()] = res;
             return res;
         }
     }
@@ -922,7 +921,7 @@ public:
                 llvm::FunctionType::get(ret, argTypes, false);
         Function *function = llvm::Function::Create(
                 functionType, llvm::GlobalValue::InternalLinkage,
-                id->getVariableName(), TheModule.get());
+                id->getSymbolName(), TheModule.get());
         funcTable.push(function);
         BasicBlock *basicBlock =
                 BasicBlock::Create(TheContext, "entry", function);
@@ -932,13 +931,13 @@ public:
             auto *argTable =
                     new std::unordered_map<std::string, Value *>;
             tableStack.push(argTable);
-            variableTables[this->id->getVariableName()] = argTable;
+            variableTables[this->id->getSymbolName()] = argTable;
             auto iter_proto = temp.begin();
             for (auto &iter_func: function->args()) {
-                iter_func.setName((*iter_proto)->id->getVariableName());
+                iter_func.setName((*iter_proto)->id->getSymbolName());
                 Value *arg = (*iter_proto)->codeGen();
                 Builder.CreateStore(&iter_func, arg, false);
-                // (*argTable)[(*iter_proto)->id->getVariableName()] = arg;
+                // (*argTable)[(*iter_proto)->id->getSymbolName()] = arg;
                 iter_proto++;
             }
         }
@@ -995,9 +994,9 @@ public:
 
     llvm::Value *codeGen() override {
         Function *CalleeF =
-                TheModule->getFunction(mFunctionName->getVariableName());
+                TheModule->getFunction(mFunctionName->getSymbolName());
         if (!CalleeF)
-            return LogErrorVV(mFunctionName->getVariableName() + "not declared");
+            return LogErrorVV(mFunctionName->getSymbolName() + "not declared");
         if (CalleeF->arg_size() != (*mArguments).size()) {
             return LogErrorVV("Incorrect # arguments passed");
         }
@@ -1038,7 +1037,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     virtual std::string getNodeTypeName() const {
-        return std::string("UnaryOperatorNode  ") + (getVariableName());
+        return std::string("UnaryOperatorNode  ") + (getSymbolName());
     }
 
     llvm::Value *codeGen() override {
@@ -1444,7 +1443,7 @@ public:
             : ExpressionNode(_tokenValue, negligible) {};
 
     std::string getNodeTypeName() {
-        return std::string("TenaryOperatorNode  ") + (getVariableName());
+        return std::string("TenaryOperatorNode  ") + (getSymbolName());
     }
 
     virtual llvm::Value *codeGen() {
@@ -1818,7 +1817,7 @@ struct symAttribute {
     symAttribute() {}
 
     symAttribute(Node *p)
-            : name(p->getVariableName()), type(p->getType()), kind(p->getKind()),
+            : name(p->getSymbolName()), type(p->getType()), kind(p->getKind()),
               argList(p->getArgList()), arraySizes(p->getArraySizes()),
               structTypeName(p->getStructTypeName()),
               lineNumber(p->getLineNumber()), columnNumber(p->getColumnNumber()),

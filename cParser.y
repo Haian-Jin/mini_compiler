@@ -1223,8 +1223,8 @@ static void error_elseWithNoIf(){
 }
 static void error_duplicatedVariable(Node *c){
     std::cout<<"[ERROR] ";
-    std::cout<<"variable \""<<c->getVariableName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
-    std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getVariableName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getVariableName())->columnNumber<<std::endl;
+    std::cout<<"variable \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
+    std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getSymbolName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getSymbolName())->columnNumber<<std::endl;
 }
 static void error_variableNotDeclared(std::string name){
     std::cout<<"[ERROR] ";
@@ -1256,18 +1256,18 @@ static void error_typeMismatch(Node *c){
     std::cout<<" Hint: are you putting an array at the left hand of \'=\', or using \'=\' to connect two mismatched type?\n";
 }
 static void error_variableNotDeclaredInStruct(Node *v, Node *m){
-    std::cout<<"[ERROR] variable \""<<v->getVariableName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
-    auto symattribute = symbolTableStack->lookUp(v->getVariableName());
+    std::cout<<"[ERROR] variable \""<<v->getSymbolName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
+    auto symattribute = symbolTableStack->lookUp(v->getSymbolName());
     if(symattribute){
         std::cout<<" Hint: you declared this variable at line "<<symattribute->lineNumber<<" near column "<<symattribute->columnNumber<<std::endl;
     }
 }
 static void error_argumentNumberNotMatch(Node *f,int an){
     std::cout<<"[ERROR] function's argument number not match at line "<<f->getLineNumber()<<" near column "<<f->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<f->getVariableName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
+    std::cout<<" Hint: function \""<<f->getSymbolName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
 }
 static void error_notArray(Node *c){
-    std::cout<<"[ERROR] \""<<c->getVariableName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
+    std::cout<<"[ERROR] \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
     std::cout<<" Hint: are you using too many \"[]\"\'s to access an array?\n";//'
 }
 static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give){
@@ -1283,7 +1283,7 @@ static void error_functionReturnsArray(){
 }
 static void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function,std::vector<std::string>& structTypeName){
     std::cout<<"[ERROR] function's argument type not match at line "<<function->getLineNumber()<<" near column "<<function->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<function->getVariableName()<<"\" needs parameters of (";
+    std::cout<<" Hint: function \""<<function->getSymbolName()<<"\" needs parameters of (";
     auto fa = function->getArgList();
     for(int i=0;i<fa.size();i++){
         switch(fa[i]){
