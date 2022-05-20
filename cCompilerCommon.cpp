@@ -425,22 +425,25 @@ std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
-std::map<std::string,symAttribute *> originalSymbolTable;
+//std::map<std::string,symAttribute *> originalSymbolTable;
 
 
-llvm::Value* ArrayIndexNode::calcArrayIndex(llvm::Value* arrayId){
+llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs){
     /* TODO: CtrlF in tiny this function name */
-    std::string name = this->getSymbolName();
-    std::vector<int> arraySizes = originalSymbolTable[name]->arraySizes;
+//    if ()
+//    std::vector<int> arraySizes = originalSymbolTable[name]->arraySizes;
     ExpressionNode* expression = *(mArrayIndexs.rbegin());
+    int postMul = arraySizes[mArrayIndexs.size()-1];
     for(int i=mArrayIndexs.size()-1; i>=1; i--){
-        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), mArrayIndexs[i-1]);
+        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i-1]);
+        postMul *= arraySizes[i-1];
         BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
         expression = te;
     }
-    return expression->codeGen();
+    if(mArrayIndexs.size()==1){
+        return (expression)->codeGen();
+    }else
+        return dynamic_cast<BinaryOperatorNode*>(expression)->codeGen();
 }
 
-void _ins(void *p){
-    originalSymbolTable.insert({((Node*)p)->getSymbolName(), new symAttribute((Node*)p)});
-}
+
