@@ -1,4 +1,4 @@
-#include"./cCompilerCommon.hpp"
+#include "./cCompilerCommon.hpp"
 
 // 用于记录行数和列数 
 int csLineCnt = 0;
@@ -57,7 +57,7 @@ void Node::copyFromChild(){
     this->setArgListStructName(mChildren[0]->getArgListStructName());
     this->setArraySizes(mChildren[0]->getArraySizes());
     this->setStructTypeName(mChildren[0]->getStructTypeName());
-    this->setVariableName(mChildren[0]->getVariableName());
+    this->setVariableName(mChildren[0]->getSymbolName());
     this->setPosition(mChildren[0]->getLineNumber(), mChildren[0]->getColumnNumber());
 }
 void Node::copyFrom(Node *c){
@@ -67,7 +67,7 @@ void Node::copyFrom(Node *c){
     this->setArgListStructName(c->getArgListStructName());
     this->setArraySizes(c->getArraySizes());
     this->setStructTypeName(c->getStructTypeName());
-    this->setVariableName(c->getVariableName());
+    this->setVariableName(c->getSymbolName());
     this->setPosition(c->getLineNumber(), c->getColumnNumber());
 }
 
@@ -82,6 +82,9 @@ void Node::setType(Node *c){
     this->setType(c->getType());
     if(c->getType()==Node::TYPE_STRUCT){
         this->setStructTypeName(c->getStructTypeName());
+    }
+    if(c->isArray()){
+        this->setArraySizes(c->getArraySizes());
     }
 }
 
@@ -148,10 +151,10 @@ std::string Node::getStructTypeName(){
 }
 void Node::setVariableName(std::string _name){
     this->mVariableName = _name;
-}
-std::string Node::getVariableName() const{
+}/*
+std::string Node::getSymbolName() const{
     return mVariableName;
-}
+}*/
 void Node::setPosition(int l, int c) {
     mLineNumber = l;
     mColumnNumber = c;
@@ -167,7 +170,7 @@ void Node::setPosition(Node *c){
     mColumnNumber = c->getColumnNumber();
 }
 
-void Attribute::print(){
+void symAttribute::print(){
     std::cout<<name<<' ';
     switch(type){
         case Node::TYPE_INT:
@@ -240,7 +243,7 @@ SymbolTable::SymbolTable(std::string name):mSymbolTableName(name){
 std::string SymbolTable::getName(){
     return mSymbolTableName;
 }
-bool SymbolTable::insert(Attribute* t){
+bool SymbolTable::insert(symAttribute* t){
     if(map.find(t->name)!=map.end()){
         return false;
     }else{
@@ -248,7 +251,7 @@ bool SymbolTable::insert(Attribute* t){
         return true;
     }
 }
-Attribute *SymbolTable::lookUp(std::string name){
+symAttribute *SymbolTable::lookUp(std::string name){
     if(map.find(name)==map.end()){
         return NULL;
     }else{
@@ -292,7 +295,7 @@ void SymbolTableStack::pop(){
 SymbolTable *SymbolTableStack::top(){
     return stack[stack.size()-1];
 }
-Attribute *SymbolTableStack::lookUp(std::string name){
+symAttribute *SymbolTableStack::lookUp(std::string name){
     for(int i=stack.size()-1;i>=0;i--){
         if(stack[i]->lookUp(name)){
             return stack[i]->lookUp(name);
@@ -300,7 +303,7 @@ Attribute *SymbolTableStack::lookUp(std::string name){
     }
     return NULL;
 }
-bool SymbolTableStack::insert(Attribute* t){
+bool SymbolTableStack::insert(symAttribute* t){
     return stack[stack.size()-1]->insert(t);
 }
 
@@ -353,7 +356,7 @@ bool typeMatch(std::vector<Node::Type> a,Node *c , std::vector<std::string> s){
 
     return true;
 }
-bool typeMatch(Attribute *a, Node * b){
+bool typeMatch(symAttribute *a, Node* b){
     if(b->isArray())return false;
     if(a->type==b->getType()){
         if(a->type==Node::TYPE_STRUCT){
@@ -365,7 +368,7 @@ bool typeMatch(Attribute *a, Node * b){
 }
 
 void Node::setAttribute(void *p){
-    auto c = (Attribute*)p;
+    auto c = (symAttribute*)p;
     this->setType(c->type);
     this->setKind(c->kind);
     this->setArgList(c->argList);
@@ -376,7 +379,7 @@ void Node::setAttribute(void *p){
     this->setPosition(c->lineNumber, c->columnNumber);
 }
 
-void Node::copyFrom(Attribute *c){
+void Node::copyFrom(symAttribute *c){
     if(!c) return;
     this->setType(c->type);
     this->setKind(c->kind);
@@ -387,7 +390,7 @@ void Node::copyFrom(Attribute *c){
     this->setPosition(c->lineNumber, c->columnNumber);
 }
 
-std::string type_to_string(Attribute *t){
+std::string type_to_string(symAttribute *t){
     switch(t->type){
         case(Node::TYPE_VOID):
             return "void";
@@ -402,9 +405,45 @@ std::string type_to_string(Attribute *t){
 std::string Node::getSymbolName()const{
     return this->mSymbolName;
 }
+
 std::string Node::getTokenValue()const{
     if(!(this->mIsTerminal)){
         return getSymbolName();
     }
     return this->mTokenValue;
 }
+Value *LogErrorVV(std::string str) {
+    std::cout << str << std::endl;
+    return nullptr;
+}
+
+llvm::LLVMContext TheContext;
+llvm::IRBuilder<> Builder(TheContext);
+Module *TheModule = new Module(llvm::StringRef(),TheContext);
+std::unordered_map<std::string, Type_and_Address> variableTable;
+std::unordered_map<std::string,
+        std::unordered_map<std::string, Type_and_Address> *>
+        variableTables;
+std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
+//std::map<std::string,symAttribute *> originalSymbolTable;
+
+
+llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs){
+    /* TODO: CtrlF in tiny this function name */
+//    if ()
+//    std::vector<int> arraySizes = originalSymbolTable[name]->arraySizes;
+    ExpressionNode* expression = *(mArrayIndexs.rbegin());
+    int postMul = arraySizes[mArrayIndexs.size()-1];
+    for(int i=mArrayIndexs.size()-1; i>=1; i--){
+        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i-1]);
+        postMul *= arraySizes[i-1];
+        BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
+        expression = te;
+    }
+    if(mArrayIndexs.size()==1){
+        return (expression)->codeGen();
+    }else
+        return dynamic_cast<BinaryOperatorNode*>(expression)->codeGen();
+}
+
+

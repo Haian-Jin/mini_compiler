@@ -11,13 +11,16 @@ We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch. 
 * flex 2.6.4
 * 3.5.1
 * libjsoncpp-dev 1.7.4-3.1ubuntu2
+* pkg-config
 
 ## 1. Installation
 
 ```shell
 sudo apt-get install flex bison
 sudo apt-get install llvm-dev 
-sudo apt-get install libjsoncpp-dev flex bison
+sudo apt-get install libjsoncpp-dev
+ln -s /usr/include/jsoncpp/json/ /usr/include/json
+
 ```
 
 ## 2. How to Build the ZJUCMM Compiler

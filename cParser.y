@@ -25,8 +25,8 @@ static void error_argumentNumberNotMatch(Node *,int);
 static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node *,std::vector<std::string>&);
 static void error_structNotDeclared(std::string);
 static void error_notArray(Node *);
-static void error_returnValueTypeMismatch(Attribute* need, Node::Type give);
-static void error_returnValueTypeMismatch(Attribute* need, Node * give);
+static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give);
+static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
 static void error_functionReturnsArray();
 %}
 %code requires {
@@ -132,7 +132,7 @@ declaration :
             $2->setKind(Node::KIND_ATTRIBUTE);
             $2->setStructTypeName($2->getTokenValue());
             $2->setVariableName($2->getTokenValue());
-            symbolTableStack->insert(new Attribute($2));
+            symbolTableStack->insert(new symAttribute($2));
             symbolTableStack->push(new SymbolTable($2->getStructTypeName()));
         } '{' structMemberDeclarations '}' ';' { 
             //$$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
@@ -188,7 +188,7 @@ structTypeName :
         STRUCT '{' {
             /* 为该匿名结构体维护符号表 */
             std::string name = nameCounter.getNumberedName("`Unamed_Structure");
-            symbolTableStack->insert(new Attribute(name, Node::TYPE_STRUCT, Node::KIND_ATTRIBUTE, std::vector<Node::Type>(), std::vector<std::string>(), 
+            symbolTableStack->insert(new symAttribute(name, Node::TYPE_STRUCT, Node::KIND_ATTRIBUTE, std::vector<Node::Type>(), std::vector<std::string>(), 
                                      std::vector<int>(), name, csLineCnt, csColumnCnt-1));
             symbolTableStack->push(new SymbolTable(name));
         } structMemberDeclarations '}' {
@@ -231,7 +231,7 @@ structMemberDeclaration :
             }
             for(int i=0;i<$2->getChildrenNumber();i++){
                 if($2->getChildrenById(i)->isTerminal() && $2->getChildrenById(i)->getTokenValue().compare(",")==0) continue;
-                if(symbolTableStack->insert(new Attribute($2->getChildrenById(i))) == false){
+                if(symbolTableStack->insert(new symAttribute($2->getChildrenById(i))) == false){
                     error_duplicatedVariable($2->getChildrenById(i));
                 }else{
 
@@ -311,10 +311,13 @@ variableName :
             }else{
                 $$ = $1;
                 auto arraySizes = $$->getArraySizes();
-                int newSize;
-                sscanf($3->getTokenValue().c_str(),"%d",&newSize);
+                int newSize = dynamic_cast<IntNode*>($3)->value;
+                //sscanf($3->getTokenValue().c_str(),"%d",&newSize);
                 arraySizes.push_back(newSize);
                 $$->setArraySizes(arraySizes);
+                auto a = $$->getArraySizes();
+                //assert(a!=NULL);
+                std::cout<<"array: ";std::cout<<a.size()<<std::endl;
             }
         }
     |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
@@ -1223,8 +1226,8 @@ static void error_elseWithNoIf(){
 }
 static void error_duplicatedVariable(Node *c){
     std::cout<<"[ERROR] ";
-    std::cout<<"variable \""<<c->getVariableName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
-    std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getVariableName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getVariableName())->columnNumber<<std::endl;
+    std::cout<<"variable \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
+    std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getSymbolName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getSymbolName())->columnNumber<<std::endl;
 }
 static void error_variableNotDeclared(std::string name){
     std::cout<<"[ERROR] ";
@@ -1256,25 +1259,25 @@ static void error_typeMismatch(Node *c){
     std::cout<<" Hint: are you putting an array at the left hand of \'=\', or using \'=\' to connect two mismatched type?\n";
 }
 static void error_variableNotDeclaredInStruct(Node *v, Node *m){
-    std::cout<<"[ERROR] variable \""<<v->getVariableName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
-    auto attribute = symbolTableStack->lookUp(v->getVariableName());
-    if(attribute){
-        std::cout<<" Hint: you declared this variable at line "<<attribute->lineNumber<<" near column "<<attribute->columnNumber<<std::endl;
+    std::cout<<"[ERROR] variable \""<<v->getSymbolName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
+    auto symattribute = symbolTableStack->lookUp(v->getSymbolName());
+    if(symattribute){
+        std::cout<<" Hint: you declared this variable at line "<<symattribute->lineNumber<<" near column "<<symattribute->columnNumber<<std::endl;
     }
 }
 static void error_argumentNumberNotMatch(Node *f,int an){
     std::cout<<"[ERROR] function's argument number not match at line "<<f->getLineNumber()<<" near column "<<f->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<f->getVariableName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
+    std::cout<<" Hint: function \""<<f->getSymbolName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
 }
 static void error_notArray(Node *c){
-    std::cout<<"[ERROR] \""<<c->getVariableName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
+    std::cout<<"[ERROR] \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
     std::cout<<" Hint: are you using too many \"[]\"\'s to access an array?\n";//'
 }
-static void error_returnValueTypeMismatch(Attribute* need, Node::Type give){
+static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give){
     std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
     std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave nothing\n"; 
 }
-static void error_returnValueTypeMismatch(Attribute* need, Node * give){
+static void error_returnValueTypeMismatch(symAttribute* need, Node * give){
     std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
     std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave "<<give->getTypeString()<<std::endl;
 }
@@ -1283,7 +1286,7 @@ static void error_functionReturnsArray(){
 }
 static void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function,std::vector<std::string>& structTypeName){
     std::cout<<"[ERROR] function's argument type not match at line "<<function->getLineNumber()<<" near column "<<function->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<function->getVariableName()<<"\" needs parameters of (";
+    std::cout<<" Hint: function \""<<function->getSymbolName()<<"\" needs parameters of (";
     auto fa = function->getArgList();
     for(int i=0;i<fa.size();i++){
         switch(fa[i]){

@@ -1,9 +1,6 @@
-int a; 
-double b;
-
-int main(int x, double y) {
+int main() {
     int t;
-    1 * 5 * 1.5;
-
-    
+    t = 1;
+    t = t + 1;
+    return 0;
 }
