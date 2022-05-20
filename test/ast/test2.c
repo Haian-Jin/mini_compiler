@@ -1,3 +1,4 @@
 int main() {
-    printf("%d", 6);
+    printf("%d\n", 6);
+    return 0;
 }

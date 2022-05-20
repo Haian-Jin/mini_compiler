@@ -22,6 +22,7 @@
 #include <llvm/IR/Value.h>
 #include <tr1/memory>
 #include <unordered_map>
+#include <regex>
 
 using namespace llvm;
 struct symAttribute;
@@ -1133,6 +1134,10 @@ public:
 //            builder.SetInsertPoint(Builder.GetInsertBlock());
             std::string format = (*((*mArguments)[0])).getTokenValue();
             format = format.substr(1, format.size()-2);
+            std::regex pattern_n("\\\\n");
+            format = std::regex_replace(format, pattern_n, "\n");
+            std::regex pattern_r("\\\\r");
+            format = std::regex_replace(format, pattern_r, "\r");
             Value *str = Builder.CreateGlobalStringPtr(format);
             std::vector <Value *> int32_call_params;
             int32_call_params.push_back(str);
@@ -1145,8 +1150,8 @@ public:
 
 
 //            std::vector<llvm::Value*> extra;
-            for (auto &temp: (*mArguments)) {
-                int32_call_params.push_back(temp->codeGen());
+            for (int i = 1; i< (*mArguments).size(); i++) {
+                int32_call_params.push_back((*mArguments)[i]->codeGen());
             }
 
             Builder.CreateCall(func_printf, int32_call_params, "call_printf");
