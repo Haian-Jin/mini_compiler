@@ -31,7 +31,7 @@ struct Type_and_Address {
     bool isPtr = false;
     std::vector<int> arraySizes;
 };
-extern void _ins(void*);
+
 extern llvm::LLVMContext TheContext;
 extern llvm::IRBuilder<> Builder;//(TheContext);
 extern Module *TheModule;// = new Module(llvm::StringRef(),TheContext);
@@ -40,6 +40,7 @@ extern std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
+extern std::unordered_map<std::string, StructType*> structTable;
 //extern std::map<std::string , symAttribute* > originalSymbolTable;
 
 // Value *LogErrorVV(const char *Str);
@@ -580,10 +581,12 @@ public:
         if (!this->id->isArray()) {
             if (tableStack.empty()) {
                 if (ty == "int" || ty == "char") {
-                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt32Ty(TheContext), false, llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt32Ty(TheContext), false,
+                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
                     tor = llvm::Type::IntegerTyID;
                 } else if (ty == "float" || ty == "double") {
-                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getDoubleTy(TheContext), false, llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getDoubleTy(TheContext), false,
+                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
                     tor = llvm::Type::DoubleTyID;
                 } else {
                     return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -618,7 +621,7 @@ public:
             for (int a: dimsize) {
                 array_size *= a;
             }
-            llvm::ArrayType* array_type = nullptr;
+            llvm::ArrayType *array_type = nullptr;
 //            Value *ArraySize = ConstantInt::get(llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (tableStack.empty()) {
                 if (ty == "int") {
@@ -633,7 +636,8 @@ public:
                                       std::to_string(this->getColumnNumber()) + " " +
                                       "This type is not supported");
                 }
-                res = new llvm::GlobalVariable(*TheModule, array_type, false, llvm::GlobalValue::PrivateLinkage, 0, id->getSymbolName());
+                res = new llvm::GlobalVariable(*TheModule, array_type, false, llvm::GlobalValue::PrivateLinkage, 0,
+                                               id->getSymbolName());
                 Type_and_Address ret = {tor, res, true, dimsize};
                 variableTable[this->id->getSymbolName()] = ret;
             } else {
@@ -776,13 +780,42 @@ public:
     }
 
     virtual Value *codeGen() {
-        /*
-        TODO:
-        */
-
-        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-                          std::to_string(this->getColumnNumber()) + " " +
-                          "Not supported yet");
+        std::vector<llvm::Type*> memberTypes;
+        auto structType = StructType::create(TheContext, this->mStructName->getSymbolName());
+        for (auto &member: mMembers->mStatementList) {
+            auto v = (VariableDeclarationNode*)member;
+            std::string ty = v->type->getSymbolName();
+            if (!v->isArray()) {
+                if (ty == "int") {
+                    memberTypes.push_back(llvm::Type::getInt32Ty(TheContext));
+                } else if (ty == "float" || ty == "double") {
+                    memberTypes.push_back(llvm::Type::getDoubleTy(TheContext));
+                } else if (ty == "char") {
+                    memberTypes.push_back(llvm::Type::getInt8Ty(TheContext));
+                } else {
+                    return LogErrorVV(
+                            std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+                            "type not supported");
+                }
+            } else {
+                if (!v->isArray()) {
+                    if (ty == "int") {
+                        memberTypes.push_back(llvm::Type::getInt32PtrTy(TheContext));
+                    } else if (ty == "float" || ty == "double") {
+                        memberTypes.push_back(llvm::Type::getDoublePtrTy(TheContext));
+                    } else if (ty == "char") {
+                        memberTypes.push_back(llvm::Type::getInt8PtrTy(TheContext));
+                    } else {
+                        return LogErrorVV(
+                                std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+                                "type not supported");
+                    }
+                }
+            }
+        }
+        structTable[this->mStructName->getSymbolName()] = structType;
+        structType->setBody(memberTypes);
+        return nullptr;
     }
 };
 
@@ -836,7 +869,9 @@ public:
     IntNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
         sscanf(_tokenValue.c_str(), "%d", &this->value);
     }
-    IntNode(int v):value(v){};
+
+    IntNode(int v) : value(v) {};
+
     double getValue() { return this->value; }
 
     virtual std::string getNodeTypeName() const { return "IntNode"; }
@@ -1148,16 +1183,16 @@ private:
     ExpressionNode *mHandSide;
 };
 
-llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs);
+llvm::Value *calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs);
 
 class ArrayIndexNode : public ExpressionNode {
 public:
     ArrayIndexNode(std::string _symbolName, int childrenNumber, ...)
-                : ExpressionNode(_symbolName, 0) {
-            va_list vl;
-            va_start(vl, childrenNumber);
-            for (int i = 0; i < childrenNumber; i++) {
-                mChildren.push_back(va_arg(vl, Node *));
+            : ExpressionNode(_symbolName, 0) {
+        va_list vl;
+        va_start(vl, childrenNumber);
+        for (int i = 0; i < childrenNumber; i++) {
+            mChildren.push_back(va_arg(vl, Node *));
         }
         mIsNegligible = (false), mSymbolName = (_symbolName),
         mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
@@ -1196,7 +1231,7 @@ public:
         }
     }
 
-    std::string getVariableName(){
+    std::string getVariableName() {
         return this->mArrayName->getSymbolName();
     }
 
@@ -1246,14 +1281,15 @@ public:
             LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
                        " array " + std::string(name) + " is not declared");
         }
-        if(isArray){ /* this is an array, normally codegen */
-            llvm::ArrayRef<Value*> indexs;
-            indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext),0), calcArrayIndex(arraySizes, mArrayIndexs)};
+        if (isArray) { /* this is an array, normally codegen */
+            llvm::ArrayRef<Value *> indexs;
+            indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
+                      calcArrayIndex(arraySizes, mArrayIndexs)};
             auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
             return ptr;
-        }else{
+        } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                                " variable " + std::string(name) + " is not an array!");
+                              " variable " + std::string(name) + " is not an array!");
         }
         /*return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber())
                                          + " " + "Not supported yet");*/
@@ -1266,7 +1302,6 @@ public:
     IdentifierNode *mArrayName;
     std::vector<ExpressionNode *> mArrayIndexs;
 };
-
 
 
 class ArrayAssignmentNode : public ExpressionNode {
@@ -1294,7 +1329,7 @@ public:
     llvm::Value *codeGen() override {
         ArrayIndexNode *&arrayIndex = mLeftHandSide;
         ExpressionNode *&expression = mRightHandSide;
-        Value* res = nullptr;
+        Value *res = nullptr;
         llvm::Value *value = nullptr;
         llvm::Type::TypeID type;
         bool isArray = false;
@@ -1326,9 +1361,8 @@ public:
         }
         if (!value) {
             res = LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                       " array " + std::string(name) + " is not declared");
-        }
-        else if (!isArray) {
+                             " array " + std::string(name) + " is not declared");
+        } else if (!isArray) {
             res = LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
                              " array " + std::string(name) + " is not an array");
         } else {
@@ -1336,9 +1370,12 @@ public:
             auto arrayIndexValue = calcArrayIndex(arraySizes, arrayIndex->mArrayIndexs);
             llvm::ArrayRef<llvm::Value *> ga{llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
                                              arrayIndexValue};
-
-            res = Builder.CreateAlignedStore(expression->codeGen(),
-                                             Builder.CreateInBoundsGEP(value, ga, "elementPointer"), 4);
+            if (type == llvm::Type::IntegerTyID)
+                res = Builder.CreateAlignedStore(expression->codeGen(),
+                                                 Builder.CreateInBoundsGEP(value, ga, "elementPointer"), 4);
+            else if (type == llvm::Type::DoubleTyID)
+                res = Builder.CreateAlignedStore(expression->codeGen(),
+                                                 Builder.CreateInBoundsGEP(value, ga, "elementPointer"), 8);
         }
         return res;
     }

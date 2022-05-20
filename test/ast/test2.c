@@ -1,11 +1,13 @@
+struct a{
+    int n;
+    double m;
+};
 int main() {
-    int i;
-    i=1;
-    int arr[100][100][100];
-    int b[10];
-    b[1];
-    b[2];
-    b[6] = i;
-    arr[1][2][3] = b[6];
+
+    struct a d;
+    d.n = 1;
+    d.m = 1.5;
+    int b;
+    b = d.n;
     return 0;
 }
