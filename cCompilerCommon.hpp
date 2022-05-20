@@ -1021,10 +1021,19 @@ public:
         }
         FunctionType *functionType =
                 llvm::FunctionType::get(ret, argTypes, false);
-        //std::cout<<"functionName: "<<id->getSymbolName()<<'\n';
-        Function *function = llvm::Function::Create(
+        // std::cout<<"functionName: "<<id->getSymbolName()<<'\n';
+
+        Function *function = NULL;
+        if (id->getSymbolName() == "main") {
+            function = llvm::Function::Create(
+                functionType, llvm::GlobalValue::ExternalLinkage,
+                "Main", TheModule);
+        }
+        else {
+                function = llvm::Function::Create(
                 functionType, llvm::GlobalValue::ExternalLinkage,
                 id->getSymbolName(), TheModule);
+        }
         BasicBlock *basicBlock =
                 BasicBlock::Create(TheContext, id->getSymbolName(), function, nullptr);
         Builder.SetInsertPoint(basicBlock);

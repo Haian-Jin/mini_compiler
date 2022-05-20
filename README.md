@@ -2,7 +2,7 @@
 
 Final project for the course  “Compilers Principle” in Zhejiang University.
 
-We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch, it follows the grammar of standard C language.
+We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch. It follows the grammar of standard C language.
 
 ## 0.Environment
 
@@ -17,9 +17,10 @@ We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch, 
 
 ```shell
 sudo apt-get install flex bison
-sudo apt-get install llvm 
-sudo apt-get install ibjsoncpp-dev flex bison
-sudo apt-get install -y pkg-config
+sudo apt-get install llvm-dev 
+sudo apt-get install libjsoncpp-dev
+ln -s /usr/include/jsoncpp/json/ /usr/include/json
+
 ```
 
 ## 2. How to Build the ZJUCMM Compiler
@@ -48,5 +49,11 @@ You can also run the script `./build.sh` to build the compiler.
   ```shell
   pytm-cli -i A_tree.json -o demo.html
   ```
+* generate object file
+  
+    ```shell
+      OjectFile=output.exe
+      clang++ objtest.cpp output.o -o ${OjectFile}
+    ```
 
   
