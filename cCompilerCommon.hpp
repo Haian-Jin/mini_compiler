@@ -23,12 +23,13 @@
 #include <unordered_map>
 
 using namespace llvm;
-
+struct symAttribute;
+//class Node;
 struct Type_and_Address {
     llvm::Type::TypeID type;
     llvm::Value *address;
 };
-
+extern void _ins(void*);
 extern llvm::LLVMContext TheContext;
 extern llvm::IRBuilder<> Builder;//(TheContext);
 extern Module *TheModule;// = new Module(llvm::StringRef(),TheContext);
@@ -37,8 +38,8 @@ extern std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
-extern std::unordered_map<std::string,symAttribute *> originalSymbolTable;
-struct symAttribute;
+extern std::map<std::string , symAttribute* > originalSymbolTable;
+
 // Value *LogErrorVV(const char *Str);
 
 Value *LogErrorVV(std::string str);
@@ -146,7 +147,6 @@ protected:
 
 public:
     Node() {};
-
     // 建立一个非终结符节点，挂接 childrenNumber 个孩子，分别是 ...
     Node(std::string _symbolName, int childrenNumber, ...);
 
@@ -633,7 +633,8 @@ public:
                 variableTable[this->id->getSymbolName()] = {tor, res};
             else
                 (*(tableStack.top()))[this->id->getSymbolName()] = {tor, res};
-            originalSymbolTable[this->id->getSymbolName()] = new symAttribute(this->id); /* make do */
+            _ins(this);
+            //originalSymbolTable[this->id->getSymbolName()] = new symAttribute(this->id); /* make do */
             return res;
         }
     }
@@ -1182,17 +1183,17 @@ public:
         /* 1. get this variable from the symbol table. */
         llvm::Value *value;
         llvm::Type::TypeID type;
-        std::string name = this->getSymbolName();
+        std::string name = this->mArrayName->getSymbolName();
         if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
-            value = variableTable[this->getSymbolName()].address;
-            type = variableTable[this->getSymbolName()].type;
+            value = variableTable[name].address;
+            type = variableTable[name].type;
         } else { /* otherwise, find it on both stack top and the global table */
-            value = (tableStack.top()->find(this->getSymbolName()) != tableStack.top()->end()) ?
-                          ((*(tableStack.top()))[this->getSymbolName()].address)
-                        : (variableTable[this->getSymbolName()].address);
-            type = (tableStack.top()->find(this->getSymbolName()) != tableStack.top()->end()) ?
-                          ((*(tableStack.top()))[this->getSymbolName()].type)
-                        : (variableTable[this->getSymbolName()].type);
+            value = (tableStack.top()->find(name) != tableStack.top()->end()) ?
+                          ((*(tableStack.top()))[name].address)
+                        : (variableTable[name].address);
+            type = (tableStack.top()->find(name) != tableStack.top()->end()) ?
+                          ((*(tableStack.top()))[name].type)
+                        : (variableTable[name].type);
         }
         if(value->getType()->isPointerTy()){ /* this is an array, normally codegen */
             llvm::ArrayRef<Value*> indexs;
@@ -1208,18 +1209,7 @@ public:
         /*return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber())
                                          + " " + "Not supported yet");*/
     }
-    llvm::Value* calcArrayIndex(llvm::Value* arrayId){
-        /* TODO: CtrlF in tiny this function name */
-        std::vector<int> arraySizes = originalSymbolTable[this->getSymbolName()]->arraySizes;
-        assert(arraySizes.size()>0 && arraySizes.size()==mArrayIndexs.size());
-        ExpressionNode* expression = *(mArrayIndexs.rbegin());
-        for(int i=mArrayIndexs.size()-1; i>=1; i--){
-            BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), mArrayIndexs[i-1]);
-            BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
-            expression = te;
-        }
-        return expression->codeGen();
-    }
+    llvm::Value* calcArrayIndex(llvm::Value* arrayId);
     // private:
     std::string op;
     // ExpressionNode *mLeftHandSide, *mRightHandSide;
@@ -1994,3 +1984,21 @@ std::string type_to_string(symAttribute *t);
 //     LogError(Str);
 //     return nullptr;
 // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
