@@ -421,6 +421,7 @@ llvm::LLVMContext TheContext;
 llvm::IRBuilder<> Builder(TheContext);
 Module *TheModule = new Module(llvm::StringRef(),TheContext);
 std::unordered_map<std::string, Type_and_Address> variableTable;
+std::unordered_map<std::string, StructType*> structTable;
 std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
@@ -429,9 +430,6 @@ std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 
 
 llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs){
-    /* TODO: CtrlF in tiny this function name */
-//    if ()
-//    std::vector<int> arraySizes = originalSymbolTable[name]->arraySizes;
     ExpressionNode* expression = *(mArrayIndexs.rbegin());
     int postMul = arraySizes[mArrayIndexs.size()-1];
     for(int i=mArrayIndexs.size()-1; i>=1; i--){

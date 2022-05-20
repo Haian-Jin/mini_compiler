@@ -1,24 +1,10 @@
 double a;
 int main() {
-    a = 10;
-
-    while (a > 10)
-    {
-        break;
+    int i;
+    a = 0;
+    for(i =0;i<7;i=i+1) {
+        a = a + 1;
     }
-    
-    while (a < 10)
-    {
-        if (a == 8) {
-            continue;
-        }
-        if (a < 5)
-        {
-            break;
-        }
-        
-    }
-    return 3 * 6;
-    
+    return 0;
 
 }
