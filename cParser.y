@@ -311,10 +311,13 @@ variableName :
             }else{
                 $$ = $1;
                 auto arraySizes = $$->getArraySizes();
-                int newSize;
-                sscanf($3->getTokenValue().c_str(),"%d",&newSize);
+                int newSize = dynamic_cast<IntNode*>($3)->value;
+                //sscanf($3->getTokenValue().c_str(),"%d",&newSize);
                 arraySizes.push_back(newSize);
                 $$->setArraySizes(arraySizes);
+                auto a = $$->getArraySizes();
+                //assert(a!=NULL);
+                std::cout<<"array: ";std::cout<<a.size()<<std::endl;
             }
         }
     |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
