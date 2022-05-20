@@ -1,5 +1,5 @@
 int a[1000];
-int n;
+
 
 int qsort(int st, int arrN){
     if(arrN<=1)return 0;
@@ -29,16 +29,22 @@ int qsort(int st, int arrN){
 
 int main(){
     // // cin>>arrN;
-    int i; i = 0;
-    while(i<n){
+    int n;
+    n = 20;
+    int i;
+    i = 1;
+    while(i<=n){
         // cin>>a[i];
-         i = i + 1;
+        a[n-i] = i;
+        i = i + 1;
     }
     qsort(0,n);
     i = 0;
     while(i<n){
         // cout<<a[i];
+        printf("%d ", a[i]);
         i = i + 1;
     }
+    return 0;
     // cout<<'\arrN';
 }

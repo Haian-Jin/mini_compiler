@@ -20,6 +20,7 @@ sudo apt-get install flex bison
 sudo apt-get install llvm-dev 
 sudo apt-get install libjsoncpp-dev
 ln -s /usr/include/jsoncpp/json/ /usr/include/json
+sudo apt-get install clang
 
 ```
 

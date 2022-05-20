@@ -650,7 +650,7 @@ public:
                                                ArraySize, id->getSymbolName());
                     tor = llvm::Type::IntegerTyID;
                 } else if (ty == "float" || ty == "double") {
-                    auto arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
+                    auto arrayType = llvm::ArrayType::get(llvm::Type::getDoubleTy(TheContext), array_size);
                     res = Builder.CreateAlloca(arrayType,
                                                ArraySize, id->getSymbolName());
                     tor = llvm::Type::DoubleTyID;
