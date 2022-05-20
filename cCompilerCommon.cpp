@@ -83,6 +83,9 @@ void Node::setType(Node *c){
     if(c->getType()==Node::TYPE_STRUCT){
         this->setStructTypeName(c->getStructTypeName());
     }
+    if(c->isArray()){
+        this->setArraySizes(c->getArraySizes());
+    }
 }
 
 Node::Kind Node::getKind(){
@@ -421,3 +424,4 @@ std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
+std::map<llvm::Value *,symAttribute *> originalSymbolTable;
