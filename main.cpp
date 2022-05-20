@@ -25,9 +25,9 @@ int main(){
         astJson.close();
         std::cout << "json write to " << jsonFile << std::endl;
     }
-//    treeRoot->codeGen();
-//    llvm::AssemblyAnnotationWriter *aaw = new llvm::AssemblyAnnotationWriter();
-//    llvm::raw_ostream &e=errs();
-//    TheModule->print(outs(), aaw);
-//    e.flush();
+    treeRoot->codeGen();
+    llvm::AssemblyAnnotationWriter *aaw = new llvm::AssemblyAnnotationWriter();
+    llvm::raw_ostream &e=errs();
+    TheModule->print(outs(), aaw);
+    e.flush();
 }

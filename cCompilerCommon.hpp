@@ -7,6 +7,7 @@
 #include <json/json.h>
 //#include "/usr/local/llvm/include/llvm/IR/Value.h"
 #include <llvm/IR/Value.h>
+#include <llvm/IR/Attributes.h>
 #include <map>
 #include <cmath>
 #include <stack>
@@ -40,7 +41,7 @@ extern std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
-extern std::unordered_map<std::string, StructType*> structTable;
+extern std::unordered_map<std::string, StructType *> structTable;
 //extern std::map<std::string , symAttribute* > originalSymbolTable;
 
 // Value *LogErrorVV(const char *Str);
@@ -780,10 +781,10 @@ public:
     }
 
     virtual Value *codeGen() {
-        std::vector<llvm::Type*> memberTypes;
+        std::vector<llvm::Type *> memberTypes;
         auto structType = StructType::create(TheContext, this->mStructName->getSymbolName());
         for (auto &member: mMembers->mStatementList) {
-            auto v = (VariableDeclarationNode*)member;
+            auto v = (VariableDeclarationNode *) member;
             std::string ty = v->type->getSymbolName();
             if (!v->isArray()) {
                 if (ty == "int") {
@@ -1095,22 +1096,63 @@ public:
     }
 
     llvm::Value *codeGen() override {
-        Function *CalleeF =
-                TheModule->getFunction(mFunctionName->getSymbolName());
-        if (!CalleeF)
-            return LogErrorVV(mFunctionName->getSymbolName() + "not declared");
-        if (CalleeF->arg_size() != (*mArguments).size()) {
-            return LogErrorVV("Incorrect # arguments passed");
-        }
+        if (mFunctionName->getSymbolName() != "printf") {
+            Function *CalleeF =
+                    TheModule->getFunction(mFunctionName->getSymbolName());
+            if (!CalleeF)
+                return LogErrorVV(mFunctionName->getSymbolName() + "not declared");
+            if (CalleeF->arg_size() != (*mArguments).size()) {
+                return LogErrorVV("Incorrect # arguments passed");
+            }
 
-        std::vector<Value *> ArgsV;
-        for (size_t i = 0; i < mArguments->size(); i++) {
-            ArgsV.push_back((*mArguments)[i]->codeGen());
-            if (!ArgsV.back())
-                return nullptr;
-        }
+            std::vector<Value *> ArgsV;
+            for (auto & mArgument : *mArguments) {
+                ArgsV.push_back(mArgument->codeGen());
+                if (!ArgsV.back())
+                    return nullptr;
+            }
 
-        return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
+            return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
+        } else {
+            if (mArguments) {
+
+
+            Function *func_printf = TheModule->getFunction("printf");
+            if (!func_printf) {
+                PointerType *Pty = PointerType::get(IntegerType::get(TheContext, 8), 0);
+                FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(TheContext, 32), true);
+
+                func_printf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "printf", TheModule);
+                func_printf->setCallingConv(CallingConv::C);
+
+                AttributeList func_printf_PAL;
+                func_printf->setAttributes(func_printf_PAL);
+            }
+
+//            IRBuilder <> builder(TheContext);
+//            builder.SetInsertPoint(Builder.GetInsertBlock());
+            std::string format = (*((*mArguments)[0])).getTokenValue();
+            format = format.substr(1, format.size()-2);
+            Value *str = Builder.CreateGlobalStringPtr(format);
+            std::vector <Value *> int32_call_params;
+            int32_call_params.push_back(str);
+
+//            va_list ap;
+//            va_start(ap, format);
+//
+//            char *str_ptr = va_arg(ap, char*);
+
+
+
+//            std::vector<llvm::Value*> extra;
+            for (auto &temp: (*mArguments)) {
+                int32_call_params.push_back(temp->codeGen());
+            }
+
+            Builder.CreateCall(func_printf, int32_call_params, "call_printf");
+            }
+            return nullptr;
+        }
     }
 
 private:

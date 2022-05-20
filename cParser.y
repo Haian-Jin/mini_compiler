@@ -1184,8 +1184,10 @@ atomicExpression :
             $$ = $1;
             $$->setPosition(csLineCnt, csColumnCnt);
         }
-    |   STRING { /* 这个就不实现了吧 */
+    |   STRING {
             $$ = $1;
+            $$ = new IdentifierNode($1->getTokenValue(), false);
+            $$->setType(Node::TYPE_STRING);
             $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   '(' expression ')' {
