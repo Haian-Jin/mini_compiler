@@ -37,6 +37,7 @@ extern std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
+extern std::map<llvm::Value *,symAttribute *> originalSymbolTable;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
@@ -398,6 +399,7 @@ public:
         if (!isType()) {
             Value *value = nullptr;
             llvm::Type::TypeID type;
+            std::cout<<"name "<<this->getSymbolName()<<std::endl;
             if (tableStack.empty()) {
                 value = variableTable[this->getSymbolName()].address;
                 type = variableTable[this->getSymbolName()].type;
@@ -542,7 +544,8 @@ public:
         this->id = id;
         this->assignmentExpr = assignmentExpr;
         this->setKind(Node::KIND_VARIABLE);
-        this->setType(inType->getType());
+        id->setType(inType->getType());
+        this->setType(id/*inType->getType()*/);
     }
 
     virtual std::string getNodeTypeName() const {
@@ -606,20 +609,23 @@ public:
                 }
             }
             return res;
-        } else {
+        } else { /* is array */
             auto dimsize = this->getArraySizes();
-            uint64_t array_size = 1;
+            int array_size = 1;
             for (int a: dimsize) {
                 array_size *= a;
             }
+            /* Array Attempt */
             Value *ArraySize = ConstantInt::get(
                     llvm::Type::getInt32Ty(TheContext), array_size, false);
             if (ty == "int" || ty == "char") {
-                res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext),
+                auto arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
+                res = Builder.CreateAlloca(arrayType,
                                            ArraySize, "arrtemp");
                 tor = llvm::Type::IntegerTyID;
             } else if (ty == "float" || ty == "double") {
-                res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext),
+                auto arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
+                res = Builder.CreateAlloca(arrayType,
                                            ArraySize, "arrtemp");
                 tor = llvm::Type::DoubleTyID;
             }
@@ -1113,11 +1119,11 @@ private:
 class ArrayIndexNode : public ExpressionNode {
 public:
     ArrayIndexNode(std::string _symbolName, int childrenNumber, ...)
-            : ExpressionNode(_symbolName, 0) {
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for (int i = 0; i < childrenNumber; i++) {
-            mChildren.push_back(va_arg(vl, Node *));
+                : ExpressionNode(_symbolName, 0) {
+            va_list vl;
+            va_start(vl, childrenNumber);
+            for (int i = 0; i < childrenNumber; i++) {
+                mChildren.push_back(va_arg(vl, Node *));
         }
         mIsNegligible = (false), mSymbolName = (_symbolName),
         mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
@@ -1172,11 +1178,44 @@ public:
         /*
         TODO:
         */
-        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-                          std::to_string(this->getColumnNumber()) + " " +
-                          "Not supported yet");
+        /* 1. get this variable from the symbol table. */
+        llvm::Value *value;
+        llvm::Type::TypeID type;
+        std::string name = this->getSymbolName();
+        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+            value = variableTable[this->getSymbolName()].address;
+            type = variableTable[this->getSymbolName()].type;
+        } else { /* otherwise, find it on both stack top and the global table */
+            value = (tableStack.top()->find(this->getSymbolName()) != tableStack.top()->end()) ?
+                          ((*(tableStack.top()))[this->getSymbolName()].address)
+                        : (variableTable[this->getSymbolName()].address);
+            type = (tableStack.top()->find(this->getSymbolName()) != tableStack.top()->end()) ?
+                          ((*(tableStack.top()))[this->getSymbolName()].type)
+                        : (variableTable[this->getSymbolName()].type);
+        }
+        if(value->getType()->isPointerTy()){ /* this is an array, normally codegen */
+            llvm::ArrayRef<Value*> indexs;
+            indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext),0), calcArrayIndex()};
+            auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
+            return ptr;
+        }else{/* this is not an array */
+            //std::cout<<"error\n";
+            //assert(false);
+            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+                                " variable " + std::string(name) + " is not an array!");
+        }
+        /*return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber())
+                                         + " " + "Not supported yet");*/
     }
-
+    llvm::Value* calcArrayIndex(){
+        /* TODO: CtrlF in tiny this function name */
+        std::vector<int> arraySizes;
+        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+            
+        } else { /* otherwise, find it on both stack top and the global table */
+            
+        }
+    }
     // private:
     std::string op;
     // ExpressionNode *mLeftHandSide, *mRightHandSide;
