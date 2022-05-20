@@ -405,6 +405,7 @@ std::string type_to_string(symAttribute *t){
 std::string Node::getSymbolName()const{
     return this->mSymbolName;
 }
+
 std::string Node::getTokenValue()const{
     if(!(this->mIsTerminal)){
         return getSymbolName();
@@ -424,4 +425,22 @@ std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
-std::map<llvm::Value *,symAttribute *> originalSymbolTable;
+std::map<std::string,symAttribute *> originalSymbolTable;
+
+
+llvm::Value* ArrayIndexNode::calcArrayIndex(llvm::Value* arrayId){
+    /* TODO: CtrlF in tiny this function name */
+    std::string name = this->getSymbolName();
+    std::vector<int> arraySizes = originalSymbolTable[name]->arraySizes;
+    ExpressionNode* expression = *(mArrayIndexs.rbegin());
+    for(int i=mArrayIndexs.size()-1; i>=1; i--){
+        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), mArrayIndexs[i-1]);
+        BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
+        expression = te;
+    }
+    return expression->codeGen();
+}
+
+void _ins(void *p){
+    originalSymbolTable.insert({((Node*)p)->getSymbolName(), new symAttribute((Node*)p)});
+}
