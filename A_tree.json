@@ -65,6 +65,33 @@
 									"children" : 
 									[
 										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: t"
+												},
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: t"
+														},
+														{
+															"name" : "IntNode:1"
+														}
+													],
+													"name" : "+"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
 											"name" : "IntNode:0"
 										}
 									],

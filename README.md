@@ -49,5 +49,11 @@ You can also run the script `./build.sh` to build the compiler.
   ```shell
   pytm-cli -i A_tree.json -o demo.html
   ```
+* generate object file
+  
+    ```shell
+      OjectFile=output.exe
+      clang++ objtest.cpp output.o -o ${OjectFile}
+    ```
 
   
