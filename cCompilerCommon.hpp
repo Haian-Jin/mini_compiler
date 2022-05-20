@@ -37,7 +37,7 @@ extern std::unordered_map<std::string,
         std::unordered_map<std::string, Type_and_Address> *>
         variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
-extern std::map<llvm::Value *,symAttribute *> originalSymbolTable;
+extern std::unordered_map<std::string,symAttribute *> originalSymbolTable;
 struct symAttribute;
 // Value *LogErrorVV(const char *Str);
 
@@ -633,6 +633,7 @@ public:
                 variableTable[this->id->getSymbolName()] = {tor, res};
             else
                 (*(tableStack.top()))[this->id->getSymbolName()] = {tor, res};
+            originalSymbolTable[this->id->getSymbolName()] = new symAttribute(this->id); /* make do */
             return res;
         }
     }
@@ -813,7 +814,7 @@ public:
     IntNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
         sscanf(_tokenValue.c_str(), "%d", &this->value);
     }
-
+    IntNode(int v):value(v){};
     double getValue() { return this->value; }
 
     virtual std::string getNodeTypeName() const { return "IntNode"; }
@@ -1195,7 +1196,7 @@ public:
         }
         if(value->getType()->isPointerTy()){ /* this is an array, normally codegen */
             llvm::ArrayRef<Value*> indexs;
-            indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext),0), calcArrayIndex()};
+            indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext),0), calcArrayIndex(value)};
             auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
             return ptr;
         }else{/* this is not an array */
@@ -1207,14 +1208,17 @@ public:
         /*return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber())
                                          + " " + "Not supported yet");*/
     }
-    llvm::Value* calcArrayIndex(){
+    llvm::Value* calcArrayIndex(llvm::Value* arrayId){
         /* TODO: CtrlF in tiny this function name */
-        std::vector<int> arraySizes;
-        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
-            
-        } else { /* otherwise, find it on both stack top and the global table */
-            
+        std::vector<int> arraySizes = originalSymbolTable[this->getSymbolName()]->arraySizes;
+        assert(arraySizes.size()>0 && arraySizes.size()==mArrayIndexs.size());
+        ExpressionNode* expression = *(mArrayIndexs.rbegin());
+        for(int i=mArrayIndexs.size()-1; i>=1; i--){
+            BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), mArrayIndexs[i-1]);
+            BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
+            expression = te;
         }
+        return expression->codeGen();
     }
     // private:
     std::string op;
