@@ -431,14 +431,24 @@ std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 
 llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs){
     ExpressionNode* expression = *(mArrayIndexs.rbegin());
-    int postMul = arraySizes[mArrayIndexs.size()-1];
-    for(int i=mArrayIndexs.size()-1; i>=1; i--){
-        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i-1]);
-        postMul *= arraySizes[i-1];
-        BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
-        expression = te;
+    int postMul = arraySizes[arraySizes.size()-1];
+//    for(int i=mArrayIndexs.size()-1; i>=1; i--){
+//        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i-1]);
+//        postMul *= arraySizes[i-1];
+//        BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
+//        expression = te;
+//    }
+    for (int i = arraySizes.size()-2;i>=0;i--) {
+        if (i>mArrayIndexs.size()-2) {
+            postMul *= arraySizes[i];
+        } else {
+            BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i]);
+            postMul *= arraySizes[i];
+            BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
+            expression = te;
+        }
     }
-    if(mArrayIndexs.size()==1){
+    if(arraySizes.size()==1){
         return (expression)->codeGen();
     }else
         return dynamic_cast<BinaryOperatorNode*>(expression)->codeGen();

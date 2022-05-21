@@ -433,37 +433,6 @@ public:
     }
     virtual llvm::Value *codeGen() {
         if (!isType()) {
-//            Value *value = nullptr;
-//            llvm::Type::TypeID type;
-//
-//            if (tableStack.empty()) {
-//                value = variableTable[this->getSymbolName()].address;
-//                type = variableTable[this->getSymbolName()].type;
-//            } else {
-//                value = (tableStack.top()->find(this->getSymbolName()) !=
-//                         tableStack.top()->end())
-//                        ? ((*(tableStack.top()))[this->getSymbolName()].address)
-//                        : (variableTable[this->getSymbolName()].address);
-//                type = (tableStack.top()->find(this->getSymbolName()) !=
-//                        tableStack.top()->end())
-//                       ? ((*(tableStack.top()))[this->getSymbolName()].type)
-//                       : (variableTable[this->getSymbolName()].type);
-//            }
-//
-//            if (!value) {
-//                return LogErrorVV(this->getSymbolName() + " is not defined\n");
-//            }
-//            if (type == llvm::Type::PointerTyID) {
-//                auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
-//                if (arrayPtr->getType()->isArrayTy()) {
-//                    std::vector<Value *> indices;
-//                    indices.push_back(ConstantInt::get(
-//                            llvm::Type::getInt32Ty(TheContext), 0, false));
-//                    auto ptr =
-//                            Builder.CreateInBoundsGEP(value, indices, "arrayPtr");
-//                    return ptr;
-//                }
-//            }
             return Builder.CreateLoad(addrGen(), false, "");
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -614,7 +583,7 @@ public:
         llvm::Type::TypeID tor;
         if (!this->id->isArray()) {
             if (tableStack.empty()) {
-                if (ty == "int" || ty == "char") {
+                if (ty == "int" || ty == "short") {
                     res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt32Ty(TheContext), false,
                                                    llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
                     tor = llvm::Type::IntegerTyID;
@@ -622,6 +591,10 @@ public:
                     res = new llvm::GlobalVariable(*TheModule, llvm::Type::getDoubleTy(TheContext), false,
                                                    llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
                     tor = llvm::Type::DoubleTyID;
+                } else if (ty == "char") {
+                    res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt8Ty(TheContext), false,
+                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                    tor = llvm::Type::IntegerTyID;
                 } else {
                     return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                       std::to_string(this->getColumnNumber()) + " " +
@@ -665,6 +638,9 @@ public:
                 } else if (ty == "float" || ty == "double") {
                     array_type = llvm::ArrayType::get(llvm::Type::getDoubleTy(TheContext), array_size);
                     tor = llvm::Type::DoubleTyID;
+                } else if (ty == "char") {
+                    array_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(TheContext), array_size);
+                    tor = llvm::Type::LabelTyID; //I didn't find a type for char, so I use Label for it
                 } else {
                     return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                       std::to_string(this->getColumnNumber()) + " " +
@@ -682,7 +658,7 @@ public:
                 variableTable[this->id->getSymbolName()] = ret;
             } else {
                 Value *ArraySize = ConstantInt::get(llvm::Type::getInt32Ty(TheContext), array_size, false);
-                if (ty == "int" || ty == "char") {
+                if (ty == "int") {
                     auto arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
                     res = Builder.CreateAlloca(arrayType,
                                                ArraySize, id->getSymbolName());
@@ -692,6 +668,11 @@ public:
                     res = Builder.CreateAlloca(arrayType,
                                                ArraySize, id->getSymbolName());
                     tor = llvm::Type::DoubleTyID;
+                } else if (ty == "char") {
+                    auto arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(TheContext), array_size);
+                    res = Builder.CreateAlloca(arrayType,
+                                               ArraySize, id->getSymbolName());
+                    tor = llvm::Type::LabelTyID; //for char
                 } else {
                     res = LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                      std::to_string(this->getColumnNumber()) + " " +
@@ -1375,6 +1356,39 @@ public:
         return root;
     }
 
+    Type_and_Address getTypeAddress() {
+        llvm::Value *value = nullptr;
+        llvm::Type::TypeID type;
+        bool isArray = false;
+        std::string name = mArrayName->getSymbolName();
+        std::vector<int> arraySizes;
+        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+            if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+                type = variableTable[name].type;
+                isArray = variableTable[name].isPtr;
+                arraySizes = variableTable[name].arraySizes;
+            } else {
+                value = nullptr;
+            }
+        } else { /* otherwise, find it on both stack top and the global table */
+            if (tableStack.top()->find(name) != tableStack.top()->end()) {
+                value = (*tableStack.top())[name].address;
+                type = (*tableStack.top())[name].type;
+                isArray = (*tableStack.top())[name].isPtr;
+                arraySizes = (*tableStack.top())[name].arraySizes;
+            } else if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+                type = variableTable[name].type;
+                isArray = variableTable[name].isPtr;
+                arraySizes = variableTable[name].arraySizes;
+            } else {
+                value = nullptr;
+            }
+        }
+        return {type, value, isArray, arraySizes};
+    }
+
     llvm::Value *addrGen() override {
         llvm::Value *value = nullptr;
         llvm::Type::TypeID type;
@@ -1422,8 +1436,13 @@ public:
     }
 
     llvm::Value *codeGen() override {
-        auto ptr = addrGen();
-        return Builder.CreateLoad(ptr, false, "");
+        Type_and_Address t = getTypeAddress();
+        if (t.type!=llvm::Type::LabelTyID || t.arraySizes.size()==mArrayIndexs.size()) {
+            auto ptr = addrGen();
+            return Builder.CreateLoad(ptr, false, "");
+        } else {
+            return this->addrGen();
+        }
     }
 
 
@@ -1507,6 +1526,9 @@ public:
             else if (type == llvm::Type::DoubleTyID)
                 res = Builder.CreateAlignedStore(expression->codeGen(),
                                                  Builder.CreateInBoundsGEP(value, ga, "elementPointer"), 8);
+            else if (type == llvm::Type::LabelTyID)
+                res = Builder.CreateAlignedStore(expression->codeGen(),
+                                                 Builder.CreateInBoundsGEP(value, ga, "elementPointer"), 1);
         }
         return res;
     }
@@ -1650,6 +1672,17 @@ public:
     virtual llvm::Value *codeGen() {
         Value *Left = mLeftHandSide->codeGen();
         Value *Right = mRightHandSide->codeGen();
+
+        if(Left->getType()->getTypeID()==llvm::Type::PointerTyID||Right->getType()->getTypeID()==llvm::Type::PointerTyID) {
+            if(Left->getType()->getTypeID()!=Right->getType()->getTypeID() || op!= "==") {
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                  std::to_string(this->getColumnNumber()) + " " +
+                                  "invalid boolean operation");
+            } else {
+                /* TODO: Override the "==" to implement string's comparison */
+            }
+        }
+
         if (!Left || !Right)
             return nullptr;
         bool isFloat = false;
