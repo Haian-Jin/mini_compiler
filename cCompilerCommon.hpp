@@ -535,6 +535,8 @@ private:
     ExpressionNode *mRightHandSide;
 };
 
+llvm::Constant* con_0();
+
 class VariableDeclarationNode : public StatementNode {
 public:
     const IdentifierNode *type;
@@ -640,6 +642,12 @@ public:
                 }
                 res = new llvm::GlobalVariable(*TheModule, array_type, false, llvm::GlobalValue::PrivateLinkage, 0,
                                                id->getSymbolName());
+                std::vector<llvm::Constant*> const_array_elems;
+                for (int i = 0; i < array_size; ++i) {
+                    const_array_elems.push_back(con_0());
+                }
+                llvm::Constant* const_array = llvm::ConstantArray::get(array_type, const_array_elems);
+                ((llvm::GlobalVariable*)res)->setInitializer(const_array);
                 Type_and_Address ret = {tor, res, true, dimsize};
                 variableTable[this->id->getSymbolName()] = ret;
             } else {
@@ -1333,7 +1341,7 @@ public:
             indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
                       calcArrayIndex(arraySizes, mArrayIndexs)};
             auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
-            return ptr;
+            return Builder.CreateLoad(ptr, false, "");
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
                               " variable " + std::string(name) + " is not an array!");

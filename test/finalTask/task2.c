@@ -1,9 +1,8 @@
-
-
+int a[100][100];
+int b[100][100];
+int c[100][100];
 int main() {
-    int a[100][100];
-    int b[100][100];
-    int c[100][100];
+
     int an;
     int am;
     int bn;
@@ -12,14 +11,15 @@ int main() {
     int cm;
     int t;
     //cin>>an;cin>>am;
-    an = 10;
-    am = 10;
+    an = 25;
+    am = 25;
     int i;
     i = 0;
     int j;
     j = 0;
     int x;
     int y;
+
     while (i < an) {
         j = 0;
         while (j < am) {
@@ -30,8 +30,8 @@ int main() {
     }
 
     //cin>>bn;cin>>bm;
-    bn = 10;
-    bm = 10;
+    bn = 25;
+    bm = 25;
     i = 0;
     j = 0;
     while (i < bn) {
@@ -65,10 +65,10 @@ int main() {
     while (i < cn) {
         j = 0;
         while (j < cm) {
-//            printf("%d ", c[i][j]);
+            printf("%d ", c[i][j]);
             j = j + 1;
         }
-//        printf("\n");
+        printf("\n");
         i = i + 1;
     }
     return 0;

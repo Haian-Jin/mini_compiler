@@ -444,5 +444,8 @@ llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionN
         return dynamic_cast<BinaryOperatorNode*>(expression)->codeGen();
 }
 
+llvm::Constant* con_0() {
+    return llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0);
+}
 
 

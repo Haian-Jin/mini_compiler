@@ -317,7 +317,7 @@ variableName :
                 $$->setArraySizes(arraySizes);
                 auto a = $$->getArraySizes();
                 //assert(a!=NULL);
-                std::cout<<"array: ";std::cout<<a.size()<<std::endl;
+//                std::cout<<"array: ";std::cout<<a.size()<<std::endl;
             }
         }
     |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
@@ -1232,14 +1232,14 @@ static void error_duplicatedVariable(Node *c){
     std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getSymbolName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getSymbolName())->columnNumber<<std::endl;
 }
 static void error_variableNotDeclared(std::string name){
-    std::cout<<"[ERROR] ";
-    std::cout<<"variable \""<<name<<"\" was not declared.\n";
-    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"variable \""<<name<<"\" was not declared.\n";
+//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
 }
 static void error_structNotDeclared(std::string name){
-    std::cout<<"[ERROR] ";
-    std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
-    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
+//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
 }
 static void error_illegalArraySize(Node * c){
     std::cout<<"[ERROR] ";
