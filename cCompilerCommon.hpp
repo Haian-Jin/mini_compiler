@@ -327,6 +327,11 @@ public:
 
     virtual std::string getNodeTypeName() const { return "ExpressionNode"; }
 
+    virtual llvm::Value *addrGen() {
+        return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                          std::to_string(this->getColumnNumber()) + " " + "This should not be Gen");
+    }
+
     virtual Json::Value jsonGen() const {
         Json::Value r;
         r["name"] = getNodeTypeName();
@@ -400,41 +405,66 @@ public:
         root["name"] = getNodeTypeName();
         return root;
     }
-
+    virtual llvm::Value *addrGen() {
+        std::string name = this->getSymbolName();
+        llvm::Value* value = nullptr;
+        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+            if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+            } else {
+                value = nullptr;
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                  std::to_string(this->getColumnNumber()) + " " + name +
+                                  "not declared");
+            }
+        } else { /* otherwise, find it on both stack top and the global table */
+            if (tableStack.top()->find(name) != tableStack.top()->end()) {
+                value = (*tableStack.top())[name].address;
+            } else if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+            } else {
+                value = nullptr;
+                return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+                                  std::to_string(this->getColumnNumber()) + " " + name +
+                                  "not declared");
+            }
+        }
+        return value;
+    }
     virtual llvm::Value *codeGen() {
         if (!isType()) {
-            Value *value = nullptr;
-            llvm::Type::TypeID type;
-
-            if (tableStack.empty()) {
-                value = variableTable[this->getSymbolName()].address;
-                type = variableTable[this->getSymbolName()].type;
-            } else {
-                value = (tableStack.top()->find(this->getSymbolName()) !=
-                         tableStack.top()->end())
-                        ? ((*(tableStack.top()))[this->getSymbolName()].address)
-                        : (variableTable[this->getSymbolName()].address);
-                type = (tableStack.top()->find(this->getSymbolName()) !=
-                        tableStack.top()->end())
-                       ? ((*(tableStack.top()))[this->getSymbolName()].type)
-                       : (variableTable[this->getSymbolName()].type);
-            }
-
-            if (!value) {
-                return LogErrorVV(this->getSymbolName() + " is not defined\n");
-            }
-            if (type == llvm::Type::PointerTyID) {
-                auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
-                if (arrayPtr->getType()->isArrayTy()) {
-                    std::vector<Value *> indices;
-                    indices.push_back(ConstantInt::get(
-                            llvm::Type::getInt32Ty(TheContext), 0, false));
-                    auto ptr =
-                            Builder.CreateInBoundsGEP(value, indices, "arrayPtr");
-                    return ptr;
-                }
-            }
-            return Builder.CreateLoad(value, false, "");
+//            Value *value = nullptr;
+//            llvm::Type::TypeID type;
+//
+//            if (tableStack.empty()) {
+//                value = variableTable[this->getSymbolName()].address;
+//                type = variableTable[this->getSymbolName()].type;
+//            } else {
+//                value = (tableStack.top()->find(this->getSymbolName()) !=
+//                         tableStack.top()->end())
+//                        ? ((*(tableStack.top()))[this->getSymbolName()].address)
+//                        : (variableTable[this->getSymbolName()].address);
+//                type = (tableStack.top()->find(this->getSymbolName()) !=
+//                        tableStack.top()->end())
+//                       ? ((*(tableStack.top()))[this->getSymbolName()].type)
+//                       : (variableTable[this->getSymbolName()].type);
+//            }
+//
+//            if (!value) {
+//                return LogErrorVV(this->getSymbolName() + " is not defined\n");
+//            }
+//            if (type == llvm::Type::PointerTyID) {
+//                auto arrayPtr = Builder.CreateLoad(value, "arrayPtr");
+//                if (arrayPtr->getType()->isArrayTy()) {
+//                    std::vector<Value *> indices;
+//                    indices.push_back(ConstantInt::get(
+//                            llvm::Type::getInt32Ty(TheContext), 0, false));
+//                    auto ptr =
+//                            Builder.CreateInBoundsGEP(value, indices, "arrayPtr");
+//                    return ptr;
+//                }
+//            }
+            return Builder.CreateLoad(addrGen(), false, "");
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                               std::to_string(this->getColumnNumber()) + " " +
@@ -1114,7 +1144,95 @@ public:
     }
 
     llvm::Value *codeGen() override {
-        if (mFunctionName->getSymbolName() != "printf") {
+        if (mFunctionName->getSymbolName() == "printf") {
+            if (mArguments) {
+
+
+                Function *func_printf = TheModule->getFunction("printf");
+                if (!func_printf) {
+                    PointerType *Pty = PointerType::get(IntegerType::get(TheContext, 8), 0);
+                    FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(TheContext, 32), true);
+
+                    func_printf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "printf", TheModule);
+                    func_printf->setCallingConv(CallingConv::C);
+
+                    AttributeList func_printf_PAL;
+                    func_printf->setAttributes(func_printf_PAL);
+                }
+                std::string format = (*((*mArguments)[0])).getTokenValue();
+                format = format.substr(1, format.size() - 2);
+                std::regex pattern_n("\\\\n");
+                format = std::regex_replace(format, pattern_n, "\n");
+                std::regex pattern_r("\\\\r");
+                format = std::regex_replace(format, pattern_r, "\r");
+                std::regex pattern_t("\\\\t");
+                format = std::regex_replace(format, pattern_t, "\t");
+                Value *str = Builder.CreateGlobalStringPtr(format);
+                std::vector<Value *> int32_call_params;
+                int32_call_params.push_back(str);
+                for (int i = 1; i < (*mArguments).size(); i++) {
+                    int32_call_params.push_back((*mArguments)[i]->codeGen());
+                }
+
+                Builder.CreateCall(func_printf, int32_call_params, "call_printf");
+            }
+            return nullptr;
+        } else if(mFunctionName->getSymbolName() == "scanf") {
+            if (mArguments) {
+                Function *func_scanf = TheModule->getFunction("scanf");
+                if (!func_scanf) {
+                    PointerType *Pty = PointerType::get(IntegerType::get(TheContext, 8), 0);
+                    FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(TheContext, 32), true);
+
+                    func_scanf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "scanf", TheModule);
+                    func_scanf->setCallingConv(CallingConv::C);
+
+                    AttributeList func_printf_PAL;
+                    func_scanf->setAttributes(func_printf_PAL);
+                }
+                std::string format = (*((*mArguments)[0])).getTokenValue();
+                format = format.substr(1, format.size() - 2);
+                std::regex pattern_n("\\\\n");
+                format = std::regex_replace(format, pattern_n, "\n");
+                std::regex pattern_r("\\\\r");
+                format = std::regex_replace(format, pattern_r, "\r");
+                std::regex pattern_t("\\\\t");
+                format = std::regex_replace(format, pattern_t, "\t");
+                Value *str = Builder.CreateGlobalStringPtr(format);
+                std::vector<Value *> int32_call_params;
+                int32_call_params.push_back(str);
+                for (int i = 1; i < (*mArguments).size(); i++) {
+//                    std::string name = (*mArguments)[i]->getSymbolName();
+//                    llvm::Value* value = nullptr;
+//                    if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+//                        if (variableTable.find(name) != (variableTable.end())) {
+//                            value = variableTable[name].address;
+//                        } else {
+//                            value = nullptr;
+//                            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+//                                              std::to_string(this->getColumnNumber()) + " " + name +
+//                                              "not declared");
+//                        }
+//                    } else { /* otherwise, find it on both stack top and the global table */
+//                        if (tableStack.top()->find(name) != tableStack.top()->end()) {
+//                            value = (*tableStack.top())[name].address;
+//                        } else if (variableTable.find(name) != (variableTable.end())) {
+//                            value = variableTable[name].address;
+//                        } else {
+//                            value = nullptr;
+//                            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
+//                                              std::to_string(this->getColumnNumber()) + " " + name +
+//                                              "not declared");
+//                        }
+//                    }
+                    llvm::Value* value = (*mArguments)[i]->addrGen();
+                    int32_call_params.push_back(value);
+                }
+
+                Builder.CreateCall(func_scanf, int32_call_params, "call_scanf");
+            }
+            return nullptr;
+        } else {
             Function *CalleeF =
                     TheModule->getFunction(mFunctionName->getSymbolName());
             if (!CalleeF)
@@ -1124,59 +1242,15 @@ public:
             }
 
             std::vector<Value *> ArgsV;
-            for (auto & mArgument : *mArguments) {
+            for (auto &mArgument: *mArguments) {
                 ArgsV.push_back(mArgument->codeGen());
                 if (!ArgsV.back())
                     return nullptr;
             }
 
             return Builder.CreateCall(CalleeF, ArgsV, "calltmp");
-        } else {
-            if (mArguments) {
-
-
-            Function *func_printf = TheModule->getFunction("printf");
-            if (!func_printf) {
-                PointerType *Pty = PointerType::get(IntegerType::get(TheContext, 8), 0);
-                FunctionType *FuncTy9 = FunctionType::get(IntegerType::get(TheContext, 32), true);
-
-                func_printf = Function::Create(FuncTy9, GlobalValue::ExternalLinkage, "printf", TheModule);
-                func_printf->setCallingConv(CallingConv::C);
-
-                AttributeList func_printf_PAL;
-                func_printf->setAttributes(func_printf_PAL);
-            }
-
-//            IRBuilder <> builder(TheContext);
-//            builder.SetInsertPoint(Builder.GetInsertBlock());
-            std::string format = (*((*mArguments)[0])).getTokenValue();
-            format = format.substr(1, format.size()-2);
-            std::regex pattern_n("\\\\n");
-            format = std::regex_replace(format, pattern_n, "\n");
-            std::regex pattern_r("\\\\r");
-            format = std::regex_replace(format, pattern_r, "\r");
-            Value *str = Builder.CreateGlobalStringPtr(format);
-            std::vector <Value *> int32_call_params;
-            int32_call_params.push_back(str);
-
-//            va_list ap;
-//            va_start(ap, format);
-//
-//            char *str_ptr = va_arg(ap, char*);
-
-
-
-//            std::vector<llvm::Value*> extra;
-            for (int i = 1; i< (*mArguments).size(); i++) {
-                int32_call_params.push_back((*mArguments)[i]->codeGen());
-            }
-
-            Builder.CreateCall(func_printf, int32_call_params, "call_printf");
-            }
-            return nullptr;
         }
     }
-
 private:
     IdentifierNode *mFunctionName;
     std::vector<ExpressionNode *> *mArguments;
@@ -1302,7 +1376,7 @@ public:
         return root;
     }
 
-    llvm::Value *codeGen() override {
+    llvm::Value *addrGen() override {
         llvm::Value *value = nullptr;
         llvm::Type::TypeID type;
         bool isArray = false;
@@ -1341,13 +1415,16 @@ public:
             indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
                       calcArrayIndex(arraySizes, mArrayIndexs)};
             auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
-            return Builder.CreateLoad(ptr, false, "");
+            return ptr;
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
                               " variable " + std::string(name) + " is not an array!");
         }
-        /*return LogErrorVV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber())
-                                         + " " + "Not supported yet");*/
+    }
+
+    llvm::Value *codeGen() override {
+        auto ptr = addrGen();
+        return Builder.CreateLoad(ptr, false, "");
     }
 
 
