@@ -789,19 +789,19 @@ public:
     }
 };
 
-class StructDeclarationNode : public StatementNodesBlock {
+class StructDeclarationNode : public StatementNode {
 protected:
     IdentifierNode *mStructName;
     StatementNodesBlock *mMembers;
 
 public:
     StructDeclarationNode(IdentifierNode *name, StatementNodesBlock *members) {
+        assert(name != nullptr);
+        assert(members != nullptr);
         mStructName = name;
         mMembers = members;
     }
 
-    void createStructDeclaration(IdentifierNode *structName,
-                                 StatementNodesBlock *structMembers) {}
 
     virtual std::string getNodeTypeName() const {
         return std::string("StructDeclarationBlock") +
@@ -812,10 +812,9 @@ public:
         Json::Value root;
         root["name"] = getNodeTypeName();
         root["children"].append(mStructName->jsonGen());
-        // for(auto it = mStatementList.begin(); it != mStatementList.end();
-        // it++){
-        root["children"].append(mMembers->jsonGen() /*(*it)->jsonGen()*/);
-        //}
+
+        root["children"].append(mMembers->jsonGen());
+
         return root;
     }
 
@@ -1833,18 +1832,23 @@ public:
     }
 
     // merge another global declaration statements block
-    void mergeGlobalStatements(StatementNodesBlock *to_merge) {
+    // void mergeGlobalStatements(StatementNodesBlock *to_merge) {
 
+    //     assert(to_merge != nullptr);
+    //     if (dynamic_cast<StructDeclarationNode *>(to_merge) == NULL)
+    //         this->mGlobalStatementList.insert(mGlobalStatementList.end(),
+    //                                           to_merge->mStatementList.begin(),
+    //                                           to_merge->mStatementList.end());
+    //     else {
+    //         this->mGlobalStatementList.push_back(to_merge);
+    //     }
+    // }
+    void mergeGlobalStatements(StatementNodesBlock *to_merge){
         assert(to_merge != nullptr);
-        if (dynamic_cast<StructDeclarationNode *>(to_merge) == NULL)
-            this->mGlobalStatementList.insert(mGlobalStatementList.end(),
-                                              to_merge->mStatementList.begin(),
-                                              to_merge->mStatementList.end());
-        else {
-            this->mGlobalStatementList.push_back(to_merge);
-        }
+        this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
     }
 };
+
 
 class ForStatementNode : public StatementNode {
 public:
