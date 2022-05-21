@@ -125,24 +125,15 @@ declaration :
             $$->createMultiVarDeclaration(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNodeList *>($2));
 
         }
-    // TODO
-     |   STRUCT IDENTIFIER { // 定义结构体
-            // 取得结构体名之后，即使为该结构体构建符号表
+    |   STRUCT IDENTIFIER '{' structMemberDeclarations '}' ';' { // 定义结构体
             $2->setType(Node::TYPE_STRUCT);
             $2->setKind(Node::KIND_ATTRIBUTE);
             $2->setStructTypeName($2->getTokenValue());
-            $2->setVariableName($2->getTokenValue());
-            symbolTableStack->insert(new symAttribute($2));
-            symbolTableStack->push(new SymbolTable($2->getStructTypeName()));
-        } '{' structMemberDeclarations '}' ';' { 
-            //$$ = new Node(nameCounter.getNumberedName("declaration"), 6, $1, $2, $4, $5, $6, $7);
-            $$ = new StructDeclarationNode(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($5));
-            // $$->createStructDeclaration(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($5));
-            symbolTableStack->pop();
+            $2->setVariableName($2->getTokenValue()); 
+            $$ = new StatementNodesBlock();
+            StructDeclarationNode * structDecTemp = new StructDeclarationNode(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($4));
+            $$->addStatementNode(dynamic_cast<StatementNode *>(structDecTemp));
         }
-    /* |   type initializations error  {
-            error_missingSemicolon(); 
-        } */
     ;
 
 type :
@@ -173,7 +164,7 @@ typeName :
             $$ = new IdentifierNode($1->getTokenValue(), true);
             $$->setPosition(csLineCnt, csColumnCnt);
         }  
-    |   structTypeName { /* TODO */
+    |   structTypeName {
             $$ = new IdentifierNode($1->getStructTypeName(), true);
             $$->setType(Node::TYPE_STRUCT);
             $$->setKind(Node::KIND_ATTRIBUTE);
@@ -218,26 +209,17 @@ structMemberDeclarations :
         }
     |   structMemberDeclarations structMemberDeclaration {
             $$ = $1;
-            $$->mergeStatements($2);
+            $$->mergeStatements(dynamic_cast<StatementNodesBlock*>($2));
         }
     ;
 
 structMemberDeclaration :
         type structMembers ';' {
-            // $$ = new Node(nameCounter.getNumberedName("structMemberDeclarations"), 3, $1, $2, $3);
             $$ = new StatementNodesBlock();
-            for(int i=0;i<$2->getChildrenNumber();i++){
+            for(int i=0; i<$2->getChildrenNumber();i++){
                 $2->getChildrenById(i)->setType($1);
             }
-            for(int i=0;i<$2->getChildrenNumber();i++){
-                if($2->getChildrenById(i)->isTerminal() && $2->getChildrenById(i)->getTokenValue().compare(",")==0) continue;
-                if(symbolTableStack->insert(new symAttribute($2->getChildrenById(i))) == false){
-                    error_duplicatedVariable($2->getChildrenById(i));
-                }else{
-
-                }
-            }
-            $$->createMultiVarDeclaration($1,$2);
+            $$->createMultiVarDeclaration($1, $2);
         }
     ;
 

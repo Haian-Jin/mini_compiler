@@ -5,11 +5,12 @@ struct NODE{
     double mb;
 };
 struct NODE c;
-int main(int x, double y) {
+int main() {
     int t;
     t = 1;
-    double a;
-    a = 1.0 + 5.2 + 2;
-    b[10]=2.0;
+    // double a;
+    // a = 1.0 + 5.2 + 2;
+    // b[10]=2.0;
     c.ma=1;
+    return 0;
 }
