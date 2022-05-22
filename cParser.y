@@ -68,9 +68,6 @@ static void error_functionReturnsArray();
 %type<ExpressionNodeListPtr> paramList 
 
 
-
-
-
 %start cCode0
 
 
@@ -282,24 +279,20 @@ pointerSpecifier :
 
 variableName :
         IDENTIFIER { /* 一个普通的变量 */
-            $$ = $1;
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setKind(Node::KIND_VARIABLE);
         }
     |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
-            // $$ = new IdentifierNode(nameCounter.getNumberedName("variableName"), 4, $1, $2, $3, $4);
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
                 error_illegalArraySize($3);
             }else{
                 $$ = $1;
                 auto arraySizes = $$->getArraySizes();
                 int newSize = dynamic_cast<IntNode*>($3)->value;
-                //sscanf($3->getTokenValue().c_str(),"%d",&newSize);
                 arraySizes.push_back(newSize);
                 $$->setArraySizes(arraySizes);
                 auto a = $$->getArraySizes();
-                //assert(a!=NULL);
-//                std::cout<<"array: ";std::cout<<a.size()<<std::endl;
+
             }
         }
     |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
@@ -553,11 +546,6 @@ jumpStatement :
     |   BREAK ';' { /* 循环控制 */
             $$ = new BreakStatementNode();
         }
-    /*
-    |   GOTO IDENTIFIER ';' { // 太复杂了，不实现 
-            $$ = new Node(nameCounter.getNumberedName("jumpStatement"), 3, $1, $2, $3);
-        }
-    */
     ; 
 
 
@@ -597,12 +585,6 @@ assignmentExpression :
             }else{
                 std::cout<<"Some thing wrong at line "<<csLineCnt<<std::endl;
             }
-            /* if(!(checkKind($1, Node::KIND_VARIABLE)) || $1->isArray()){
-                if (!(checkKind($1, Node::KIND_VARIABLE))) {
-                    printf("hhhhh");
-                }
-                error_expressionTypeError($1,$2,$3);
-            } */
             if(!typeMatch($1, $3)){
                 error_typeMismatch($1);
             }
@@ -685,7 +667,6 @@ logicalOrExpression :
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -703,7 +684,6 @@ logicalAndExpression :
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -721,7 +701,6 @@ bitwiseOrExpression :
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -757,7 +736,6 @@ bitwiseAndExpression :
     |   bitwiseAndExpression '&' equalityComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
             if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
@@ -778,9 +756,8 @@ equalityComparisonExpression :
 
             $$->setType(Node::TYPE_INT);
             $$->setKind(Node::KIND_CONSTANT);
-            /*if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
-                error_expressionTypeError($1,$2,$3);
-            }*/
+
+
             if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
                 error_expressionTypeError($1,$2,$3);
             }
@@ -1035,38 +1012,6 @@ postfixUnaryExpression :
                 indexList.push_back(dynamic_cast<ExpressionNode*>($3));
                 $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(dynamic_cast<ArrayIndexNode*>($1)->mArrayName), indexList);
             }
-            /*
-            $$ = new BinaryOperatorNode({"[]"}, 2, $1, $3);
-            $$->copyFromChild();
-            if(!$1->isArray()){
-                error_notArray($1);
-            }else {
-                if(!checkType($3, Node::TYPE_INT)){
-                    error_expressionTypeError($3,$$);
-                }
-                /* 减少一个维度 *//*
-                auto arraySizes = $$->getArraySizes();
-                arraySizes.erase(arraySizes.begin(),arraySizes.begin()+1);
-                $$->setArraySizes(arraySizes);
-                Node *p = $$;
-                std::vector<ExpressionNode*> indexList;
-                int dontDead = 0;
-                while(dynamic_cast<IdentifierNode*>(p)==NULL){
-                    dontDead++;
-                    indexList.push_back(dynamic_cast<ExpressionNode*>(p->getChildrenById(1)));
-                    p = p->getChildrenById(0);
-                    if(dontDead>=100){
-                        throw("dead loop");
-                    }
-                }
-                for(int i=0;i<indexList.size()/2;i++){
-                    auto t = indexList[i];
-                    indexList[i] = indexList[indexList.size()-i-1];
-                    indexList[indexList.size()-i-1] = t;
-                }
-                std::cout<<"ChangedIntoArray\n";
-                $$ = new ArrayIndexNode({"[]"}, dynamic_cast<ExpressionNode*>(p), indexList);
-            }*/
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             $$ = new FunctionCallNode({"()"}, 2, $1, $3);
@@ -1074,42 +1019,10 @@ postfixUnaryExpression :
             for(auto i : *$3){
                 dynamic_cast<FunctionCallNode *>($$)->addArgument(i);
             }
-            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
-                error_expressionTypeError($1,$2);
-            }else{
-                std::vector<Node::Type> argList;
-                std::vector<std::string> argListStructName;
-                for(int i=0; i<$3->getChildrenNumber(); i++){
-                    auto child = $3->getChildrenById(i);
-                    if(child->isTerminal() && child->getTokenValue().compare(",")==0)continue;
-                    argList.push_back(child->getType());
-                    if(child->getType()==Node::TYPE_STRUCT){
-                        argListStructName.push_back(child->getStructTypeName());
-                    }else{
-                        argListStructName.push_back({""});
-                    }
-                    (dynamic_cast<FunctionCallNode *>($$))->addArgument(child);
-                }
-                if(argList.size()!=$1->getArgList().size()){
-                    //std::cout<<"~";
-                    error_argumentNumberNotMatch($1,argList.size());
-                }else{
-                    if(!typeMatch(argList,$1,argListStructName)){
-                        error_argumentTypeNotMatch(argList,$1,argListStructName);
-                    }
-                }
-            }*/
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
             $$ = new FunctionCallNode({"()"}, 1, $1);
             $$->copyFromChild();
-            /*if(!(checkKind($1, Node::KIND_FUNCTION))){
-                error_expressionTypeError($1,$$);
-            }else {
-                if($1->getArgList().size()!=0){
-                    error_argumentNumberNotMatch($1,0);
-                }
-            }*/
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
@@ -1132,14 +1045,11 @@ postfixUnaryExpression :
 
 paramList :
         assignmentExpression {
-            // $$ = new Node(nameCounter.getNumberedName("paramList"), 1, $1);
             $$ = new std::vector<ExpressionNode*>();
             $$->push_back(dynamic_cast<ExpressionNode*>($1));
         }
     |   paramList ',' assignmentExpression {/* 这里面不能填 expression，因为 expression 也是用逗号隔开的一串表达式 */
             $$ = $1;
-            //$$->addChild($2);
-            //$$->addChild($3);
             $$->push_back(dynamic_cast<ExpressionNode*>($3));
         }
     ;
@@ -1327,14 +1237,5 @@ Node *makeParseTree(){
     }
     return treeRoot;
 }
-/*
-int main(){
-    yyparse();
-    if(!noError){
-        std::cout<<"The compiling cannot continue due to errors above.";
-        return 0;
-    }
-    std::cout<<"Parse complete, no error was found.\n";
-    //treeRoot->printTree();
-}
-*/
+
+

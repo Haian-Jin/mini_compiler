@@ -2,22 +2,24 @@ int a[1000];
 
 
 int qsort(int st, int arrN){
-    if(arrN<=1) return 0;
+    if(arrN <= 1) return 0;
     int pivot;
     pivot = a[st];
-    int i; i = 0;
-    int j; j = arrN-1;
+    int i; 
+    i = 0;
+    int j; 
+    j = arrN-1;
     int t;
-    while(i<j){
+    while(i < j){
         t = a[st+j];
-        while(i<j && t>pivot){
+        while(i < j && t > pivot){
             j = j - 1;
         }
         t = a[st+i];
         a[st+i] = a[st+j];
         a[st+j] = t;
         t = a[st+i];
-        while(i<j && t<=pivot){
+        while(i < j && t <= pivot){
             i = i + 1;
         }
         t = a[st+i];

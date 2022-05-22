@@ -15,3 +15,4 @@ test.exe
 .gitignore
 .clang-format
 build/*
+*.html
