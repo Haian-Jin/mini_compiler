@@ -1,43 +1,42 @@
 int a[100][100];
 int b[100][100];
 int c[100][100];
+
 int main() {
 
-    int an;
-    int am;
-    int bn;
-    int bm;
-    int cn;
-    int cm;
+    int an, am;
+    int bn, bm;
+    int cn, cm;
     int t;
-    //cin>>an;cin>>am;
-    an = 25;
-    am = 25;
-    int i;
-    i = 0;
-    int j;
-    j = 0;
+
+    int i, j;
     int x;
     int y;
 
+    scanf("%d %d", an, am);
+    i = 0;
+    j = 0;
     while (i < an) {
         j = 0;
         while (j < am) {
-            a[i][j] = j;
+            scanf("%d", a[i][j]);
             j = j + 1;
         }
         i = i + 1;
     }
 
-    //cin>>bn;cin>>bm;
-    bn = 25;
-    bm = 25;
+    scanf("%d %d", bn, bm);
+    if (am != bn) {
+        printf("Incompatible Dimensions\n");
+        return 0;
+    }
+
     i = 0;
     j = 0;
     while (i < bn) {
         j = 0;
         while (j < bm) {
-            b[i][j] = i;
+            scanf("%d", b[i][j]);
             j = j + 1;
         }
         i = i + 1;
@@ -65,7 +64,7 @@ int main() {
     while (i < cn) {
         j = 0;
         while (j < cm) {
-            printf("%d ", c[i][j]);
+            printf("%10d", c[i][j]);
             j = j + 1;
         }
         printf("\n");
