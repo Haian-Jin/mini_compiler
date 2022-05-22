@@ -1,54 +1,52 @@
-int a[1000];
+int a[10001];
 
-
-int qsort(int st, int arrN){
-    if(arrN <= 1) return 0;
-    int pivot;
-    pivot = a[st];
-    int i; 
-    i = 0;
-    int j; 
-    j = arrN-1;
-    int t;
-    while(i < j){
-        t = a[st+j];
-        while(i < j && t > pivot){
-            j = j - 1;
-        }
-        t = a[st+i];
-        a[st+i] = a[st+j];
-        a[st+j] = t;
-        t = a[st+i];
-        while(i < j && t <= pivot){
-            i = i + 1;
-        }
-        t = a[st+i];
-        a[st+i] = a[st+j];
-        a[st+j] = t;
+int QuickSort(int left, int right) {
+	if(left >= right) {
+        return 0;
     }
-    qsort(st, i);
-    qsort(st+i+1, arrN-i-1);
+    
+	int i, j, temp, standard;
+	i = left; j = right;
+	standard = i;
+	while(i != j){
+		while((a[j] >= a[standard]) && (j > i))
+		j = j -1;
+		while((a[i] <= a[standard]) && (i < j))
+		i = i + 1;
+		if(i != j){
+			temp = a[j];
+			a[j] = a[i];
+			a[i] = temp;
+		}
+	} 
+	if(i == j){
+		    temp = a[standard];
+			a[standard] = a[j] ;
+			a[j] = temp;
+	}
+	QuickSort(left, i-1);
+	QuickSort(i+1, right);
     return 0;
-}
+} 
+
 
 int main(){
-    // // cin>>arrN;
     int n;
-    n = 20;
+    scanf("%d", n);
     int i;
-    i = 1;
-    while(i<=n){
-        // cin>>a[i];
-        a[n-i] = i;
-        i = i + 1;
-    }
-    qsort(0,n);
     i = 0;
-    while(i<n){
-        // cout<<a[i];
-        printf("%d ", a[i]);
+    while(i < n) {
+        scanf("%d", a[i]);
         i = i + 1;
     }
+
+    QuickSort(0, n-1);
+    i = 0;
+    while(i < n){
+        printf("%d\n", a[i]);
+        i = i + 1;
+    }
+
     return 0;
-    // cout<<'\arrN';
+
 }
