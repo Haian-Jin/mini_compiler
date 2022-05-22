@@ -17,19 +17,22 @@
 			"children" : 
 			[
 				{
-					"name" : "TypeNode: double"
+					"children" : 
+					[
+						{
+							"name" : "TypeNode: int"
+						}
+					],
+					"name" : "ReturnType"
 				},
 				{
-					"name" : "IdentifierNode: b"
-				}
-			],
-			"name" : "VariableDeclarationNode"
-		},
-		{
-			"children" : 
-			[
-				{
-					"name" : "TypeNode: NODE"
+					"children" : 
+					[
+						{
+							"name" : "IdentifierNode: qsort"
+						}
+					],
+					"name" : "FuncName"
 				},
 				{
 					"children" : 
@@ -41,7 +44,7 @@
 									"name" : "TypeNode: int"
 								},
 								{
-									"name" : "IdentifierNode: ma"
+									"name" : "IdentifierNode: st"
 								}
 							],
 							"name" : "VariableDeclarationNode"
@@ -50,31 +53,775 @@
 							"children" : 
 							[
 								{
-									"name" : "TypeNode: double"
+									"name" : "TypeNode: int"
 								},
 								{
-									"name" : "IdentifierNode: mb"
+									"name" : "IdentifierNode: arrN"
 								}
 							],
 							"name" : "VariableDeclarationNode"
 						}
 					],
-					"name" : "StatementsBlock"
-				}
-			],
-			"name" : "StructDeclarationBlockNODE"
-		},
-		{
-			"children" : 
-			[
-				{
-					"name" : "TypeNode: NODE"
+					"name" : "Paras"
 				},
 				{
-					"name" : "IdentifierNode: c"
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: arrN"
+														},
+														{
+															"name" : "IntNode:1"
+														}
+													],
+													"name" : "<="
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IntNode:0"
+														}
+													],
+													"name" : "ReturnStatement"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "NIfStatement"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: pivot"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: pivot"
+												},
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: a"
+														},
+														{
+															"name" : "IdentifierNode: st"
+														}
+													],
+													"name" : "[]"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: i"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: i"
+												},
+												{
+													"name" : "IntNode:0"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: j"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: j"
+												},
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: arrN"
+														},
+														{
+															"name" : "IntNode:1"
+														}
+													],
+													"name" : "-"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: t"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: i"
+														},
+														{
+															"name" : "IdentifierNode: j"
+														}
+													],
+													"name" : "<"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: t"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: i"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "<"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: t"
+																				},
+																				{
+																					"name" : "IdentifierNode: pivot"
+																				}
+																			],
+																			"name" : ">"
+																		}
+																	],
+																	"name" : "&&"
+																}
+															],
+															"name" : "ExpressionStatementNode"
+														},
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: j"
+																				},
+																				{
+																					"children" : 
+																					[
+																						{
+																							"name" : "IdentifierNode: j"
+																						},
+																						{
+																							"name" : "IntNode:1"
+																						}
+																					],
+																					"name" : "-"
+																				}
+																			],
+																			"name" : "AssignmentNode ="
+																		}
+																	],
+																	"name" : "ExpressionStatementNode"
+																}
+															],
+															"name" : "StatementsBlock"
+														}
+													],
+													"name" : "WhileStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: t"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "ArrayAssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																},
+																{
+																	"name" : "IdentifierNode: t"
+																}
+															],
+															"name" : "ArrayAssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: t"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: i"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "<"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: t"
+																				},
+																				{
+																					"name" : "IdentifierNode: pivot"
+																				}
+																			],
+																			"name" : "<="
+																		}
+																	],
+																	"name" : "&&"
+																}
+															],
+															"name" : "ExpressionStatementNode"
+														},
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: i"
+																				},
+																				{
+																					"children" : 
+																					[
+																						{
+																							"name" : "IdentifierNode: i"
+																						},
+																						{
+																							"name" : "IntNode:1"
+																						}
+																					],
+																					"name" : "+"
+																				}
+																			],
+																			"name" : "AssignmentNode ="
+																		}
+																	],
+																	"name" : "ExpressionStatementNode"
+																}
+															],
+															"name" : "StatementsBlock"
+														}
+													],
+													"name" : "WhileStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: t"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "ArrayAssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: st"
+																				},
+																				{
+																					"name" : "IdentifierNode: j"
+																				}
+																			],
+																			"name" : "+"
+																		}
+																	],
+																	"name" : "[]"
+																},
+																{
+																	"name" : "IdentifierNode: t"
+																}
+															],
+															"name" : "ArrayAssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "WhileStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: st"
+												},
+												{
+													"name" : "IdentifierNode: i"
+												}
+											],
+											"name" : "FunctionNode: qsort"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: st"
+																},
+																{
+																	"name" : "IdentifierNode: i"
+																}
+															],
+															"name" : "+"
+														},
+														{
+															"name" : "IntNode:1"
+														}
+													],
+													"name" : "+"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: arrN"
+																},
+																{
+																	"name" : "IdentifierNode: i"
+																}
+															],
+															"name" : "-"
+														},
+														{
+															"name" : "IntNode:1"
+														}
+													],
+													"name" : "-"
+												}
+											],
+											"name" : "FunctionNode: qsort"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "IntNode:0"
+										}
+									],
+									"name" : "ReturnStatement"
+								}
+							],
+							"name" : "StatementsBlock"
+						}
+					],
+					"name" : "Body"
 				}
 			],
-			"name" : "VariableDeclarationNode"
+			"name" : "FunctionDeclarationNode"
 		},
 		{
 			"children" : 
@@ -113,7 +860,7 @@
 											"name" : "TypeNode: int"
 										},
 										{
-											"name" : "IdentifierNode: t"
+											"name" : "IdentifierNode: n"
 										}
 									],
 									"name" : "VariableDeclarationNode"
@@ -125,7 +872,37 @@
 											"children" : 
 											[
 												{
-													"name" : "IdentifierNode: t"
+													"name" : "IdentifierNode: n"
+												},
+												{
+													"name" : "IntNode:20"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: i"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: i"
 												},
 												{
 													"name" : "IntNode:1"
@@ -146,22 +923,208 @@
 													"children" : 
 													[
 														{
-															"name" : "IdentifierNode: c"
+															"name" : "IdentifierNode: i"
 														},
 														{
-															"name" : "IdentifierNode: ma"
+															"name" : "IdentifierNode: n"
 														}
 													],
-													"name" : "."
-												},
-												{
-													"name" : "IntNode:1"
+													"name" : "<="
 												}
 											],
-											"name" : "StructMemberAssignmentNode ="
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"children" : 
+																			[
+																				{
+																					"name" : "IdentifierNode: n"
+																				},
+																				{
+																					"name" : "IdentifierNode: i"
+																				}
+																			],
+																			"name" : "-"
+																		}
+																	],
+																	"name" : "[]"
+																},
+																{
+																	"name" : "IdentifierNode: i"
+																}
+															],
+															"name" : "ArrayAssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: i"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: i"
+																		},
+																		{
+																			"name" : "IntNode:1"
+																		}
+																	],
+																	"name" : "+"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "WhileStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IntNode:0"
+												},
+												{
+													"name" : "IdentifierNode: n"
+												}
+											],
+											"name" : "FunctionNode: qsort"
 										}
 									],
 									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: i"
+												},
+												{
+													"name" : "IntNode:0"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"name" : "IdentifierNode: i"
+														},
+														{
+															"name" : "IdentifierNode: n"
+														}
+													],
+													"name" : "<"
+												}
+											],
+											"name" : "ExpressionStatementNode"
+										},
+										{
+											"children" : 
+											[
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: \"%d \""
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: a"
+																		},
+																		{
+																			"name" : "IdentifierNode: i"
+																		}
+																	],
+																	"name" : "[]"
+																}
+															],
+															"name" : "FunctionNode: printf"
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												},
+												{
+													"children" : 
+													[
+														{
+															"children" : 
+															[
+																{
+																	"name" : "IdentifierNode: i"
+																},
+																{
+																	"children" : 
+																	[
+																		{
+																			"name" : "IdentifierNode: i"
+																		},
+																		{
+																			"name" : "IntNode:1"
+																		}
+																	],
+																	"name" : "+"
+																}
+															],
+															"name" : "AssignmentNode ="
+														}
+													],
+													"name" : "ExpressionStatementNode"
+												}
+											],
+											"name" : "StatementsBlock"
+										}
+									],
+									"name" : "WhileStatementNode"
 								},
 								{
 									"children" : 
