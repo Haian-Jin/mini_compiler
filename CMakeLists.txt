@@ -3,7 +3,7 @@ project(zjucmm)
 
 find_package( LLVM REQUIRED CONFIG)
 
-find_package(jsoncpp REQUIRED)
+#find_package(jsoncpp REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)

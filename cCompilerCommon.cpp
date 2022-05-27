@@ -430,23 +430,34 @@ std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 
 
 llvm::Value* calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs){
-    ExpressionNode* expression = *(mArrayIndexs.rbegin());
-    int postMul = arraySizes[arraySizes.size()-1];
+     ExpressionNode* expression = *(mArrayIndexs.begin());
+    int postMul = 1;
 //    for(int i=mArrayIndexs.size()-1; i>=1; i--){
 //        BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i-1]);
 //        postMul *= arraySizes[i-1];
 //        BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
 //        expression = te;
 //    }
-    for (int i = arraySizes.size()-2;i>=0;i--) {
-        if (i>mArrayIndexs.size()-2) {
-            postMul *= arraySizes[i];
-        } else {
-            BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i]);
-            postMul *= arraySizes[i];
-            BinaryOperatorNode* te = new BinaryOperatorNode("+", temp, expression);
-            expression = te;
+    for (int i = 1;i<arraySizes.size();i++) {
+        BinaryOperatorNode* te = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), expression);
+        expression = te;
+        if(i<mArrayIndexs.size()) {
+            BinaryOperatorNode *temp = new BinaryOperatorNode("+", mArrayIndexs[i], expression);
+            expression = temp;
         }
+//        if (i>mArrayIndexs.size()-1) {
+//            postMul *= arraySizes[i];
+//            expression = nullptr;
+//        } else {
+//            BinaryOperatorNode* temp = new BinaryOperatorNode("*", new IntNode(postMul), mArrayIndexs[i]);
+//            postMul *= arraySizes[i];
+//            if(!expression)
+//                expression = temp;
+//            else {
+//                BinaryOperatorNode *te = new BinaryOperatorNode("+", temp, expression);
+//                expression = te;
+//            }
+//        }
     }
     if(arraySizes.size()==1){
         return (expression)->codeGen();
