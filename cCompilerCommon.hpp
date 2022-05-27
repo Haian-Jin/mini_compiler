@@ -327,7 +327,11 @@ public:
 
     virtual std::string getNodeTypeName() const { return "ExpressionNode"; }
 
-    virtual llvm::Value *addrGen() {
+    virtual Type_and_Address getTypeAddress() {
+        return {llvm::Type::TypeID::VoidTyID, nullptr};
+    }
+
+    virtual llvm::Value *addrGen(int ind = 0) {
         return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                           std::to_string(this->getColumnNumber()) + " " + "This should not be Gen");
     }
@@ -405,7 +409,41 @@ public:
         root["name"] = getNodeTypeName();
         return root;
     }
-    virtual llvm::Value *addrGen() {
+
+    Type_and_Address getTypeAddress() {
+        llvm::Value *value = nullptr;
+        llvm::Type::TypeID type;
+        bool isArray = false;
+        std::string name = this->getSymbolName();
+        std::vector<int> arraySizes;
+        if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
+            if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+                type = variableTable[name].type;
+                isArray = variableTable[name].isPtr;
+                arraySizes = variableTable[name].arraySizes;
+            } else {
+                value = nullptr;
+            }
+        } else { /* otherwise, find it on both stack top and the global table */
+            if (tableStack.top()->find(name) != tableStack.top()->end()) {
+                value = (*tableStack.top())[name].address;
+                type = (*tableStack.top())[name].type;
+                isArray = (*tableStack.top())[name].isPtr;
+                arraySizes = (*tableStack.top())[name].arraySizes;
+            } else if (variableTable.find(name) != (variableTable.end())) {
+                value = variableTable[name].address;
+                type = variableTable[name].type;
+                isArray = variableTable[name].isPtr;
+                arraySizes = variableTable[name].arraySizes;
+            } else {
+                value = nullptr;
+            }
+        }
+        return {type, value, isArray, arraySizes};
+    }
+
+    virtual llvm::Value *addrGen(int ind = 0) {
         std::string name = this->getSymbolName();
         llvm::Value* value = nullptr;
         if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
@@ -433,6 +471,10 @@ public:
     }
     virtual llvm::Value *codeGen() {
         if (!isType()) {
+            auto t = getTypeAddress();
+            if (t.type == llvm::Type::LabelTyID) {
+                return addrGen();
+            }
             return Builder.CreateLoad(addrGen(), false, "");
         } else {
             return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -585,15 +627,15 @@ public:
             if (tableStack.empty()) {
                 if (ty == "int" || ty == "short") {
                     res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt32Ty(TheContext), false,
-                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                                                   llvm::GlobalValue::PrivateLinkage, con_0(), id->getSymbolName());
                     tor = llvm::Type::IntegerTyID;
                 } else if (ty == "float" || ty == "double") {
                     res = new llvm::GlobalVariable(*TheModule, llvm::Type::getDoubleTy(TheContext), false,
-                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                                                   llvm::GlobalValue::PrivateLinkage, con_0(), id->getSymbolName());
                     tor = llvm::Type::DoubleTyID;
                 } else if (ty == "char") {
                     res = new llvm::GlobalVariable(*TheModule, llvm::Type::getInt8Ty(TheContext), false,
-                                                   llvm::GlobalValue::ExternalLinkage, 0, id->getSymbolName());
+                                                   llvm::GlobalValue::PrivateLinkage, con_0(), id->getSymbolName());
                     tor = llvm::Type::IntegerTyID;
                 } else {
                     return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
@@ -603,12 +645,15 @@ public:
                 Type_and_Address ret = {tor, res};
                 variableTable[this->id->getSymbolName()] = ret;
             } else {
-                if (ty == "int" || ty == "char") {
+                if (ty == "int") {
                     res = Builder.CreateAlloca(llvm::Type::getInt32Ty(TheContext));
                     tor = llvm::Type::IntegerTyID;
                 } else if (ty == "float" || ty == "double") {
                     res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
                     tor = llvm::Type::DoubleTyID;
+                } else if (ty=="char") {
+                    res = Builder.CreateAlloca(llvm::Type::getInt8Ty(TheContext));
+                    tor = llvm::Type::IntegerTyID;
                 } else {
                     return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                       std::to_string(this->getColumnNumber()) + " " +
@@ -670,9 +715,20 @@ public:
                     tor = llvm::Type::DoubleTyID;
                 } else if (ty == "char") {
                     auto arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(TheContext), array_size);
+//                    std::vector<llvm::Constant*> const_array_elems;
+//                    for (int i = 0; i < array_size; ++i) {
+//                        const_array_elems.push_back(con_0());
+//                    }
+//                    llvm::Constant* const_array = llvm::ConstantArray::get(array_type, const_array_elems);
                     res = Builder.CreateAlloca(arrayType,
                                                ArraySize, id->getSymbolName());
                     tor = llvm::Type::LabelTyID; //for char
+                    for (int i = 0; i < array_size; ++i) {
+                        llvm::ArrayRef<llvm::Value *> ga{llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
+                                                         ConstantInt::get(llvm::Type::getInt32Ty(TheContext), i, false)};
+                        Builder.CreateAlignedStore(ConstantInt::get(llvm::Type::getInt8Ty(TheContext), 0, true),
+                                                   Builder.CreateInBoundsGEP(res, ga, "elementPointer"), 1);
+                    }
                 } else {
                     res = LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                      std::to_string(this->getColumnNumber()) + " " +
@@ -1125,6 +1181,7 @@ public:
 
     llvm::Value *codeGen() override {
         if (mFunctionName->getSymbolName() == "printf") {
+            Value * res = nullptr;
             if (mArguments) {
 
 
@@ -1154,10 +1211,11 @@ public:
                     int32_call_params.push_back((*mArguments)[i]->codeGen());
                 }
 
-                Builder.CreateCall(func_printf, int32_call_params, "call_printf");
+                res = Builder.CreateCall(func_printf, int32_call_params, "call_printf");
             }
-            return nullptr;
+            return res;
         } else if(mFunctionName->getSymbolName() == "scanf") {
+            Value* res = nullptr;
             if (mArguments) {
                 Function *func_scanf = TheModule->getFunction("scanf");
                 if (!func_scanf) {
@@ -1182,36 +1240,13 @@ public:
                 std::vector<Value *> int32_call_params;
                 int32_call_params.push_back(str);
                 for (int i = 1; i < (*mArguments).size(); i++) {
-//                    std::string name = (*mArguments)[i]->getSymbolName();
-//                    llvm::Value* value = nullptr;
-//                    if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
-//                        if (variableTable.find(name) != (variableTable.end())) {
-//                            value = variableTable[name].address;
-//                        } else {
-//                            value = nullptr;
-//                            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-//                                              std::to_string(this->getColumnNumber()) + " " + name +
-//                                              "not declared");
-//                        }
-//                    } else { /* otherwise, find it on both stack top and the global table */
-//                        if (tableStack.top()->find(name) != tableStack.top()->end()) {
-//                            value = (*tableStack.top())[name].address;
-//                        } else if (variableTable.find(name) != (variableTable.end())) {
-//                            value = variableTable[name].address;
-//                        } else {
-//                            value = nullptr;
-//                            return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
-//                                              std::to_string(this->getColumnNumber()) + " " + name +
-//                                              "not declared");
-//                        }
-//                    }
                     llvm::Value* value = (*mArguments)[i]->addrGen();
                     int32_call_params.push_back(value);
                 }
 
-                Builder.CreateCall(func_scanf, int32_call_params, "call_scanf");
+                res = Builder.CreateCall(func_scanf, int32_call_params, "call_scanf");
             }
-            return nullptr;
+            return res;
         } else {
             Function *CalleeF =
                     TheModule->getFunction(mFunctionName->getSymbolName());
@@ -1389,7 +1424,7 @@ public:
         return {type, value, isArray, arraySizes};
     }
 
-    llvm::Value *addrGen() override {
+    llvm::Value *addrGen(int ind = 0) override {
         llvm::Value *value = nullptr;
         llvm::Type::TypeID type;
         bool isArray = false;
@@ -1425,8 +1460,10 @@ public:
         }
         if (isArray) { /* this is an array, normally codegen */
             llvm::ArrayRef<Value *> indexs;
+            std::vector<ExpressionNode *> Ind = std::vector<ExpressionNode *>(mArrayIndexs);
+            Ind.push_back(new IntNode(ind));
             indexs = {llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
-                      calcArrayIndex(arraySizes, mArrayIndexs)};
+                      calcArrayIndex(arraySizes, Ind)};
             auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
             return ptr;
         } else {
@@ -1677,9 +1714,31 @@ public:
             if(Left->getType()->getTypeID()!=Right->getType()->getTypeID() || op!= "==") {
                 return LogErrorVV(std::to_string(this->getLineNumber()) + ":" +
                                   std::to_string(this->getColumnNumber()) + " " +
-                                  "invalid boolean operation");
+                                  "invalid operation");
             } else {
-                /* TODO: Override the "==" to implement string's comparison */
+                Type_and_Address l = mLeftHandSide->getTypeAddress();
+                Type_and_Address r = mRightHandSide->getTypeAddress();
+                int e = std::min(*l.arraySizes.rbegin(), *r.arraySizes.rbegin());
+                llvm::ArrayRef<llvm::Value *> ga{llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
+                                                 ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, false)};
+//                if(((ArrayIndexNode*)Left)->mArrayIndexs.size() != l.arraySizes.size()) {
+//                    Left = mLeftHandSide->addrGen();
+//                    Right = mRightHandSide->addrGen();
+//                }
+//                auto ptr_l = Builder.CreateInBoundsGEP(Left, ga, "elementPtr");
+//                auto ptr_r = Builder.CreateInBoundsGEP(Right, ga, "elementPtr");
+                auto ret = Builder.CreateICmpEQ(Builder.CreateLoad(Left, false, ""), Builder.CreateLoad(Right, false, ""));
+                for (int i = 1; i < e; ++i) {
+//                    llvm::ArrayRef<llvm::Value *> ga{llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0),
+//                                                     ConstantInt::get(llvm::Type::getInt32Ty(TheContext), i, false)};
+//                    auto ptr_l = Builder.CreateInBoundsGEP(Left, ga, "elementPtr");
+//                    auto ptr_r = Builder.CreateInBoundsGEP(Right, ga, "elementPtr");
+                    auto ptr_l = mLeftHandSide->addrGen(i);
+                    auto ptr_r = mRightHandSide->addrGen(i);
+                    auto temp = Builder.CreateICmpEQ(Builder.CreateLoad(ptr_l, false, ""), Builder.CreateLoad(ptr_r, false, ""));
+                    ret = Builder.CreateAnd(temp, ret);
+                }
+                return ret;
             }
         }
 
@@ -1698,6 +1757,9 @@ public:
                 Right = Builder.CreateSIToFP(
                         Right, llvm::Type::getDoubleTy(TheContext), "ftmp");
             }
+        } else if (Left->getType()->getIntegerBitWidth()==8 || Right->getType()->getIntegerBitWidth()==8) {
+            Left = Builder.CreateIntCast(Left, llvm::Type::getInt32Ty(TheContext), false, "8castl");
+            Right = Builder.CreateIntCast(Right, llvm::Type::getInt32Ty(TheContext), false, "8castr");
         }
 
         if (op == "&&") { // and operation
@@ -1941,12 +2003,12 @@ public:
 
         Builder.SetInsertPoint(loopBody);
 
-        auto tempTable = inheritTable();
-        tableStack.push(tempTable);
+//        auto tempTable = inheritTable();
+//        tableStack.push(tempTable);
 
         this->forBody->codeGen();
 
-        tableStack.pop();
+//        tableStack.pop();
 
         if (this->progressStatement) {
             this->progressStatement->codeGen();
@@ -2008,12 +2070,12 @@ public:
 
         Builder.SetInsertPoint(loopBody);
 
-        auto tempTable = inheritTable();
-        tableStack.push(tempTable);
+//        auto tempTable = inheritTable();
+//        tableStack.push(tempTable);
 
         this->whileBody->codeGen();
 
-        tableStack.pop();
+//        tableStack.pop();
 
         cond = this->conditionStatement->codeGen();
         Builder.CreateCondBr(CastBool(cond), loopBody, after);
@@ -2062,7 +2124,7 @@ public:
         auto theFunction = Builder.GetInsertBlock()->getParent();
 
         auto trueBlock = llvm::BasicBlock::Create(
-                TheContext, "then", Builder.GetInsertBlock()->getParent());
+                TheContext, "then", theFunction);
         auto falseBlock = llvm::BasicBlock::Create(TheContext, "else");
         auto mergeBlock = llvm::BasicBlock::Create(TheContext, "ifcont");
         if (this->falseBody) {
@@ -2075,12 +2137,12 @@ public:
 
         Builder.SetInsertPoint(trueBlock);
 
-        auto tempTable = inheritTable();
-        tableStack.push(tempTable);
+//        auto tempTable = inheritTable();
+//        tableStack.push(tempTable);
 
         this->trueBody->codeGen();
 
-        tableStack.pop();
+//        tableStack.pop();
 
         trueBlock = Builder.GetInsertBlock();
         if (trueBlock->getTerminator() == nullptr) {
@@ -2091,12 +2153,12 @@ public:
             theFunction->getBasicBlockList().push_back(falseBlock);
             Builder.SetInsertPoint(falseBlock);
 
-            auto tempTable = inheritTable();
-            tableStack.push(tempTable);
+//            auto tempTable = inheritTable();
+//            tableStack.push(tempTable);
 
             this->falseBody->codeGen();
 
-            tableStack.pop();
+//            tableStack.pop();
 
             Builder.CreateBr(mergeBlock);
         }
