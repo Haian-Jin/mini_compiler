@@ -17,6 +17,12 @@
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/FileSystem.h>
 
+#include "arrayNode.hpp"
+#include "exprNode.hpp"
+#include "funcNode.hpp"
+#include "ctrlNode.hpp"
+#include "statNode.hpp"
+
 extern Node *makeParseTree();
 //extern Module* TheModule;
 using std::string;

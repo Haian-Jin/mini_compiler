@@ -31,6 +31,11 @@ static void error_functionReturnsArray();
 %}
 %code requires {
 #include"./cCompilerCommon.hpp"
+#include "arrayNode.hpp"
+#include "exprNode.hpp"
+#include "ctrlNode.hpp"
+#include "funcNode.hpp"
+#include "statNode.hpp"
 }
 
 %union{
