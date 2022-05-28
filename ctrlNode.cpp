@@ -9,23 +9,20 @@
 #include "ctrlNode.hpp"
 #include "statNode.hpp"
 
-llvm::Value *GlobalDeclaraionNode::codeGen() {
-    Value *ret = nullptr;
-    TheModule = new Module("test", TheContext);
-    for (auto &iter: mGlobalStatementList) {
-        ret = iter->codeGen();
-    }
-    return ret;
-}
+//--------------------------GlobalDeclarationNode--------------------------------
 
-GlobalDeclaraionNode::GlobalDeclaraionNode(StatementNodesBlock *toCopy) : StatementNode() {
+GlobalDeclarationNode::GlobalDeclarationNode() : StatementNode() {}
+
+GlobalDeclarationNode::GlobalDeclarationNode(StatementNodesBlock *toCopy) : StatementNode() {
     for (auto it = toCopy->mStatementList.begin();
          it != toCopy->mStatementList.end(); ++it) {
         mGlobalStatementList.push_back(*it);
     }
 }
 
-Json::Value GlobalDeclaraionNode::jsonGen() const  {
+std::string GlobalDeclarationNode::getNodeTypeName() const { return "CentralBlock"; }
+
+Json::Value GlobalDeclarationNode::jsonGen() const {
     Json::Value root;
     root["name"] = getNodeTypeName();
     for (auto it = mGlobalStatementList.begin();
@@ -35,9 +32,34 @@ Json::Value GlobalDeclaraionNode::jsonGen() const  {
     return root;
 }
 
-void GlobalDeclaraionNode::mergeGlobalStatements(StatementNodesBlock *to_merge) {
+llvm::Value *GlobalDeclarationNode::codeGen() {
+    Value *ret = nullptr;
+    TheModule = new Module("test", TheContext);
+    for (auto &iter: mGlobalStatementList) {
+        ret = iter->codeGen();
+    }
+    return ret;
+}
+
+void GlobalDeclarationNode::mergeGlobalStatements(StatementNodesBlock *to_merge) {
     assert(to_merge != nullptr);
-    this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(), to_merge->mStatementList.end());
+    this->mGlobalStatementList.insert(mGlobalStatementList.end(), to_merge->mStatementList.begin(),
+                                      to_merge->mStatementList.end());
+}
+
+//---------------------------ReturnStatementNode----------------------------------
+
+ReturnStatementNode::ReturnStatementNode(ExpressionNode *returnV)
+        : StatementNode(), returnValue(returnV) {}
+
+std::string ReturnStatementNode::getTypeName() const { return "ReturnStatement"; }
+
+Json::Value ReturnStatementNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getTypeName();
+    if (returnValue != nullptr)
+        root["children"].append(returnValue->jsonGen());
+    return root;
 }
 
 llvm::Value *ReturnStatementNode::codeGen() {
@@ -46,16 +68,27 @@ llvm::Value *ReturnStatementNode::codeGen() {
     return nullptr;
 }
 
-ReturnStatementNode::ReturnStatementNode(ExpressionNode *returnV)
-        : StatementNode(), returnValue(returnV) {}
+//----------------------------IfStatementNode-------------------------------------------
 
-Json::Value ReturnStatementNode::jsonGen() const  {
+IfStatementNode::IfStatementNode(ExpressionStatementNode *condition, StatementNodesBlock *trueStatements,
+                                 StatementNodesBlock *falseStatements) : StatementNode(), conditionStatement(condition),
+                                                                         trueBody(trueStatements),
+                                                                         falseBody(falseStatements) {
+    assert(conditionStatement != nullptr);
+    assert(trueBody != nullptr);
+}
+
+Json::Value IfStatementNode::jsonGen() const {
     Json::Value root;
     root["name"] = getTypeName();
-    if (returnValue != nullptr)
-        root["children"].append(returnValue->jsonGen());
+    root["children"].append(conditionStatement->jsonGen());
+    root["children"].append(trueBody->jsonGen());
+    if (falseBody != nullptr)
+        root["children"].append(falseBody->jsonGen());
     return root;
 }
+
+std::string IfStatementNode::getTypeName() const { return "NIfStatement"; }
 
 llvm::Value *IfStatementNode::codeGen() {
     auto conditionExpressionValue = conditionStatement->codeGen();
@@ -112,6 +145,28 @@ llvm::Value *IfStatementNode::codeGen() {
     return nullptr;
 }
 
+//----------------------------WhileStatementNode----------------------------------------
+
+WhileStatementNode::WhileStatementNode(ExpressionStatementNode *condition, StatementNodesBlock *body)
+        : StatementNode(), conditionStatement(condition), whileBody(body) {
+    assert(conditionStatement != nullptr);
+    assert(whileBody != nullptr);
+}
+
+Json::Value WhileStatementNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getTypeName();
+
+    root["children"].append(conditionStatement->jsonGen());
+    root["children"].append(whileBody->jsonGen());
+
+    return root;
+}
+
+std::string WhileStatementNode::getTypeName() const {
+    return std::string("WhileStatementNode");
+}
+
 llvm::Value *WhileStatementNode::codeGen() {
     Function *theFunction = Builder.GetInsertBlock()->getParent();
 
@@ -145,20 +200,21 @@ llvm::Value *WhileStatementNode::codeGen() {
     return nullptr;
 }
 
-WhileStatementNode::WhileStatementNode(ExpressionStatementNode *condition, StatementNodesBlock *body)
-        : StatementNode(), conditionStatement(condition), whileBody(body) {
+//-------------------------------ForStatementNode--------------------------------------
+
+ForStatementNode::ForStatementNode(ExpressionStatementNode *initial, ExpressionStatementNode *condition,
+                                   ExpressionStatementNode *progress, StatementNodesBlock *body)
+        : StatementNode(), initialStatement(initial),
+          conditionStatement(condition), progressStatement(progress),
+          forBody(body) {
+    assert(initialStatement != nullptr);
     assert(conditionStatement != nullptr);
-    assert(whileBody != nullptr);
+    assert(progressStatement != nullptr);
+    assert(forBody != nullptr);
 }
 
-Json::Value WhileStatementNode::jsonGen() const {
-    Json::Value root;
-    root["name"] = getTypeName();
-
-    root["children"].append(conditionStatement->jsonGen());
-    root["children"].append(whileBody->jsonGen());
-
-    return root;
+std::string ForStatementNode::getTypeName() const {
+    return std::string("ForStatementNode");
 }
 
 llvm::Value *ForStatementNode::codeGen() {
@@ -182,12 +238,12 @@ llvm::Value *ForStatementNode::codeGen() {
 
     Builder.SetInsertPoint(loopBody);
 
-        auto tempTable = inheritTable();
-        tableStack.push(tempTable);
+    auto tempTable = inheritTable();
+    tableStack.push(tempTable);
 
     this->forBody->codeGen();
 
-        tableStack.pop();
+    tableStack.pop();
 
     if (this->progressStatement) {
         this->progressStatement->codeGen();
@@ -214,22 +270,7 @@ Json::Value ForStatementNode::jsonGen() const {
     return root;
 }
 
-IfStatementNode::IfStatementNode(ExpressionStatementNode *condition, StatementNodesBlock *trueStatements,
-                                 StatementNodesBlock *falseStatements) : StatementNode(), conditionStatement(condition),
-                                                                         trueBody(trueStatements), falseBody(falseStatements) {
-    assert(conditionStatement != nullptr);
-    assert(trueBody != nullptr);
-}
-
-Json::Value IfStatementNode::jsonGen() const {
-    Json::Value root;
-    root["name"] = getTypeName();
-    root["children"].append(conditionStatement->jsonGen());
-    root["children"].append(trueBody->jsonGen());
-    if (falseBody != nullptr)
-        root["children"].append(falseBody->jsonGen());
-    return root;
-}
+//-----------------------------------ContinueStatementNode---------------------
 
 Json::Value ContinueStatementNode::jsonGen() const {
     Json::Value root;
@@ -237,8 +278,18 @@ Json::Value ContinueStatementNode::jsonGen() const {
     return root;
 }
 
-Json::Value BreakStatementNode::jsonGen() const  {
+ContinueStatementNode::ContinueStatementNode() : StatementNode() {}
+
+std::string ContinueStatementNode::getTypeName() const { return "ContinueStatement"; }
+
+//-----------------------------------BreakStatementNode---------------------------
+
+Json::Value BreakStatementNode::jsonGen() const {
     Json::Value root;
     root["name"] = getTypeName();
     return root;
 }
+
+BreakStatementNode::BreakStatementNode() : StatementNode() {}
+
+std::string BreakStatementNode::getTypeName() const { return "BreakStatement"; }
