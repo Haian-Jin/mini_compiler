@@ -483,26 +483,6 @@ Value *LogErrorV(const char *Str) {
 }
 
 
-//std::map<std::string,symAttribute *> originalSymbolTable;
-
-
-llvm::Value *calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs) {
-    ExpressionNode *expression = *(mArrayIndexs.begin());
-    int postMul = 1;
-    for (int i = 1; i < arraySizes.size(); i++) {
-        BinaryOperatorNode *te = new BinaryOperatorNode("*", new IntNode(arraySizes[i]), expression);
-        expression = te;
-        if (i < mArrayIndexs.size()) {
-            BinaryOperatorNode *temp = new BinaryOperatorNode("+", mArrayIndexs[i], expression);
-            expression = temp;
-        }
-    }
-    if (arraySizes.size() == 1) {
-        return (expression)->codeGen();
-    } else
-        return dynamic_cast<BinaryOperatorNode *>(expression)->codeGen();
-}
-
 llvm::Constant *con_0() {
     return llvm::ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0);
 }
