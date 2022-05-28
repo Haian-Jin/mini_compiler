@@ -47,7 +47,7 @@ static void error_functionReturnsArray();
     IdentifierNode* identifierNodePtr;
     VarDeclarationList* varDeclarationListPtr;
     StatementNodesBlock* statementNodesBlockPtr;
-    GlobalDeclaraionNode * globalDeclaraionNodePtr;
+    GlobalDeclarationNode * globalDeclarationNodePtr;
     std::vector<VarDeclarationList*> * structMemberListPtr;
     std::vector<ExpressionNode*> * ExpressionNodeListPtr;
 }
@@ -63,7 +63,7 @@ static void error_functionReturnsArray();
 %type<varDeclarationListPtr> paramTypes 
 %type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement structMemberDeclarations structMemberDeclaration
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
-%type<globalDeclaraionNodePtr> cCode0 cCode 
+%type<globalDeclarationNodePtr> cCode0 cCode
 %type<nodePtr> structTypeName pointerSpecifier 
 %type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration localDeclarations 
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
@@ -90,7 +90,7 @@ cCode0 :
 
 cCode :
         globalDeclaration {
-            $$ = new GlobalDeclaraionNode(dynamic_cast<StatementNodesBlock*>($1));
+            $$ = new GlobalDeclarationNode(dynamic_cast<StatementNodesBlock*>($1));
         }
     |   cCode globalDeclaration {
             $$ = $1;
