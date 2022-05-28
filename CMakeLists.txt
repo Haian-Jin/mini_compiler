@@ -42,9 +42,9 @@ add_custom_command(
 add_executable(
     zjucmm
     main.cpp
-    cCompilerCommon.cpp cCompilerCommon.hpp
+        lib/ast_node.cpp include/ast_node.hpp
     cParser.cpp cParser.hpp cScanner.cpp
-        arrayNode.cpp arrayNode.hpp funcNode.cpp funcNode.hpp exprNode.cpp exprNode.hpp ctrlNode.cpp ctrlNode.hpp statNode.cpp statNode.hpp structNode.cpp structNode.hpp)
+        lib/array_node.cpp include/array_node.hpp lib/func_node.cpp include/func_node.hpp lib/expr_node.cpp include/expr_node.hpp lib/ctrl_node.cpp include/ctrl_node.hpp lib/stat_node.cpp include/stat_node.hpp lib/struct_node.cpp include/struct_node.hpp)
 
 set_target_properties(zjucmm PROPERTIES LINK_LIBRARIES "${LLVM_LINK_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${JSONCPP_LIBRARIES})

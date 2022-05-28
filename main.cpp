@@ -1,4 +1,4 @@
-#include "./cCompilerCommon.hpp"
+#include "include/ast_node.hpp"
 #include <iostream>
 #include <fstream>
 #include <llvm/IR/LegacyPassManager.h>
@@ -17,11 +17,11 @@
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/FileSystem.h>
 
-#include "arrayNode.hpp"
-#include "exprNode.hpp"
-#include "funcNode.hpp"
-#include "ctrlNode.hpp"
-#include "statNode.hpp"
+#include "include/array_node.hpp"
+#include "include/expr_node.hpp"
+#include "include/func_node.hpp"
+#include "include/ctrl_node.hpp"
+#include "include/stat_node.hpp"
 
 extern Node *makeParseTree();
 //extern Module* TheModule;
@@ -50,13 +50,6 @@ int main(){
     llvm::raw_ostream &e=errs();
     TheModule->print(outs(), aaw);
     e.flush();
-
-    //aaw->printInfoComment()
-    //errs()<<"foo\n";
-    //TheModule->dump();=-
-//    printf("print finished\n");
-//    if(treeRoot->semanticCheck());
-
 
 
     InitializeAllTargetInfos();

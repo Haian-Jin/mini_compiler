@@ -1,10 +1,10 @@
-#include "./cCompilerCommon.hpp"
-#include "arrayNode.hpp"
-#include "exprNode.hpp"
-#include "ctrlNode.hpp"
-#include "funcNode.hpp"
-#include "statNode.hpp"
-#include "structNode.hpp"
+#include "include/ast_node.hpp"
+#include "include/array_node.hpp"
+#include "include/expr_node.hpp"
+#include "include/ctrl_node.hpp"
+#include "include/func_node.hpp"
+#include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 // 用于记录行数和列数 
 int csLineCnt = 0;

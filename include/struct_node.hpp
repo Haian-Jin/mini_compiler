@@ -1,7 +1,11 @@
 #pragma once
-#include "exprNode.hpp"
-#include "cCompilerCommon.hpp"
-#include "statNode.hpp"
+#include "expr_node.hpp"
+#include "ast_node.hpp"
+#include "stat_node.hpp"
+
+/*
+ * Not implemented yet
+ */
 
 class StructDeclarationNode : public StatementNode {
 protected:
@@ -37,9 +41,9 @@ public:
 
     llvm::Value *codeGen() override;
 
-    ExpressionNode *getL() { return mVariableName; }
+    ExpressionNode *getL();
 
-    ExpressionNode *getR() { return mMemberName; }
+    ExpressionNode *getR();
 
 private:
     std::string op;

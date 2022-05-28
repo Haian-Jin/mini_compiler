@@ -1,5 +1,5 @@
 %{
-#include"./cCompilerCommon.hpp"
+#include"./include/ast_node.hpp"
 extern int yylex();
 extern char *yytext;
 static bool noError = true;
@@ -30,13 +30,13 @@ static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
 static void error_functionReturnsArray();
 %}
 %code requires {
-#include"./cCompilerCommon.hpp"
-#include "arrayNode.hpp"
-#include "exprNode.hpp"
-#include "ctrlNode.hpp"
-#include "funcNode.hpp"
-#include "statNode.hpp"
-#include "structNode.hpp"
+#include "./include/ast_node.hpp"
+#include "./include/array_node.hpp"
+#include "./include/expr_node.hpp"
+#include "./include/ctrl_node.hpp"
+#include "./include/func_node.hpp"
+#include "./include/stat_node.hpp"
+#include "./include/struct_node.hpp"
 }
 
 %union{
@@ -1144,14 +1144,14 @@ static void error_illegalArraySize(Node * c){
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
 static void error_expressionTypeError(Node *exp1, Node *op, Node *exp2){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
+//    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
 }
 static void error_expressionTypeError(Node *exp1, Node *op){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
+//    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
 }
 static void error_typeMismatch(Node *c){
     std::cout<<"[ERROR] ";

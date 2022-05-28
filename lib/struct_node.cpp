@@ -2,13 +2,13 @@
 // Created by Administrator on 5/28/2022.
 //
 
-#include"./cCompilerCommon.hpp"
-#include "arrayNode.hpp"
-#include "exprNode.hpp"
-#include "ctrlNode.hpp"
-#include "funcNode.hpp"
-#include "statNode.hpp"
-#include "structNode.hpp"
+#include"include/ast_node.hpp"
+#include "include/array_node.hpp"
+#include "include/expr_node.hpp"
+#include "include/ctrl_node.hpp"
+#include "include/func_node.hpp"
+#include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 
 //---------------------------StructDeclarationNode------------------------------
@@ -108,6 +108,10 @@ llvm::Value *StructMemberNode::codeGen() {
                      std::to_string(this->getColumnNumber()) + " " +
                      "Not supported yet");
 }
+
+ExpressionNode *StructMemberNode::getL() { return mVariableName; }
+
+ExpressionNode *StructMemberNode::getR() { return mMemberName; }
 
 std::string StructMemberAssignmentNode::getNodeTypeName() const {
     return std::string("StructMemberAssignmentNode ") + ("=");
