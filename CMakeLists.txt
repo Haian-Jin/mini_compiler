@@ -44,7 +44,7 @@ add_executable(
     main.cpp
     cCompilerCommon.cpp cCompilerCommon.hpp
     cParser.cpp cParser.hpp cScanner.cpp
-        arrayNode.cpp arrayNode.hpp funcNode.cpp funcNode.hpp exprNode.cpp exprNode.hpp ctrlNode.cpp ctrlNode.hpp statNode.cpp statNode.hpp)
+        arrayNode.cpp arrayNode.hpp funcNode.cpp funcNode.hpp exprNode.cpp exprNode.hpp ctrlNode.cpp ctrlNode.hpp statNode.cpp statNode.hpp structNode.cpp structNode.hpp)
 
 set_target_properties(zjucmm PROPERTIES LINK_LIBRARIES "${LLVM_LINK_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${JSONCPP_LIBRARIES})

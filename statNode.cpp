@@ -28,60 +28,6 @@ void StatementNodesBlock::createMultiVarDeclaration(IdentifierNode *type, Identi
     }
 }
 
-Value *StructDeclarationNode::codeGen() {
-    std::vector<llvm::Type *> memberTypes;
-    auto structType = StructType::create(TheContext, this->mStructName->getSymbolName());
-    for (auto &member: mMembers->mStatementList) {
-        auto v = (VariableDeclarationNode *) member;
-        std::string ty = v->type->getSymbolName();
-        if (!v->isArray()) {
-            if (ty == "int") {
-                memberTypes.push_back(llvm::Type::getInt32Ty(TheContext));
-            } else if (ty == "float" || ty == "double") {
-                memberTypes.push_back(llvm::Type::getDoubleTy(TheContext));
-            } else if (ty == "char") {
-                memberTypes.push_back(llvm::Type::getInt8Ty(TheContext));
-            } else {
-                return LogErrorV(
-                        std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                        "type not supported");
-            }
-        } else {
-            if (!v->isArray()) {
-                if (ty == "int") {
-                    memberTypes.push_back(llvm::Type::getInt32PtrTy(TheContext));
-                } else if (ty == "float" || ty == "double") {
-                    memberTypes.push_back(llvm::Type::getDoublePtrTy(TheContext));
-                } else if (ty == "char") {
-                    memberTypes.push_back(llvm::Type::getInt8PtrTy(TheContext));
-                } else {
-                    return LogErrorV(
-                            std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                            "type not supported");
-                }
-            }
-        }
-    }
-    structTable[this->mStructName->getSymbolName()] = structType;
-    structType->setBody(memberTypes);
-    return nullptr;
-}
-
-std::string StructDeclarationNode::getNodeTypeName() const {
-    return std::string("StructDeclarationBlock") +
-           mStructName->getTokenValue();
-}
-
-Json::Value StructDeclarationNode::jsonGen() const {
-    Json::Value root;
-    root["name"] = getNodeTypeName();
-    root["children"].append(mStructName->jsonGen());
-
-    root["children"].append(mMembers->jsonGen());
-
-    return root;
-}
-
 llvm::Value *NullStatementNode::codeGen() {
     return Builder.CreateAdd(
             ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true),

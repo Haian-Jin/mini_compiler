@@ -4,6 +4,7 @@
 #include "ctrlNode.hpp"
 #include "funcNode.hpp"
 #include "statNode.hpp"
+#include "structNode.hpp"
 
 // 用于记录行数和列数 
 int csLineCnt = 0;

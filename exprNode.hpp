@@ -1,4 +1,5 @@
 #pragma once
+
 #include "cCompilerCommon.hpp"
 #include "statNode.hpp"
 
@@ -6,136 +7,113 @@ class Node;
 
 class ExpressionNode : public Node {
 public:
+
     ExpressionNode() = default;;
 
-    ExpressionNode(std::string _symbolName, int childrenNumber, ...)
-            : Node(_symbolName, 0) {
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for (int i = 0; i < childrenNumber; i++) {
-            mChildren.push_back(va_arg(vl, Node *));
-        }
-        mIsNegligible = (false), mSymbolName = (_symbolName),
-        mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-    }
+    ExpressionNode(std::string _symbolName, int childrenNumber, ...);
 
-    ExpressionNode(std::string _tokenValue, bool negligible = false) {};
+    ExpressionNode(std::string _tokenValue, bool negligible = false);
 
-    std::string getNodeTypeName() const override { return "ExpressionNode"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Type_and_Address getTypeAddress() {
-        return {llvm::Type::TypeID::VoidTyID, nullptr};
-    }
+    /* getTypeAddress():
+            get the type and address of the variable form the symbol table
+            return error type and nullptr if not inherited by other nodes
+     */
+    virtual Type_and_Address getTypeAddress();
 
-    virtual llvm::Value* addrGen(int ind = 0) {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " + "This should not be Gen");
-    }
+    /* addrGen():
+            get the address of the variable form the symbol table
+            return error type and nullptr if the function was not called by a variable node
+     */
+    virtual llvm::Value *addrGen(int ind = 0);
 
-    Json::Value jsonGen() const override {
-        Json::Value r;
-        r["name"] = getNodeTypeName();
-        return r;
-    }
+    Json::Value jsonGen() const override;
 };
 
 class IdentifierNode : public ExpressionNode {
+    /*
+      This node is used represent an identifier, could be variable or type of variable
+     */
 public:
-    IdentifierNode(std::string name, bool isType = false)
-            : ExpressionNode(name) {
-        assert(name.length() > 0);
+    IdentifierNode(std::string name, bool isType = false);
 
-        this->mSymbolName = name;
-        if (isType) {
-            this->setKind(Node::KIND_ATTRIBUTE);
-            if (name == "int") {
-                this->setType(Node::TYPE_INT);
-            } else if (name == "float") {
-                this->setType(Node::TYPE_FLOAT);
-            } else if (name == "double") {
-                this->setType(Node::TYPE_DOUBLE);
-            } else if (name == "char") {
-                this->setType(Node::TYPE_CHAR);
-            } else if (name == "void") {
-                this->setType(Node::TYPE_VOID);
-            }
-        }
-    };
+    /* isType():
+            return if this identifier is variable type's name
+            for example: "int", "char", "double"
+     */
+    bool isType() const;
 
-    bool isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
+    /* isArray():
+            return if this identifier is the name of an array
+            implement as an interface for public access to Node::isType()
+            seems to be redundant
+            may be useful in TAC pattern
+     */
+    bool isArray() const override;
 
-    bool isArray() const { return Node::isArray(); }
+    /* getNodeTypeName():
+            used to generate Json Tree for AST Tree
+     */
+    std::string getNodeTypeName() const override;
 
-    virtual std::string getNodeTypeName() const {
+    Json::Value jsonGen() const override;
 
-        if (isType()) {
-            return std::string("TypeNode: ") + getTokenValue();
-        } else {
-            return std::string("IdentifierNode: ") + getTokenValue();
-        }
-    }
-
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        return root;
-    }
-
+    /* getTypeAddress():
+            get the type and address of the variable form the symbol table
+     */
     Type_and_Address getTypeAddress();
 
+    /* addrGen():
+            get the address of the variable form the symbol table
+     */
     llvm::Value *addrGen(int ind = 0) override;
+
+    /* codeGen():
+            generate IR code to load the value form the address gotten form the addrGen()
+            return that value's register
+     */
     llvm::Value *codeGen() override;
 };
 
 class IdentifierNodeList : public ExpressionNode {
+    /*
+      This node is used to pass value to declare multiple variables in a line
+     */
 public:
+
     std::vector<IdentifierNode *> mIdentifierNodeList;
 
     IdentifierNodeList() : ExpressionNode("IdentifierNodeList", 0) {}
 
-    void addIdentifierNode(IdentifierNode *identifierNode) {
-        assert(identifierNode != nullptr);
-        mIdentifierNodeList.push_back(identifierNode);
-    }
+    void addIdentifierNode(IdentifierNode *identifierNode);
 
-    virtual std::string getNodeTypeName() const { return "IdentifierNodeList"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        return root;
-    }
+    Json::Value jsonGen() const override;
 
-    virtual llvm::Value *codeGen() {
-        /* 用于为函数传递参数，并不会真的被调用codeGen */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "I'm not sure this should be made a codeGen");
-    }
+    /*codeGen():
+            a virtual codeGen for this node's codeGen() would never be called
+     */
+    llvm::Value *codeGen() override;
 };
 
 class AssignmentNode : public ExpressionNode {
+    /*
+        used to represent assignment
+        only "=" is supported in our program, "+=", "-=" is not supported
+     */
 public:
-    virtual std::string getNodeTypeName() const {
-        return std::string("AssignmentNode ") + ("=");
-    }
 
-    AssignmentNode(IdentifierNode *lhs, ExpressionNode *rhs)
-            : ExpressionNode("=", 0) {
-        assert(lhs != nullptr);
-        assert(rhs != nullptr);
-        mLeftHandSide = lhs;
-        mRightHandSide = rhs;
-    }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        root["children"].append(mLeftHandSide->jsonGen());
-        root["children"].append(mRightHandSide->jsonGen());
-        return root;
-    }
+    AssignmentNode(IdentifierNode *lhs, ExpressionNode *rhs);
 
+    virtual Json::Value jsonGen() const;
+
+    /*codeGen():
+            generate IR codes to create store of the right value
+     */
     llvm::Value *codeGen() override;
 
 private:
@@ -145,93 +123,68 @@ private:
 };
 
 class DoubleNode : public ExpressionNode {
+    //represent a double value in the user's code
 public:
     double value;
 
-    DoubleNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
-        sscanf(_tokenValue.c_str(), "%lf", &this->value);
-    }
+    DoubleNode(std::string _tokenValue);
 
-    virtual std::string getNodeTypeName() const { return "DoubleNode"; }
+    std::string getNodeTypeName() const override;
 
-    int getValue() { return this->value; }
+    int getValue() const;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
-        return root;
-    };
+    Json::Value jsonGen() const override;
 
-    llvm::Value *codeGen() override {
-        return llvm::ConstantFP::get(TheContext, llvm::APFloat(value));
-    };
+    /*codeGen():
+            generate a right value of the double type in llvm
+     */
+    llvm::Value *codeGen() override;
 };
 
 class IntNode : public ExpressionNode {
+    //represent an int value in the user's code
 public:
     int value;
 
-    IntNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
-        sscanf(_tokenValue.c_str(), "%d", &this->value);
-    }
+    IntNode(std::string _tokenValue);
 
-    IntNode(int v) : value(v) {};
+    IntNode(int v);;
 
-    double getValue() { return this->value; }
+    double getValue() const;
 
-    virtual std::string getNodeTypeName() const { return "IntNode"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName() + ":" + std::to_string(value);
-        return root;
-    };
+    Json::Value jsonGen() const override;
 
-    llvm::Value *codeGen() override {
-        return ConstantInt::get(llvm::Type::getInt32Ty(TheContext), this->value,
-                                true);
-    }
+    /*codeGen():
+            generate a right value of the int type in llvm
+     */
+    llvm::Value *codeGen() override;
 };
 
-// 为了不改变文法.l文件，做的妥协，这个中间文件，只用在函数定义中，
 class FuncNameAndArgsNode : public ExpressionNode {
+    //only used for function declaration
+    //not a terminal symbol
 public:
     IdentifierNode *mFuncName;
     VarDeclarationList *parasList; // used for function agrs
     // used for function declararion
     FuncNameAndArgsNode(IdentifierNode *nameIdentifier,
-                        VarDeclarationList *args)
-            : ExpressionNode() {
-        assert(nameIdentifier != nullptr);
-        this->mFuncName = nameIdentifier;
-        this->parasList = args;
-    };
+                        VarDeclarationList *args);;
 };
 
 class UnaryOperatorNode : public ExpressionNode {
+    //Unary Operator such as "++", "-", "!"
 public:
-    UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
-            : ExpressionNode(_symbolName, 0) {
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for (int i = 0; i < childrenNumber; i++) {
-            mChildren.push_back(va_arg(vl, Node *));
-        }
-        mIsNegligible = (false), mSymbolName = (_symbolName),
-        mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-        mHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-        op = _symbolName;
-        if (mHandSide == NULL)
-            throw ("castfail");
-    }
+    UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...);
 
-    UnaryOperatorNode(std::string _tokenValue, bool negligible = false)
-            : ExpressionNode(_tokenValue, negligible) {};
+    UnaryOperatorNode(std::string _tokenValue, bool negligible = false);
 
-    virtual std::string getNodeTypeName() const {
-        return std::string("UnaryOperatorNode  ") + (getSymbolName());
-    }
+    std::string getNodeTypeName() const override;
 
+    /*codeGen():
+            generate IR codes of the operator
+     */
     llvm::Value *codeGen() override;
 
 private:
@@ -240,43 +193,21 @@ private:
 };
 
 class BinaryOperatorNode : public ExpressionNode {
+    //binary Operator such as "+", "-", "&&"
 public:
-    BinaryOperatorNode(std::string _tokenValue, bool negligible = false)
-            : ExpressionNode(_tokenValue, negligible) {};
+    BinaryOperatorNode(std::string _tokenValue, bool negligible = false);;
 
     BinaryOperatorNode(std::string opType, ExpressionNode *lhs,
-                       ExpressionNode *rhs, bool isArithmetic = true)
-            : ExpressionNode() {
-        assert(lhs != nullptr);
-        assert(rhs != nullptr);
-        assert(opType != "");
-        this->setType(Node::TYPE_INT);
-        // this->setKind() HERE
-        mLeftHandSide = lhs;
-        mRightHandSide = rhs;
-        op = opType;
-
-        if (isArithmetic) // + - * / %
-        {
-            if (lhs->getType() == Node::TYPE_DOUBLE ||
-                rhs->getType() == Node::TYPE_DOUBLE) {
-                this->setType(Node::TYPE_DOUBLE);
-            }
-        }
-    }
+                       ExpressionNode *rhs, bool isArithmetic = true);
 
 
-    virtual std::string getNodeTypeName() const { return op; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        root["children"].append(mLeftHandSide->jsonGen());
-        root["children"].append(mRightHandSide->jsonGen());
+    Json::Value jsonGen() const override;
 
-        return root;
-    }
-
+    /*codeGen():
+            generate IR codes of the operator
+     */
     llvm::Value *codeGen() override;
 
     ExpressionNode *getL() { return mLeftHandSide; }
@@ -289,131 +220,18 @@ private:
 };
 
 class TenaryOperatorNode : public ExpressionNode {
+    //binary Operator such as "...?...:..."
 public:
-    TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
-            : ExpressionNode(_symbolName, 0) {
-        va_list vl;
-        va_start(vl, childrenNumber);
-        for (int i = 0; i < childrenNumber; i++) {
-            mChildren.push_back(va_arg(vl, Node *));
-        }
-        mIsNegligible = (false), mSymbolName = (_symbolName),
-        mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-        mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-        mMidHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
-        mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[2]);
-        op = _symbolName;
-        if (mLeftHandSide == NULL || mRightHandSide == NULL ||
-            mMidHandSide == NULL)
-            throw ("castfail");
-    }
+    TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...);
 
-    TenaryOperatorNode(std::string _tokenValue, bool negligible = false)
-            : ExpressionNode(_tokenValue, negligible) {};
+    TenaryOperatorNode(std::string _tokenValue, bool negligible = false);
 
-    std::string getNodeTypeName() {
-        return std::string("TenaryOperatorNode  ") + (getSymbolName());
-    }
+    std::string getNodeTypeName();
 
-    virtual llvm::Value *codeGen() {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "? ... : is not supported");
-    }
+    //not finished
+    llvm::Value *codeGen() override;
 
 private:
     std::string op;
     ExpressionNode *mLeftHandSide, *mRightHandSide, *mMidHandSide;
-};
-
-class StructMemberNode : public ExpressionNode {
-public:
-    StructMemberNode(std::string _tokenValue, bool negligible = false)
-            : ExpressionNode(_tokenValue, negligible) {};
-
-    StructMemberNode(std::string opType, IdentifierNode *lhs,
-                     IdentifierNode *rhs, bool isArithmetic = false)
-            : ExpressionNode() {
-        assert(lhs != nullptr);
-        assert(rhs != nullptr);
-        assert(opType != "");
-        this->setType(Node::TYPE_INT);
-        // this->setKind() HERE
-        mVariableName = lhs;
-        mMemberName = rhs;
-        op = opType;
-        if (isArithmetic) // + - * / %
-        {
-            if (lhs->getType() == Node::TYPE_DOUBLE ||
-                rhs->getType() == Node::TYPE_DOUBLE) {
-                this->setType(Node::TYPE_DOUBLE);
-            }
-        } else {
-        }
-    }
-
-    virtual std::string getNodeTypeName() const { return op; }
-
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        root["children"].append(mVariableName->jsonGen());
-        root["children"].append(mMemberName->jsonGen());
-
-        return root;
-    }
-
-    virtual llvm::Value *codeGen() {
-        /*
-        TODO:
-        */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "Not supported yet");
-    }
-
-    ExpressionNode *getL() { return mVariableName; }
-
-    ExpressionNode *getR() { return mMemberName; }
-
-private:
-    std::string op;
-    IdentifierNode *mVariableName, *mMemberName;
-};
-
-class StructMemberAssignmentNode : public ExpressionNode {
-public:
-    virtual std::string getNodeTypeName() const {
-        return std::string("StructMemberAssignmentNode ") + ("=");
-    }
-
-    StructMemberAssignmentNode(StructMemberNode *lhs, ExpressionNode *rhs)
-            : ExpressionNode("=", 0) {
-        assert(lhs != nullptr);
-        assert(rhs != nullptr);
-        mLeftHandSide = lhs;
-        mRightHandSide = rhs;
-    }
-
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        root["children"].append(mLeftHandSide->jsonGen());
-        root["children"].append(mRightHandSide->jsonGen());
-        return root;
-    }
-
-    virtual llvm::Value *codeGen() {
-        /*
-        TODO:
-        */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "Not supported yet");
-    }
-
-private:
-    std::string op;
-    StructMemberNode *mLeftHandSide;
-    ExpressionNode *mRightHandSide;
 };

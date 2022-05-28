@@ -9,6 +9,78 @@
 #include "funcNode.hpp"
 #include "statNode.hpp"
 
+// -----------------------ExpressionNode-----------------------------
+ExpressionNode::ExpressionNode(std::string _symbolName, int childrenNumber, ...)
+        : Node(_symbolName, 0) {
+    va_list vl;
+    va_start(vl, childrenNumber);
+    for (int i = 0; i < childrenNumber; i++) {
+        mChildren.push_back(va_arg(vl, Node *));
+    }
+    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
+}
+
+Type_and_Address ExpressionNode::getTypeAddress() {
+    return {llvm::Type::TypeID::VoidTyID, nullptr};
+}
+
+llvm::Value *ExpressionNode::addrGen(int ind) {
+    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                     std::to_string(this->getColumnNumber()) + " " + "This should not be Gen");
+}
+
+Json::Value ExpressionNode::jsonGen() const {
+    Json::Value r;
+    r["name"] = getNodeTypeName();
+    return r;
+}
+
+ExpressionNode::ExpressionNode(std::string _tokenValue, bool negligible) {}
+
+std::string ExpressionNode::getNodeTypeName() const { return "ExpressionNode"; }
+
+// -----------------------IdentifierNode-----------------------------
+IdentifierNode::IdentifierNode(std::string name, bool isType)
+        : ExpressionNode(name) {
+    assert(name.length() > 0);
+
+    this->mSymbolName = name;
+    if (isType) {
+        this->setKind(Node::KIND_ATTRIBUTE);
+        if (name == "int") {
+            this->setType(Node::TYPE_INT);
+        } else if (name == "float") {
+            this->setType(Node::TYPE_FLOAT);
+        } else if (name == "double") {
+            this->setType(Node::TYPE_DOUBLE);
+        } else if (name == "char") {
+            this->setType(Node::TYPE_CHAR);
+        } else if (name == "void") {
+            this->setType(Node::TYPE_VOID);
+        }
+    }
+}
+
+bool IdentifierNode::isType() const { return Node::NodeKind == Node::KIND_ATTRIBUTE; }
+
+bool IdentifierNode::isArray() const { return Node::isArray(); }
+
+std::string IdentifierNode::getNodeTypeName() const {
+
+    if (isType()) {
+        return std::string("TypeNode: ") + getTokenValue();
+    } else {
+        return std::string("IdentifierNode: ") + getTokenValue();
+    }
+}
+
+Json::Value IdentifierNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    return root;
+}
+
 Type_and_Address IdentifierNode::getTypeAddress() {
     llvm::Value *value = nullptr;
     llvm::Type::TypeID type;
@@ -43,30 +115,8 @@ Type_and_Address IdentifierNode::getTypeAddress() {
 }
 
 llvm::Value *IdentifierNode::addrGen(int ind) {
-    std::string name = this->getSymbolName();
-    llvm::Value* value = nullptr;
-    if (tableStack.empty()) { /* if the stack is empty, find it only in the global table */
-        if (variableTable.find(name) != (variableTable.end())) {
-            value = variableTable[name].address;
-        } else {
-            value = nullptr;
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                             std::to_string(this->getColumnNumber()) + " " + name +
-                             "not declared");
-        }
-    } else { /* otherwise, find it on both stack top and the global table */
-        if (tableStack.top()->find(name) != tableStack.top()->end()) {
-            value = (*tableStack.top())[name].address;
-        } else if (variableTable.find(name) != (variableTable.end())) {
-            value = variableTable[name].address;
-        } else {
-            value = nullptr;
-            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                             std::to_string(this->getColumnNumber()) + " " + name +
-                             "not declared");
-        }
-    }
-    return value;
+    auto res = getTypeAddress();
+    return res.address;
 }
 
 llvm::Value *IdentifierNode::codeGen() {
@@ -83,29 +133,36 @@ llvm::Value *IdentifierNode::codeGen() {
     }
 }
 
+// -----------------------AssignmentNode-----------------------------
+std::string AssignmentNode::getNodeTypeName() const {
+    return std::string("AssignmentNode ") + ("=");
+}
+
+AssignmentNode::AssignmentNode(IdentifierNode *lhs, ExpressionNode *rhs)
+        : ExpressionNode("=", 0) {
+    assert(lhs != nullptr);
+    assert(rhs != nullptr);
+    mLeftHandSide = lhs;
+    mRightHandSide = rhs;
+}
+
+Json::Value AssignmentNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    root["children"].append(mLeftHandSide->jsonGen());
+    root["children"].append(mRightHandSide->jsonGen());
+    return root;
+}
 
 llvm::Value *AssignmentNode::codeGen() {
-    Value *dst = nullptr;
-    llvm::Type::TypeID type_l;
-    if (tableStack.empty()) {
-        dst = variableTable[mLeftHandSide->getSymbolName()].address;
-        type_l = variableTable[mLeftHandSide->getSymbolName()].type;
-    } else {
-        dst = (tableStack.top()->find(mLeftHandSide->getSymbolName()) !=
-               tableStack.top()->end())
-              ? ((*(tableStack.top()))[mLeftHandSide->getSymbolName()].address)
-              : (variableTable[mLeftHandSide->getSymbolName()].address);
-        type_l = (tableStack.top()->find(mLeftHandSide->getSymbolName()) !=
-                  tableStack.top()->end())
-                 ? ((*(tableStack.top()))[mLeftHandSide->getSymbolName()].type)
-                 : (variableTable[mLeftHandSide->getSymbolName()].type);
-    }
+    auto res = mLeftHandSide->getTypeAddress();
+    Value *dst = res.address;
     if (!dst)
         return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "undeclared variable");
     Value *R = mRightHandSide->codeGen();
-
+    auto type_l = res.type;
     auto type_r = R->getType()->getTypeID();
     if (type_r == type_l) {
         Builder.CreateStore(R, dst);
@@ -121,21 +178,141 @@ llvm::Value *AssignmentNode::codeGen() {
     }
 }
 
-llvm::Value *UnaryOperatorNode::codeGen() {
-    Value *OperandV = mHandSide->codeGen();
-    if (!OperandV)
-        return nullptr;
-    bool isFloat = false;
+// -----------------------IdentifierNodeList-----------------------------
+void IdentifierNodeList::addIdentifierNode(IdentifierNode *identifierNode) {
+    assert(identifierNode != nullptr);
+    mIdentifierNodeList.push_back(identifierNode);
+}
 
-    if (OperandV->getType()->getTypeID() == llvm::Type::DoubleTyID) {
-        isFloat = true;
+std::string IdentifierNodeList::getNodeTypeName() const { return "IdentifierNodeList"; }
+
+Json::Value IdentifierNodeList::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    return root;
+}
+
+llvm::Value *IdentifierNodeList::codeGen() {
+    /* 用于为函数传递参数，并不会真的被调用codeGen */
+    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                     std::to_string(this->getColumnNumber()) + " " +
+                     "I'm not sure this should be made a codeGen");
+}
+
+// -----------------------DoubleNode-----------------------------
+DoubleNode::DoubleNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
+    sscanf(_tokenValue.c_str(), "%lf", &this->value);
+}
+
+std::string DoubleNode::getNodeTypeName() const { return "DoubleNode"; }
+
+int DoubleNode::getValue() const { return this->value; }
+
+Json::Value DoubleNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+    return root;
+}
+
+llvm::Value *DoubleNode::codeGen() {
+    return llvm::ConstantFP::get(TheContext, llvm::APFloat(value));
+}
+
+// -----------------------IntNode-----------------------------
+IntNode::IntNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
+    sscanf(_tokenValue.c_str(), "%d", &this->value);
+}
+
+IntNode::IntNode(int v) : value(v) {}
+
+double IntNode::getValue() const { return this->value; }
+
+std::string IntNode::getNodeTypeName() const { return "IntNode"; }
+
+Json::Value IntNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName() + ":" + std::to_string(value);
+    return root;
+}
+
+llvm::Value *IntNode::codeGen() {
+    return ConstantInt::get(llvm::Type::getInt32Ty(TheContext), this->value,
+                            true);
+}
+
+// -----------------------FuncNameAndArgsNode-----------------------------
+FuncNameAndArgsNode::FuncNameAndArgsNode(IdentifierNode *nameIdentifier, VarDeclarationList *args)
+        : ExpressionNode() {
+    assert(nameIdentifier != nullptr);
+    this->mFuncName = nameIdentifier;
+    this->parasList = args;
+}
+
+// -----------------------UnaryOperatorNode-----------------------------
+UnaryOperatorNode::UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
+        : ExpressionNode(_symbolName, 0) {
+    va_list vl;
+    va_start(vl, childrenNumber);
+    for (int i = 0; i < childrenNumber; i++) {
+        mChildren.push_back(va_arg(vl, Node *));
     }
-    if (op == "pre++" || op == "pre--" || op == "post++" ||
-        op == "post--" || op == "~") {
+    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
+    mHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+    op = _symbolName;
+    if (mHandSide == NULL)
+        throw ("castfail");
+}
+
+UnaryOperatorNode::UnaryOperatorNode(std::string _tokenValue, bool negligible)
+        : ExpressionNode(_tokenValue, negligible) {}
+
+std::string UnaryOperatorNode::getNodeTypeName() const {
+    return std::string("UnaryOperatorNode  ") + (getSymbolName());
+}
+
+llvm::Value *UnaryOperatorNode::codeGen() {
+    if (op == "~") {
         return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                          std::to_string(this->getColumnNumber()) + " " +
                          "\"" + op + "\" is not supported as an operator");
+    } else if (op == "post++" || op == "post--" || op == "pre++" || op == "pre--") {
+        int delta = 0;
+        if (op == "post++" || op == "pre++") {
+            delta = 1;
+        } else {
+            delta = -1;
+        }
+        auto res = mHandSide->getTypeAddress();
+        Value *dst = res.address;
+        if (!dst) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "\"" + mHandSide->getSymbolName() + "\" is not declared");
+        }
+        if (res.type != llvm::Type::IntegerTyID) {
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +
+                             "only integer's ++/-- is supported");
+        }
+        Value *bef = mHandSide->codeGen();
+        Value *aft = Builder.CreateAdd(bef, ConstantInt::get(llvm::Type::getInt32Ty(TheContext), delta,
+                                                             true), "PPorMM");
+        Builder.CreateStore(aft, dst);
+        if (op == "post++" || op == "post--") {
+            return bef;
+        } else {
+            return aft;
+        }
     } else if (op == "!") {
+        Value *OperandV = mHandSide->codeGen();
+        if (!OperandV)
+            return nullptr;
+        bool isFloat = false;
+
+        if (OperandV->getType()->getTypeID() == llvm::Type::DoubleTyID) {
+            isFloat = true;
+        }
         if (isFloat) {
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
@@ -143,18 +320,61 @@ llvm::Value *UnaryOperatorNode::codeGen() {
         }
         return Builder.CreateNot(OperandV, "notop");
     } else if (op == "-") {
+        Value *OperandV = mHandSide->codeGen();
+        if (!OperandV)
+            return nullptr;
+        bool isFloat = false;
+
+        if (OperandV->getType()->getTypeID() == llvm::Type::DoubleTyID) {
+            isFloat = true;
+        }
         return isFloat ? Builder.CreateFNeg(OperandV, "fnotop")
                        : Builder.CreateFNeg(OperandV, "notop");
     }
 }
 
+// -----------------------BinaryOperatorNode-----------------------------
+BinaryOperatorNode::BinaryOperatorNode(std::string _tokenValue, bool negligible)
+        : ExpressionNode(_tokenValue, negligible) {}
+
+BinaryOperatorNode::BinaryOperatorNode(std::string opType, ExpressionNode *lhs, ExpressionNode *rhs, bool isArithmetic)
+        : ExpressionNode() {
+    assert(lhs != nullptr);
+    assert(rhs != nullptr);
+    assert(opType != "");
+    this->setType(Node::TYPE_INT);
+    // this->setKind() HERE
+    mLeftHandSide = lhs;
+    mRightHandSide = rhs;
+    op = opType;
+
+    if (isArithmetic) // + - * / %
+    {
+        if (lhs->getType() == Node::TYPE_DOUBLE ||
+            rhs->getType() == Node::TYPE_DOUBLE) {
+            this->setType(Node::TYPE_DOUBLE);
+        }
+    }
+}
+
+std::string BinaryOperatorNode::getNodeTypeName() const { return op; }
+
+Json::Value BinaryOperatorNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    root["children"].append(mLeftHandSide->jsonGen());
+    root["children"].append(mRightHandSide->jsonGen());
+
+    return root;
+}
 
 llvm::Value *BinaryOperatorNode::codeGen() {
     Value *Left = mLeftHandSide->codeGen();
     Value *Right = mRightHandSide->codeGen();
 
-    if(Left->getType()->getTypeID()==llvm::Type::PointerTyID||Right->getType()->getTypeID()==llvm::Type::PointerTyID) {
-        if(Left->getType()->getTypeID()!=Right->getType()->getTypeID() || op!= "==") {
+    if (Left->getType()->getTypeID() == llvm::Type::PointerTyID ||
+        Right->getType()->getTypeID() == llvm::Type::PointerTyID) {
+        if (Left->getType()->getTypeID() != Right->getType()->getTypeID() || op != "==") {
             return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
                              std::to_string(this->getColumnNumber()) + " " +
                              "invalid operation");
@@ -166,7 +386,8 @@ llvm::Value *BinaryOperatorNode::codeGen() {
             for (int i = 1; i < e; ++i) {
                 auto ptr_l = mLeftHandSide->addrGen(i);
                 auto ptr_r = mRightHandSide->addrGen(i);
-                auto temp = Builder.CreateICmpEQ(Builder.CreateLoad(ptr_l, false, ""), Builder.CreateLoad(ptr_r, false, ""));
+                auto temp = Builder.CreateICmpEQ(Builder.CreateLoad(ptr_l, false, ""),
+                                                 Builder.CreateLoad(ptr_r, false, ""));
                 ret = Builder.CreateAnd(temp, ret);
             }
             return ret;
@@ -188,7 +409,7 @@ llvm::Value *BinaryOperatorNode::codeGen() {
             Right = Builder.CreateSIToFP(
                     Right, llvm::Type::getDoubleTy(TheContext), "ftmp");
         }
-    } else if (Left->getType()->getIntegerBitWidth()==8 || Right->getType()->getIntegerBitWidth()==8) {
+    } else if (Left->getType()->getIntegerBitWidth() == 8 || Right->getType()->getIntegerBitWidth() == 8) {
         Left = Builder.CreateIntCast(Left, llvm::Type::getInt32Ty(TheContext), false, "8castl");
         Right = Builder.CreateIntCast(Right, llvm::Type::getInt32Ty(TheContext), false, "8castr");
     }
@@ -268,4 +489,36 @@ llvm::Value *BinaryOperatorNode::codeGen() {
                          std::to_string(this->getColumnNumber()) + " " +
                          "\"" + op + "\" is not supported as an operator");
     }
+}
+
+// -----------------------TenaryOperatorNode-----------------------------
+TenaryOperatorNode::TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
+        : ExpressionNode(_symbolName, 0) {
+    va_list vl;
+    va_start(vl, childrenNumber);
+    for (int i = 0; i < childrenNumber; i++) {
+        mChildren.push_back(va_arg(vl, Node *));
+    }
+    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
+    mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
+    mMidHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
+    mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[2]);
+    op = _symbolName;
+    if (mLeftHandSide == NULL || mRightHandSide == NULL ||
+        mMidHandSide == NULL)
+        throw ("castfail");
+}
+
+TenaryOperatorNode::TenaryOperatorNode(std::string _tokenValue, bool negligible)
+        : ExpressionNode(_tokenValue, negligible) {}
+
+std::string TenaryOperatorNode::getNodeTypeName() {
+    return std::string("TenaryOperatorNode  ") + (getSymbolName());
+}
+
+llvm::Value *TenaryOperatorNode::codeGen() {
+    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                     std::to_string(this->getColumnNumber()) + " " +
+                     "? ... : is not supported");
 }

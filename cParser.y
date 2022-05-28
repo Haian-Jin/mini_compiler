@@ -36,6 +36,7 @@ static void error_functionReturnsArray();
 #include "ctrlNode.hpp"
 #include "funcNode.hpp"
 #include "statNode.hpp"
+#include "structNode.hpp"
 }
 
 %union{

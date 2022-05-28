@@ -110,26 +110,7 @@ public:
     Value *codeGen() override;
 };
 
-class StructDeclarationNode : public StatementNode {
-protected:
-    IdentifierNode *mStructName;
-    StatementNodesBlock *mMembers;
 
-public:
-    StructDeclarationNode(IdentifierNode *name, StatementNodesBlock *members) {
-        assert(name != nullptr);
-        assert(members != nullptr);
-        mStructName = name;
-        mMembers = members;
-    }
-
-
-    std::string getNodeTypeName() const override;
-
-    Json::Value jsonGen() const override;
-
-    Value *codeGen() override;
-};
 
 // handle the statement that has only one semicollon
 class NullStatementNode : public StatementNode {
