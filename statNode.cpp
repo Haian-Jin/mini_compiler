@@ -8,34 +8,24 @@
 #include "ctrlNode.hpp"
 #include "statNode.hpp"
 
-Value *StatementNodesBlock::codeGen() {
-    for (auto &iter: mStatementList) {
-        iter->codeGen();
-    }
+// ------------------------------StatementNode----------------------------------------
+StatementNode::StatementNode() : Node() {}
+
+std::string StatementNode::getNodeTypeName() const { return "StatementNode"; }
+
+Json::Value StatementNode::jsonGen() const {
+    Json::Value r;
+    r["name"] = getNodeTypeName();
+    return r;
+}
+
+llvm::Value *StatementNode::codeGen() {
     return nullptr;
 }
 
-void StatementNodesBlock::createMultiVarDeclaration(IdentifierNode *type, IdentifierNodeList *nameList) {
-    assert(type != nullptr && nameList != nullptr);
-    assert(type->isType());
-    std::vector<IdentifierNode *> idenNameList =
-            nameList->mIdentifierNodeList; // vector of identifiers, store the
-    // name of the variables
-    for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
-        // create a variable declaration
-        StatementNode *varDecl = new VariableDeclarationNode(type, *it);
-        mStatementList.push_back(varDecl);
-    }
-}
-
-llvm::Value *NullStatementNode::codeGen() {
-    return Builder.CreateAdd(
-            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true),
-            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true));
-}
-
+// ------------------------------VariableDeclarationNode----------------------------------------
 VariableDeclarationNode::VariableDeclarationNode(IdentifierNode *inType, IdentifierNode *id,
-                                                 AssignmentNode *assignmentExpr): StatementNode()  {
+                                                 AssignmentNode *assignmentExpr) : StatementNode() {
     assert(inType != nullptr);
     assert(id != nullptr);
     this->type = inType;
@@ -96,7 +86,7 @@ llvm::Value *VariableDeclarationNode::codeGen() {
             } else if (ty == "float" || ty == "double") {
                 res = Builder.CreateAlloca(llvm::Type::getDoubleTy(TheContext));
                 tor = llvm::Type::DoubleTyID;
-            } else if (ty=="char") {
+            } else if (ty == "char") {
                 res = Builder.CreateAlloca(llvm::Type::getInt8Ty(TheContext));
                 tor = llvm::Type::IntegerTyID;
             } else {
@@ -119,7 +109,6 @@ llvm::Value *VariableDeclarationNode::codeGen() {
             array_size *= a;
         }
         llvm::ArrayType *array_type = nullptr;
-//            Value *ArraySize = ConstantInt::get(llvm::Type::getInt32Ty(TheContext), array_size, false);
         if (tableStack.empty()) {
             if (ty == "int") {
                 array_type = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
@@ -138,12 +127,12 @@ llvm::Value *VariableDeclarationNode::codeGen() {
             }
             res = new llvm::GlobalVariable(*TheModule, array_type, false, llvm::GlobalValue::PrivateLinkage, 0,
                                            id->getSymbolName());
-            std::vector<llvm::Constant*> const_array_elems;
+            std::vector<llvm::Constant *> const_array_elems;
             for (int i = 0; i < array_size; ++i) {
                 const_array_elems.push_back(con_0());
             }
-            llvm::Constant* const_array = llvm::ConstantArray::get(array_type, const_array_elems);
-            ((llvm::GlobalVariable*)res)->setInitializer(const_array);
+            llvm::Constant *const_array = llvm::ConstantArray::get(array_type, const_array_elems);
+            ((llvm::GlobalVariable *) res)->setInitializer(const_array);
             Type_and_Address ret = {tor, res, true, dimsize};
             variableTable[this->id->getSymbolName()] = ret;
         } else {
@@ -160,11 +149,6 @@ llvm::Value *VariableDeclarationNode::codeGen() {
                 tor = llvm::Type::DoubleTyID;
             } else if (ty == "char") {
                 auto arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(TheContext), array_size);
-//                    std::vector<llvm::Constant*> const_array_elems;
-//                    for (int i = 0; i < array_size; ++i) {
-//                        const_array_elems.push_back(con_0());
-//                    }
-//                    llvm::Constant* const_array = llvm::ConstantArray::get(array_type, const_array_elems);
                 res = Builder.CreateAlloca(arrayType,
                                            ArraySize, id->getSymbolName());
                 tor = llvm::Type::LabelTyID; //for char
@@ -186,6 +170,92 @@ llvm::Value *VariableDeclarationNode::codeGen() {
     }
 }
 
+std::string VariableDeclarationNode::getNodeTypeName() const {
+    return "VariableDeclarationNode";
+}
+
+// ------------------------------VarDeclarationList----------------------------------------
+std::string VarDeclarationList::getNodeTypeName() const { return "VarDeclarationList"; }
+
+Json::Value VarDeclarationList::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    for (auto it = mVarDeclarationList.begin();
+         it != mVarDeclarationList.end(); it++) {
+        root["children"].append((*it)->jsonGen());
+    }
+    return root;
+}
+
+Value *VarDeclarationList::codeGen() {
+    /* This node is used for func declaration, no need to codeGen() */
+    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                     std::to_string(this->getColumnNumber()) + " " +
+                     "No need to codeGen this");
+}
+
+
+// ------------------------------StatementNodesBlock----------------------------------------
+void StatementNodesBlock::createMultiVarDeclaration(IdentifierNode *type, IdentifierNodeList *nameList) {
+    assert(type != nullptr && nameList != nullptr);
+    assert(type->isType());
+    std::vector<IdentifierNode *> idenNameList =
+            nameList->mIdentifierNodeList; // vector of identifiers, store the
+    // name of the variables
+    for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
+        // create a variable declaration
+        StatementNode *varDecl = new VariableDeclarationNode(type, *it);
+        mStatementList.push_back(varDecl);
+    }
+}
+
+std::string StatementNodesBlock::getNodeTypeName() const { return "StatementsBlock"; }
+
+Json::Value StatementNodesBlock::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    for (auto it = mStatementList.begin(); it != mStatementList.end();
+         it++) {
+        root["children"].append((*it)->jsonGen());
+    }
+    return root;
+}
+
+void StatementNodesBlock::addStatementNode(StatementNode *statementNode) {
+    assert(statementNode != nullptr);
+    mStatementList.push_back(statementNode);
+}
+
+void StatementNodesBlock::mergeStatements(StatementNodesBlock *to_merge) {
+    assert(to_merge != nullptr);
+    this->mStatementList.insert(this->mStatementList.end(),
+                                to_merge->mStatementList.begin(),
+                                to_merge->mStatementList.end());
+}
+
+Value *StatementNodesBlock::codeGen() {
+    for (auto &iter: mStatementList) {
+        iter->codeGen();
+    }
+    return nullptr;
+}
+
+// ------------------------------NullStatementNode----------------------------------------
+llvm::Value *NullStatementNode::codeGen() {
+    return Builder.CreateAdd(
+            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true),
+            ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, true));
+}
+
+std::string NullStatementNode::getNodeTypeName() const { return "NullStatementNode"; }
+
+Json::Value NullStatementNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    return root;
+}
+
+// ------------------------------ExpressionStatementNode----------------------------------------
 Value *ExpressionStatementNode::codeGen() {
     return this->mExpression->codeGen();
 }
@@ -196,3 +266,15 @@ Json::Value ExpressionStatementNode::jsonGen() const {
     root["children"].append(mExpression->jsonGen());
     return root;
 }
+
+ExpressionStatementNode::ExpressionStatementNode(ExpressionNode *expression) : StatementNode() {
+    assert(expression != nullptr);
+    this->mExpression = expression;
+}
+
+std::string ExpressionStatementNode::getNodeTypeName() const {
+    return "ExpressionStatementNode";
+}
+
+
+

@@ -44,12 +44,8 @@ extern llvm::LLVMContext TheContext;
 extern llvm::IRBuilder<> Builder;//(TheContext);
 extern Module *TheModule;// = new Module(llvm::StringRef(),TheContext);
 extern std::unordered_map<std::string, Type_and_Address> variableTable;
-//extern std::unordered_map<std::string,
-//        std::unordered_map<std::string, Type_and_Address> *>
-//        variableTables;
 extern std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 extern std::unordered_map<std::string, StructType *> structTable;
-//extern std::map<std::string , symAttribute* > originalSymbolTable;
 
 Value *LogErrorV(const char *Str);
 

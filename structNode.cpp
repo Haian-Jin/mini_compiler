@@ -11,6 +11,23 @@
 #include "structNode.hpp"
 
 
+//---------------------------StructDeclarationNode------------------------------
+
+std::string StructDeclarationNode::getNodeTypeName() const {
+    return std::string("StructDeclarationBlock") +
+           mStructName->getTokenValue();
+}
+
+Json::Value StructDeclarationNode::jsonGen() const {
+    Json::Value root;
+    root["name"] = getNodeTypeName();
+    root["children"].append(mStructName->jsonGen());
+
+    root["children"].append(mMembers->jsonGen());
+
+    return root;
+}
+
 Value *StructDeclarationNode::codeGen() {
     std::vector<llvm::Type *> memberTypes;
     auto structType = StructType::create(TheContext, this->mStructName->getSymbolName());
@@ -30,39 +47,23 @@ Value *StructDeclarationNode::codeGen() {
                         "type not supported");
             }
         } else {
-            if (!v->isArray()) {
-                if (ty == "int") {
-                    memberTypes.push_back(llvm::Type::getInt32PtrTy(TheContext));
-                } else if (ty == "float" || ty == "double") {
-                    memberTypes.push_back(llvm::Type::getDoublePtrTy(TheContext));
-                } else if (ty == "char") {
-                    memberTypes.push_back(llvm::Type::getInt8PtrTy(TheContext));
-                } else {
-                    return LogErrorV(
-                            std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                            "type not supported");
-                }
+            if (ty == "int") {
+                memberTypes.push_back(llvm::Type::getInt32PtrTy(TheContext));
+            } else if (ty == "float" || ty == "double") {
+                memberTypes.push_back(llvm::Type::getDoublePtrTy(TheContext));
+            } else if (ty == "char") {
+                memberTypes.push_back(llvm::Type::getInt8PtrTy(TheContext));
+            } else {
+                return LogErrorV(
+                        std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+                        "type not supported");
             }
+
         }
     }
     structTable[this->mStructName->getSymbolName()] = structType;
     structType->setBody(memberTypes);
     return nullptr;
-}
-
-std::string StructDeclarationNode::getNodeTypeName() const {
-    return std::string("StructDeclarationBlock") +
-           mStructName->getTokenValue();
-}
-
-Json::Value StructDeclarationNode::jsonGen() const {
-    Json::Value root;
-    root["name"] = getNodeTypeName();
-    root["children"].append(mStructName->jsonGen());
-
-    root["children"].append(mMembers->jsonGen());
-
-    return root;
 }
 
 StructMemberNode::StructMemberNode(std::string _tokenValue, bool negligible)

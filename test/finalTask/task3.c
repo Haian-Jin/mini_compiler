@@ -75,19 +75,19 @@ int main() {
                 int j;
                 int needCal;
                 needCal = 1;
-                for (j = 0; courseNsize[com][j]!=0&&j<7; j= j + 1) {
+                for (j = 0; courseNsize[com][j]!=0&&j<7; j++) {
                     if(needCal!=0) {
                         int canTake;
                         canTake = 1;
                         int k;
-                        for (k = 0; k < courseNsize[com][j]; k = k + 1) {
+                        for (k = 0; k < courseNsize[com][j]; k++) {
                             if (course_need[com][j][k][0] == 0) {
                                 canTake = canTake * 1;
                             } else {
                                 int flag;
                                 flag = 0;
                                 int ttt;
-                                for (ttt = 0; ttt < i; ttt = ttt + 1) {
+                                for (ttt = 0; ttt < i; ttt++) {
                                     if ((course_name[ttt]==course_need[com][j][k]) && (course_com[ttt] != 0)) {
                                         flag = 1;
                                     }

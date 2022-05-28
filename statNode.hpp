@@ -9,24 +9,20 @@ class IdentifierNodeList;
 class AssignmentNode;
 
 class StatementNode : public Node {
-
+    //node for instructions not generating r value
 public:
-    StatementNode() : Node() {}
+    StatementNode();
 
-    std::string getNodeTypeName() const override { return "StatementNode"; }
+    std::string getNodeTypeName() const override;
 
-    Json::Value jsonGen() const override {
-        Json::Value r;
-        r["name"] = getNodeTypeName();
-        return r;
-    }
+    Json::Value jsonGen() const override;
 
-    llvm::Value *codeGen() override {
-        return nullptr;
-    }
+    //return nullptr if not inherited
+    llvm::Value *codeGen() override;
 };
 
 class VariableDeclarationNode : public StatementNode {
+    //node for variable's declaration, such as "int a;"
 public:
     const IdentifierNode *type;
     IdentifierNode *id;
@@ -35,64 +31,50 @@ public:
     VariableDeclarationNode(IdentifierNode *inType, IdentifierNode *id,
                             AssignmentNode *assignmentExpr = nullptr);
 
-    virtual std::string getNodeTypeName() const {
-        return "VariableDeclarationNode";
-    }
+    std::string getNodeTypeName() const override;
 
     Json::Value jsonGen() const override;
+
+    /*codeGen:
+        generate IR codes to create alloca for the variable
+        store to symbol table
+     */
     llvm::Value *codeGen() override;
 };
 
-// store all the variable declaration, this is used for function declaration and
-// struct declaraion
 class VarDeclarationList : public StatementNode {
+    /*
+     store all the variable declaration, this is used for function declaration and
+     struct declaraion.
+     Not a terminal AST Node
+     */
 public:
     std::vector<VariableDeclarationNode *> mVarDeclarationList;
 
     VarDeclarationList() : StatementNode() {}
 
-    virtual std::string getNodeTypeName() const { return "VarDeclarationList"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        for (auto it = mVarDeclarationList.begin();
-             it != mVarDeclarationList.end(); it++) {
-            root["children"].append((*it)->jsonGen());
-        }
-        return root;
-    }
+    Json::Value jsonGen() const override;
 
-    virtual Value *codeGen() {
-        /* This node is used for func declaration, no need to codeGen() */
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                         std::to_string(this->getColumnNumber()) + " " +
-                         "No need to codeGen this");
-    }
+    Value *codeGen() override;
 };
 
 class StatementNodesBlock : public StatementNode {
+    /*
+        represent a series of codes in a block
+        for example: codes in "{}"
+     */
 public:
     std::vector<StatementNode *> mStatementList;
 
     StatementNodesBlock() : StatementNode() {}
 
-    virtual std::string getNodeTypeName() const { return "StatementsBlock"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        for (auto it = mStatementList.begin(); it != mStatementList.end();
-             it++) {
-            root["children"].append((*it)->jsonGen());
-        }
-        return root;
-    }
+    Json::Value jsonGen() const override;
 
-    void addStatementNode(StatementNode *statementNode) {
-        assert(statementNode != nullptr);
-        mStatementList.push_back(statementNode);
-    }
+    void addStatementNode(StatementNode *statementNode);
 
     // input type expression and multiple name identifiers, create multiple
     // declaration nodes
@@ -100,49 +82,44 @@ public:
                                    IdentifierNodeList *nameList);
 
     // merge two statements block into one same statements block
-    void mergeStatements(StatementNodesBlock *to_merge) {
-        assert(to_merge != nullptr);
-        this->mStatementList.insert(this->mStatementList.end(),
-                                    to_merge->mStatementList.begin(),
-                                    to_merge->mStatementList.end());
-    }
+    void mergeStatements(StatementNodesBlock *to_merge);
 
+    /* codeGen():
+        call evert statement's codeGen() in this block
+        to generate the IR codes of this block
+     */
     Value *codeGen() override;
 };
 
-
-
-// handle the statement that has only one semicollon
 class NullStatementNode : public StatementNode {
+    // handle the statement that has only one semicolon
 public:
     NullStatementNode() : StatementNode() {}
 
-    virtual std::string getNodeTypeName() const { return "NullStatementNode"; }
+    std::string getNodeTypeName() const override;
 
-    virtual Json::Value jsonGen() const {
-        Json::Value root;
-        root["name"] = getNodeTypeName();
-        return root;
-    }
+    Json::Value jsonGen() const override;
 
+    /* codeGen():
+        generate IR code of 0+0 to generate null statement
+     */
     llvm::Value *codeGen() override;
 };
 
 class ExpressionStatementNode : public StatementNode {
+    //expressions with semicolon
 public:
     ExpressionNode *mExpression;
 
-    ExpressionStatementNode(ExpressionNode *expression) : StatementNode() {
-        assert(expression != nullptr);
-        this->mExpression = expression;
-    }
+    ExpressionStatementNode(ExpressionNode *expression);
 
-    virtual std::string getNodeTypeName() const {
-        return "ExpressionStatementNode";
-    }
+    std::string getNodeTypeName() const override;
 
     Json::Value jsonGen() const override;
 
+    /* codeGen():
+        run codeGen of the expression node
+     */
     Value *codeGen() override;
 };
 
