@@ -1,5 +1,5 @@
 %{
-#include "./cCompilerCommon.hpp"
+#include "./include/ast_node.hpp"
 #include "./cParser.hpp"
 
 void echo(bool negligible=false);

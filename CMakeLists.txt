@@ -3,7 +3,7 @@ project(zjucmm)
 
 find_package( LLVM REQUIRED CONFIG)
 
-find_package(jsoncpp REQUIRED)
+#find_package(jsoncpp REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)
@@ -42,9 +42,9 @@ add_custom_command(
 add_executable(
     zjucmm
     main.cpp
-    cCompilerCommon.cpp cCompilerCommon.hpp
+        ast_tree/ast_node.cpp include/ast_node.hpp
     cParser.cpp cParser.hpp cScanner.cpp
-    )
+        ast_tree/array_node.cpp include/array_node.hpp ast_tree/func_node.cpp include/func_node.hpp ast_tree/expr_node.cpp include/expr_node.hpp ast_tree/ctrl_node.cpp include/ctrl_node.hpp ast_tree/stat_node.cpp include/stat_node.hpp ast_tree/struct_node.cpp include/struct_node.hpp)
 
 set_target_properties(zjucmm PROPERTIES LINK_LIBRARIES "${LLVM_LINK_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${JSONCPP_LIBRARIES})

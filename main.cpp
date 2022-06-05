@@ -1,4 +1,4 @@
-#include "./cCompilerCommon.hpp"
+#include "include/ast_node.hpp"
 #include <iostream>
 #include <fstream>
 #include <llvm/IR/LegacyPassManager.h>
@@ -16,6 +16,12 @@
 #include <llvm/ADT/Optional.h>
 #include <llvm/Support/FormattedStream.h>
 #include <llvm/Support/FileSystem.h>
+
+#include "include/array_node.hpp"
+#include "include/expr_node.hpp"
+#include "include/func_node.hpp"
+#include "include/ctrl_node.hpp"
+#include "include/stat_node.hpp"
 
 extern Node *makeParseTree();
 //extern Module* TheModule;
@@ -42,7 +48,10 @@ int main(){
     TheModule->print(outs(), aaw);
     e.flush();
 
+<<<<<<< HEAD
     // generate object file
+=======
+>>>>>>> 4761a95ee0c6901f61c840986133a2ab144a7f83
 
     InitializeAllTargetInfos();
     InitializeAllTargets();

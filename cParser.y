@@ -1,5 +1,5 @@
 %{
-#include"./cCompilerCommon.hpp"
+#include"./include/ast_node.hpp"
 extern int yylex();
 extern char *yytext;
 static bool noError = true;
@@ -25,7 +25,13 @@ static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
 static void error_functionReturnsArray();
 %}
 %code requires {
-#include"./cCompilerCommon.hpp"
+#include "./include/ast_node.hpp"
+#include "./include/array_node.hpp"
+#include "./include/expr_node.hpp"
+#include "./include/ctrl_node.hpp"
+#include "./include/func_node.hpp"
+#include "./include/stat_node.hpp"
+#include "./include/struct_node.hpp"
 }
 
 %union{
@@ -36,7 +42,7 @@ static void error_functionReturnsArray();
     IdentifierNode* identifierNodePtr;
     VarDeclarationList* varDeclarationListPtr;
     StatementNodesBlock* statementNodesBlockPtr;
-    GlobalDeclaraionNode * globalDeclaraionNodePtr;
+    GlobalDeclarationNode * globalDeclarationNodePtr;
     std::vector<VarDeclarationList*> * structMemberListPtr;
     std::vector<ExpressionNode*> * ExpressionNodeListPtr;
 }
@@ -52,7 +58,7 @@ static void error_functionReturnsArray();
 %type<varDeclarationListPtr> paramTypes 
 %type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement structMemberDeclarations structMemberDeclaration
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
-%type<globalDeclaraionNodePtr> cCode0 cCode 
+%type<globalDeclarationNodePtr> cCode0 cCode
 %type<nodePtr> structTypeName pointerSpecifier 
 %type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration 
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
@@ -79,7 +85,7 @@ cCode0 :
 
 cCode :
         globalDeclaration {
-            $$ = new GlobalDeclaraionNode(dynamic_cast<StatementNodesBlock*>($1));
+            $$ = new GlobalDeclarationNode(dynamic_cast<StatementNodesBlock*>($1));
         }
     |   cCode globalDeclaration {
             $$ = $1;
@@ -897,14 +903,14 @@ static void error_illegalArraySize(Node * c){
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
 static void error_expressionTypeError(Node *exp1, Node *op, Node *exp2){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
+//    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
 }
 static void error_expressionTypeError(Node *exp1, Node *op){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
+//    std::cout<<"[ERROR] ";
+//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
+//    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
 }
 
 static void error_variableNotDeclaredInStruct(Node *v, Node *m){
