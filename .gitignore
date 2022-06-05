@@ -19,3 +19,5 @@ build/*
 *.o
 tester
 tester/*
+output.exe
+output.o

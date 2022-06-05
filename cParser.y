@@ -7,23 +7,13 @@ static Node *treeRoot;
 static NameCounter nameCounter;
 int yyerror(std::string);
 static void error_missingSemicolon();
-static void error_missingInitializations();
 static void error_wrongStatement();
 static void error_wrongExpression();
 static void error_missingRightBrancket();
 static void error_missingRightBrancket2();
 static void error_elseWithNoIf();
-static void eatToNewLine();
-static void error_duplicatedVariable(Node *);
-static void error_variableNotDeclared(std::string);
 static void error_illegalArraySize(Node *);
-static void error_expressionTypeError(Node *,Node *,Node *);
-static void error_expressionTypeError(Node *,Node *);
-static void error_typeMismatch(Node *);
-static void error_variableNotDeclaredInStruct(Node *,Node *);
-static void error_argumentNumberNotMatch(Node *,int);
 static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node *,std::vector<std::string>&);
-static void error_structNotDeclared(std::string);
 static void error_notArray(Node *);
 static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give);
 static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
@@ -59,13 +49,13 @@ static void error_functionReturnsArray();
 
 
 %type<identifierNodeListPtr> initializations structMembers
-%type<identifierNodePtr> initialization IDENTIFIER  typeName type
+%type<identifierNodePtr> initialization IDENTIFIER typeName type
 %type<varDeclarationListPtr> paramTypes 
 %type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement structMemberDeclarations structMemberDeclaration
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 %type<globalDeclarationNodePtr> cCode0 cCode
 %type<nodePtr> structTypeName pointerSpecifier 
-%type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration localDeclarations 
+%type<nodePtr> variable variableName  paramTypeName variableWithNoName variableWithNoNameCore initialValue initialValues functionDeclaration 
 %type<nodePtr>  expressionStatement loopStatement branchStatement caseBlock caseStatements jumpStatement expression assignmentExpression tenaryConditionExpression
 %type<nodePtr> logicalOrExpression logicalAndExpression bitwiseOrExpression bitwiseExclusiveOrExpression bitwiseAndExpression equalityComparisonExpression 
 %type<nodePtr> shiftExpression arithmeticAddExpression arithmeticMulExpression castedExpression unaryExpression prefixUnaryExpression postfixUnaryExpression 
@@ -109,16 +99,6 @@ globalDeclaration :
             $$ = new StatementNodesBlock(); 
             $$->addStatementNode(dynamic_cast<StatementNode*>($1));
         }
-
-    
-    /* |   statement { // 不允许在全局范围内出现不是定义的语句。 
-            yyerror("syntax error");
-            std::cout<<"C-- only supports statements within a function.\n";
-        }
-    |   '}' {
-            yyerror("syntax error");
-            std::cout<<"a '}' without its '{'.\n";
-        } */
     ;
 
 
@@ -199,9 +179,6 @@ structTypeName :
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($2->getTokenValue()/*nameCounter.getNumberedName($2->getTokenValue())*/);
             $$->setPosition($1);
-            if(symbolTableStack->lookUp($2->getTokenValue())==0){
-                error_structNotDeclared($2->getTokenValue());
-            }
         }
     ;
 
@@ -259,9 +236,7 @@ initialization :
     ;
 
 variable :
-        pointerSpecifier variableName {  /* int *a; 指针变量，这里不打算实现。 */
-           // $$ = new Node(nameCounter.getNumberedName("variable"), 2, $1, $2);
-        }
+        pointerSpecifier variableName {  /* int *a; 指针变量，这里不打算实现。 */}
     |   variableName { /* 不是指针的变量 */
             $$ = $1;
         }
@@ -269,18 +244,10 @@ variable :
 
 /* 我们不打算实现指针。 */
 pointerSpecifier :
-        '*' { /* a simple pointer */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 1, $1);
-        }
-    |   pointerSpecifier '*' { /* a pointer to another pointer variable */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, $1, $2);
-        }
-    |   '*' CONST { /* a pointer to a const variable */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, $1, $2);
-        }
-    |   pointerSpecifier '*' CONST { /* a pointer to another pointer which is a pointer to a const value */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 3, $1, $2, $3);
-        }
+        '*' { /* a simple pointer */}
+    |   pointerSpecifier '*' { /* a pointer to another pointer variable */ }
+    |   '*' CONST { /* a pointer to a const variable */ }
+    |   pointerSpecifier '*' CONST { /* a pointer to another pointer which is a pointer to a const value */ }
     ;
 
 variableName :
@@ -301,9 +268,7 @@ variableName :
 
             }
         }
-    |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
-        }
+    |   '(' variable ')' { /* 这一条弃之不用，太复杂了 */}
     |   variableName '(' ')' {           /* 函数定义 */
            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
         }
@@ -325,52 +290,29 @@ paramTypes :    /* 参数可以没有名字、只有类型。但是我们的参�
 
 paramTypeName :
     /*
-        type {   // int (*f)(double,char); 不实现这一条，太复杂 
-            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 1, $1);
-        }
-    |   type variableWithNoName { // 无名字的指针变量。不实现这一条，天复杂 
-            $$ = new Node(nameCounter.getNumberedName("paramTypeName"), 2, $1, $2);
-        }
+        type {   // int (*f)(double,char); 不实现这一条，太复杂 }
+    |   type variableWithNoName { // 无名字的指针变量。不实现这一条，天复杂 }
     |   */
         type variable {      // 这一条是要正常实现的，定义函数用的 
             $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
-
         }
     ;
 
 /* 不用管这个，都不实现的。 */
 variableWithNoName :        /* !! 如果要阅读这个的话，请和 variable 相关的产生式一起阅读 !!*/
-        pointerSpecifier {       /* 不实现指针 */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
-        }
-    |   variableWithNoNameCore { 
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoName"), 1, $1);
-        }
+        pointerSpecifier {       /* 不实现指针 */}
+    |   variableWithNoNameCore {}
     ;
 
 /* 不用管这个，都不实现的。 */
 variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
-        variableWithNoNameCore '[' INT_NUMBER ']' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
-        }
-    |   '(' variableWithNoName ')' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
-    |   variableWithNoNameCore '(' ')' {  /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
-    |   variableWithNoNameCore '(' paramTypes ')' { /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 4, $1, $2, $3, $4);
-        }
-    |   '[' ']' {            /* because it has no name, it must stop some way. Below is some terminators */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
-        }
-    |   '(' ')' {
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 2, $1, $2);
-        }
-    |   '(' paramTypes ')' { /* a function taking another function as param... */
-            $$ = new Node(nameCounter.getNumberedName("variableWithNoNameCore"), 3, $1, $2, $3);
-        }
+        variableWithNoNameCore '[' INT_NUMBER ']' {}
+    |   '(' variableWithNoName ')' {}
+    |   variableWithNoNameCore '(' ')' {  /* a function taking another function as param... */}
+    |   variableWithNoNameCore '(' paramTypes ')' { /* a function taking another function as param... */}
+    |   '[' ']' { /* because it has no name, it must stop some way. Below is some terminators */}
+    |   '(' ')' {}
+    |   '(' paramTypes ')' { /* a function taking another function as param... */}
     ;
 
 /* 初始值，如果要在定义的时候初始化的话，initialValue 就是跟在 = 后面的部分。有时间的话就实现一下初始值，没时间就算了。 */
@@ -411,31 +353,8 @@ statementBlock :
     |   '{' statements '}' {
             $$ = $2;
         }
-
-    /* 暂时先不管
-    |   '{' localDeclarations '}' {
-            $$ = new Node(nameCounter.getNumberedName("statementBlock"), 3, $1, $2, $3);
-        }
-    |   '{' localDeclarations statements '}' { // 如果要定义局部变量，必须要把所有的定义语句语句块的最前面。
-            $$ = new Node(nameCounter.getNumberedName("statementBlock"), 4, $1, $2, $3, $4);
-        }
-    |   '{' localDeclarations statements error '}' {
-            yyerror("Declaration after statements");
-        }
-    */
-        
     ;
 
-/* 局部变量定义。和全局定义的区别在于，局部不能定义函数。 */
-localDeclarations :
-        declaration {
-            $$ = new Node(nameCounter.getNumberedName("localDeclarations"), 1, $1);
-        }
-    |   localDeclarations declaration {
-            $$ = $1;
-            $$->addChild($2);
-        }
-    ;
 
 statements :    /* 一串语句 */
         statement {
@@ -459,12 +378,8 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
             $$ = new StatementNodesBlock();
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
-    |   { symbolTableStack->push(new SymbolTable(nameCounter.getNumberedName("NestedBlock"))); } statementBlock { // 语句块
-            // 注：非函数体的语句块是管变量的生命周期的，所以这里要维护符号表。 
-            // 不能把这个维护放在 statementBlock:'{'...'}' 这个产生式里面，因为这样的话函数体语句块会维护两次符号表。 
-            // $$ = new Node(nameCounter.getNumberedName("statement"), 1, $2);
-            $$ = $2;
-            symbolTableStack->pop();
+    |   statementBlock { // 语句块
+            $$ = $1;
         }     
     |   branchStatement {
             $$ = new StatementNodesBlock();
@@ -474,9 +389,6 @@ statement :     /* 一个语句，以封号“;”结尾。（但是语句块可
             $$ = new StatementNodesBlock();
             $$->addStatementNode(dynamic_cast<StatementNode *>($1));
         }
-    |   error ';' {
-        error_wrongStatement();
-    } 
     ;
 
 expressionStatement :
@@ -501,9 +413,7 @@ loopStatement : /* for, while, do-while */
             $$ = new WhileStatementNode(dynamic_cast<ExpressionStatementNode *>($3), dynamic_cast<StatementNodesBlock *>($5));
         }
     // do-while暂不实现
-    |   DO statement WHILE '(' expression ')' ';' {
-            $$ = new Node(nameCounter.getNumberedName("loopStatement"), 7, $1, $2, $3, $4, $5, $6, $7);
-        }
+    |   DO statement WHILE '(' expression ')' ';' {}
     
     |   WHILE '(' expression error { error_missingRightBrancket(); } ')' statement /* error recovery */
     |   WHILE '(' error { error_wrongExpression; } ')' statement { 
@@ -563,15 +473,8 @@ expression :
         assignmentExpression {
             $$ = $1;
         }
-    // 暂时先不实现 TODO
-    /* 
-    |   expression ',' assignmentExpression {
-            $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
-            // 一串逗号分隔的表达式的值，是最后一个表达式的值。
-            $$->copyFrom($$->getChildrenById($$->getChildrenNumber()-1));
-        }
+    /* // 暂时先不实现 TODO
+    |   expression ',' assignmentExpression {}
     */
     ;
 
@@ -591,56 +494,13 @@ assignmentExpression :
             }else{
                 std::cout<<"Some thing wrong at line "<<csLineCnt<<std::endl;
             }
-            if(!typeMatch($1, $3)){
-                error_typeMismatch($1);
-            }
 
         }
-    // 暂时只实现= TODO
-    /* |   unaryExpression ADD_ASSIGN assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1, Node::KIND_VARIABLE))){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if(!typeMatch($1, $3)){
-                error_typeMismatch($1);
-            }
-        }
-    |   unaryExpression SUB_ASSIGN assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE))){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if(!typeMatch($1,$3)){
-                error_typeMismatch($1);
-            }
-        }
-    |   unaryExpression MUL_ASSIGN assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE))){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if(!typeMatch($1,$3)){
-                error_typeMismatch($1);
-            }
-        }
-    |   unaryExpression DIV_ASSIGN assignmentExpression {
-            $2 = new AssignmentNode($2->getName(), 2, $1, $3);
-            $$ = $2;
-            $$->copyFromChild();
-            if(!(checkKind($1,Node::KIND_VARIABLE))){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if(!typeMatch($1,$3)){
-                error_typeMismatch($1);
-            }
-        } */
+    /* 暂时未实现, TODO
+    |   unaryExpression ADD_ASSIGN assignmentExpression {}
+    |   unaryExpression SUB_ASSIGN assignmentExpression {}
+    |   unaryExpression MUL_ASSIGN assignmentExpression {}
+    |   unaryExpression DIV_ASSIGN assignmentExpression {} /*
     ;
 
 /* PRIORITY 13: "?:" tenary conditional operator */
@@ -655,12 +515,6 @@ tenaryConditionExpression :
             $$->setType(Node::TYPE_INT);
             if($3->getType()==Node::TYPE_DOUBLE||$5->getType()==Node::TYPE_DOUBLE)$$->setType(Node::TYPE_DOUBLE);
             $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT))){
-                error_expressionTypeError($1,$$);
-            }
-            if($1->isArray()){
-                error_expressionTypeError($1,$$);
-            }
         }
     ;
 
@@ -673,11 +527,6 @@ logicalOrExpression :
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -690,11 +539,6 @@ logicalAndExpression :
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -707,11 +551,6 @@ bitwiseOrExpression :
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -724,12 +563,6 @@ bitwiseExclusiveOrExpression :
     |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -742,11 +575,6 @@ bitwiseAndExpression :
     |   bitwiseAndExpression '&' equalityComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -760,23 +588,10 @@ equalityComparisonExpression :
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
 
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-
-
-            if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   equalityComparisonExpression NE relationComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(!typeMatch($1,$3) || $1->getType()==Node::TYPE_VOID || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -789,54 +604,18 @@ relationComparisonExpression :
     |   relationComparisonExpression '<' shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   relationComparisonExpression '>' shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   relationComparisonExpression LE shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   relationComparisonExpression GE shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
-            if(checkType($1,Node::TYPE_STRUCT)||checkType($1,Node::TYPE_VOID)||checkType($1,Node::TYPE_STRING)||checkType($3,Node::TYPE_STRUCT)||checkType($3,Node::TYPE_VOID)||checkType($3,Node::TYPE_STRING)){
-                error_expressionTypeError($1,$2,$3);
-            }
-            if($1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -849,18 +628,10 @@ shiftExpression :
     |   shiftExpression SL arithmeticAddExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   shiftExpression SR arithmeticAddExpression  {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-
-            if(!(checkType($1,Node::TYPE_INT)&&checkType($3,Node::TYPE_INT)) || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -873,20 +644,10 @@ arithmeticAddExpression :
     |   arithmeticAddExpression '+' arithmeticMulExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
             $$->setPosition($2);
-
-            // 不知道要不要留
-            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   arithmeticAddExpression '-' arithmeticMulExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
             $$->setPosition($2);
-
-            // 不知道要不要留
-            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
@@ -899,35 +660,19 @@ arithmeticMulExpression :
     |   arithmeticMulExpression '*' castedExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
             $$->setPosition($2);
-
-            // 不知道要不要留
-            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   arithmeticMulExpression '/' castedExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
             $$->setPosition($2);
-
-            // 不知道要不要留
-            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     |   arithmeticMulExpression '%' castedExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3));
             $$->setPosition($2);
-
-            // 不知道要不要留
-            if($1->getType()==Node::TYPE_STRUCT || $3->getType()==Node::TYPE_STRUCT || $1->isArray() || $3->isArray()){
-                error_expressionTypeError($1,$2,$3);
-            }
         }
     ;
 
 /* PRIORITY 2: typecasting */
 /* 类型转换这个我们不实现。只用第一个产生式。 */
-
 castedExpression :
        unaryExpression {
             $$ = $1;
@@ -948,43 +693,24 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$->copyFromChild();
-            if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($2,$1);
-            }
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$->copyFromChild();
-            if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($2,$1);
-            }
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
             $$->copyFromChild();
-            if(!checkType($2, Node::TYPE_INT)){
-                error_expressionTypeError($2,$1);
-            }
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
             $$->copyFromChild();
-            if(!checkType($2, Node::TYPE_INT)){
-                error_expressionTypeError($2,$1);
-            }
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
-            if(checkType($2, Node::TYPE_STRUCT)){
-                error_expressionTypeError($2,$1);
-            }
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
+            $$->copyFromChild();
         }
     ;
 
@@ -993,20 +719,12 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$ = $2;
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$->copyFromChild();
-            if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2);
-            }
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$ = $2;
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$->copyFromChild();
-            if(!checkKind($1, Node::KIND_VARIABLE) || $1->isArray() || $1->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($1,$2);
-            }
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
             if(dynamic_cast<IdentifierNode*>($1)!=NULL){
@@ -1033,16 +751,6 @@ postfixUnaryExpression :
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
             $$->setPosition($2);
-            if(checkKind($1, Node::KIND_ATTRIBUTE) || !(checkType($1, Node::TYPE_STRUCT)) || $1->isArray())
-                error_expressionTypeError($1,$2);
-            else {
-                auto symbolTable = SymbolTable::getSymbolTableByName($1->getStructTypeName());
-            
-                if(symbolTable->lookUp($3->getTokenValue()) == NULL)
-                    error_variableNotDeclaredInStruct($1,$3);
-                
-                $$->copyFrom(symbolTable->lookUp($3->getTokenValue()));
-            }
         }
     |   postfixUnaryExpression '[' expression error  {
             error_missingRightBrancket2();
@@ -1066,11 +774,6 @@ atomicExpression :
         IDENTIFIER {
             $$ = $1;
             $$ = new IdentifierNode($1->getTokenValue(), false);
-            if(symbolTableStack->lookUp($1->getTokenValue())==NULL){
-                error_variableNotDeclared($1->getTokenValue());
-            }else{
-                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()));
-            }
             $$->setPosition(csLineCnt, csColumnCnt);
 
         }
@@ -1083,7 +786,6 @@ atomicExpression :
             $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   STRING {
-            $$ = $1;
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setType(Node::TYPE_STRING);
             $$->setPosition(csLineCnt, csColumnCnt);
@@ -1124,51 +826,15 @@ static void error_elseWithNoIf(){
     std::cout<<"[ERROR] ";
     printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
 }
-static void error_duplicatedVariable(Node *c){
-    std::cout<<"[ERROR] ";
-    std::cout<<"variable \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<""<<" has been declared before.\n";
-    std::cout<<" Hint: first declaraed at line "<<symbolTableStack->lookUp(c->getSymbolName())->lineNumber<<", near column "<<symbolTableStack->lookUp(c->getSymbolName())->columnNumber<<std::endl;
-}
-static void error_variableNotDeclared(std::string name){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"variable \""<<name<<"\" was not declared.\n";
-//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
-}
-static void error_structNotDeclared(std::string name){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
-//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
-}
+
+
 static void error_illegalArraySize(Node * c){
     std::cout<<"[ERROR] ";
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
-static void error_expressionTypeError(Node *exp1, Node *op, Node *exp2){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-//    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
-}
-static void error_expressionTypeError(Node *exp1, Node *op){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-//    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
-}
-static void error_typeMismatch(Node *c){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Type mismatch at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<"\n";
-    std::cout<<" Hint: are you putting an array at the left hand of \'=\', or using \'=\' to connect two mismatched type?\n";
-}
-static void error_variableNotDeclaredInStruct(Node *v, Node *m){
-    std::cout<<"[ERROR] variable \""<<v->getSymbolName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
-    auto symattribute = symbolTableStack->lookUp(v->getSymbolName());
-    if(symattribute){
-        std::cout<<" Hint: you declared this variable at line "<<symattribute->lineNumber<<" near column "<<symattribute->columnNumber<<std::endl;
-    }
-}
-static void error_argumentNumberNotMatch(Node *f,int an){
-    std::cout<<"[ERROR] function's argument number not match at line "<<f->getLineNumber()<<" near column "<<f->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<f->getSymbolName()<<"\" needs "<<f->getArgList().size()<<" arguments but you gave "<<an<<".\n";
-}
+
+
+
 static void error_notArray(Node *c){
     std::cout<<"[ERROR] \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
     std::cout<<" Hint: are you using too many \"[]\"\'s to access an array?\n";//'
@@ -1223,18 +889,7 @@ static void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *f
     }
     std::cout<<")\n";
 }
-static void eatToNewLine(){ /* 该函数已弃置不用 */
-    std::cout<<"eating:\n";
-    char c;
-    while((c=getchar())!=EOF && c!='\n'){
-        //std::cout<<c;
-    }
-    std::cout<<"last eaten: \\"<<(int)c<<std::endl;
-    if(c=='\n'){
-        csLineCnt++;
-        csColumnCnt=0;
-    }
-}
+
 Node *makeParseTree(){
     yyparse();
     if(!noError){
