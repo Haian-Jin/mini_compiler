@@ -3,9 +3,19 @@
 #include "ast_node.hpp"
 #include "stat_node.hpp"
 
+struct Index_Type{
+    int index;
+    llvm::Type::TypeID type;
+    bool isPtr = false;
+    std::vector<int> arraySizes;
+};
+
+extern std::unordered_map<std::string, std::unordered_map<std::string, Index_Type>*> structMap;
 /*
  * Not implemented yet
  */
+
+
 
 class StructDeclarationNode : public StatementNode {
 protected:
@@ -38,6 +48,8 @@ public:
     std::string getNodeTypeName() const override;
 
     Json::Value jsonGen() const override;
+
+    llvm::Value *addrGen(int ind=0) override;
 
     llvm::Value *codeGen() override;
 
