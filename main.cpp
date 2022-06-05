@@ -48,10 +48,6 @@ int main(){
     TheModule->print(outs(), aaw);
     e.flush();
 
-<<<<<<< HEAD
-    // generate object file
-=======
->>>>>>> 4761a95ee0c6901f61c840986133a2ab144a7f83
 
     InitializeAllTargetInfos();
     InitializeAllTargets();

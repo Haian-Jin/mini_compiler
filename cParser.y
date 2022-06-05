@@ -12,13 +12,8 @@ static void error_wrongExpression();
 static void error_missingRightBrancket();
 static void error_missingRightBrancket2();
 static void error_elseWithNoIf();
-static void error_variableNotDeclared(std::string);
 static void error_illegalArraySize(Node *);
-static void error_expressionTypeError(Node *,Node *,Node *);
-static void error_expressionTypeError(Node *,Node *);
-static void error_variableNotDeclaredInStruct(Node *,Node *);
 static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node *,std::vector<std::string>&);
-static void error_structNotDeclared(std::string);
 static void error_notArray(Node *);
 static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give);
 static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
@@ -54,7 +49,7 @@ static void error_functionReturnsArray();
 
 
 %type<identifierNodeListPtr> initializations structMembers
-%type<identifierNodePtr> initialization IDENTIFIER  typeName type
+%type<identifierNodePtr> initialization IDENTIFIER typeName type
 %type<varDeclarationListPtr> paramTypes 
 %type<statementNodesBlockPtr>  globalDeclaration declaration statementBlock statements statement structMemberDeclarations structMemberDeclaration
 %type<nodePtr> GOTO ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN LOGICAL_OR LOGICAL_AND EQ NE GE LE SL SR INC DEC DOUBLE_NUMBER INT_NUMBER STRING FOR DO WHILE CONTINUE BREAK IF ELSE SWITCH CASE RETURN STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
@@ -184,9 +179,6 @@ structTypeName :
             $$->setKind(Node::KIND_ATTRIBUTE);
             $$->setStructTypeName($2->getTokenValue()/*nameCounter.getNumberedName($2->getTokenValue())*/);
             $$->setPosition($1);
-            if(symbolTableStack->lookUp($2->getTokenValue())==0){
-                error_structNotDeclared($2->getTokenValue());
-            }
         }
     ;
 
@@ -252,18 +244,10 @@ variable :
 
 /* 我们不打算实现指针。 */
 pointerSpecifier :
-        '*' { /* a simple pointer */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 1, $1);
-        }
-    |   pointerSpecifier '*' { /* a pointer to another pointer variable */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, $1, $2);
-        }
-    |   '*' CONST { /* a pointer to a const variable */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 2, $1, $2);
-        }
-    |   pointerSpecifier '*' CONST { /* a pointer to another pointer which is a pointer to a const value */
-            $$ = new Node(nameCounter.getNumberedName("pointerSpecifier"), 3, $1, $2, $3);
-        }
+        '*' { /* a simple pointer */}
+    |   pointerSpecifier '*' { /* a pointer to another pointer variable */ }
+    |   '*' CONST { /* a pointer to a const variable */ }
+    |   pointerSpecifier '*' CONST { /* a pointer to another pointer which is a pointer to a const value */ }
     ;
 
 variableName :
@@ -284,9 +268,7 @@ variableName :
 
             }
         }
-    |   '(' variable ')' {              /* 这一条弃之不用，太复杂了 */
-            $$ = new Node(nameCounter.getNumberedName("variableName"), 3, $1, $2, $3);
-        }
+    |   '(' variable ')' { /* 这一条弃之不用，太复杂了 */}
     |   variableName '(' ')' {           /* 函数定义 */
            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
         }
@@ -491,15 +473,8 @@ expression :
         assignmentExpression {
             $$ = $1;
         }
-    // 暂时先不实现 TODO
-    /* 
-    |   expression ',' assignmentExpression {
-            $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
-            // 一串逗号分隔的表达式的值，是最后一个表达式的值。
-            $$->copyFrom($$->getChildrenById($$->getChildrenNumber()-1));
-        }
+    /* // 暂时先不实现 TODO
+    |   expression ',' assignmentExpression {}
     */
     ;
 
@@ -552,8 +527,6 @@ logicalOrExpression :
     |   logicalOrExpression LOGICAL_OR logicalAndExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -566,8 +539,6 @@ logicalAndExpression :
     |   logicalAndExpression LOGICAL_AND bitwiseOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -580,8 +551,6 @@ bitwiseOrExpression :
     |   bitwiseOrExpression '|' bitwiseExclusiveOrExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -594,8 +563,6 @@ bitwiseExclusiveOrExpression :
     |   bitwiseExclusiveOrExpression '^' bitwiseAndExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -608,8 +575,6 @@ bitwiseAndExpression :
     |   bitwiseAndExpression '&' equalityComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -622,15 +587,11 @@ equalityComparisonExpression :
     |   equalityComparisonExpression EQ relationComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
 
         }
     |   equalityComparisonExpression NE relationComparisonExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -643,26 +604,18 @@ relationComparisonExpression :
     |   relationComparisonExpression '<' shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     |   relationComparisonExpression '>' shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     |   relationComparisonExpression LE shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     |   relationComparisonExpression GE shiftExpression {
             $$ = new BinaryOperatorNode($2->getTokenValue(), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), false);
             $$->setPosition($2);
-            $$->setType(Node::TYPE_INT);
-            $$->setKind(Node::KIND_CONSTANT);
         }
     ;
 
@@ -740,31 +693,24 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$->copyFromChild();
-            if(!checkKind($2, Node::KIND_VARIABLE) || $2->isArray() || $2->getType()==Node::TYPE_STRUCT){
-                error_expressionTypeError($2,$1);
-            }
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $1 = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
             $$->copyFromChild();
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
             $$->copyFromChild();
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
             $$->copyFromChild();
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $1 = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$ = $1;
+            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
+            $$->copyFromChild();
         }
     ;
 
@@ -773,13 +719,11 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$ = $2;
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$->copyFromChild();
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $2 = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$ = $2;
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
             $$->copyFromChild();
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
@@ -830,11 +774,6 @@ atomicExpression :
         IDENTIFIER {
             $$ = $1;
             $$ = new IdentifierNode($1->getTokenValue(), false);
-            if(symbolTableStack->lookUp($1->getTokenValue())==NULL){
-                error_variableNotDeclared($1->getTokenValue());
-            }else{
-                $$->setAttribute(symbolTableStack->lookUp($1->getTokenValue()));
-            }
             $$->setPosition(csLineCnt, csColumnCnt);
 
         }
@@ -888,38 +827,13 @@ static void error_elseWithNoIf(){
     printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
 }
 
-static void error_variableNotDeclared(std::string name){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"variable \""<<name<<"\" was not declared.\n";
-//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
-}
-static void error_structNotDeclared(std::string name){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"struct type name \""<<name<<"\" was not declared.\n";
-//    std::cout<<" Hint: first used at line "<<csLineCnt<<", near column "<<csColumnCnt<<std::endl;
-}
+
 static void error_illegalArraySize(Node * c){
     std::cout<<"[ERROR] ";
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
-static void error_expressionTypeError(Node *exp1, Node *op, Node *exp2){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-//    std::cout<<" Type "<<exp1->getTypeString()<<" and type "<<exp2->getTypeString()<<" are not match for the operator \""<<op->getTokenValue()<<"\"\n";
-}
-static void error_expressionTypeError(Node *exp1, Node *op){
-//    std::cout<<"[ERROR] ";
-//    std::cout<<"Type error at line "<<op->getLineNumber()<<" near column "<<op->getColumnNumber()<<":\n";
-//    std::cout<<" Type "<<exp1->getTypeString()<<" is not supported for the operator \""<<op->getTokenValue()<<"\"\n";
-}
 
-static void error_variableNotDeclaredInStruct(Node *v, Node *m){
-    std::cout<<"[ERROR] variable \""<<v->getSymbolName()<<"\" dose not has member \""<<m->getTokenValue()<<"\"\n";
-    auto symattribute = symbolTableStack->lookUp(v->getSymbolName());
-    if(symattribute){
-        std::cout<<" Hint: you declared this variable at line "<<symattribute->lineNumber<<" near column "<<symattribute->columnNumber<<std::endl;
-    }
-}
+
 
 static void error_notArray(Node *c){
     std::cout<<"[ERROR] \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";

@@ -348,15 +348,15 @@ BinaryOperatorNode::BinaryOperatorNode(std::string opType, ExpressionNode *lhs, 
     assert(rhs != nullptr);
     assert(opType != "");
     this->setType(Node::TYPE_INT);
-    // this->setKind() HERE
+    this->setKind(Node::KIND_CONSTANT); //defualt for non-arithmetic operation
     mLeftHandSide = lhs;
     mRightHandSide = rhs;
     op = opType;
 
     if (isArithmetic) // + - * / %
     {
-        if (lhs->getType() == Node::TYPE_DOUBLE ||
-            rhs->getType() == Node::TYPE_DOUBLE) {
+        if (lhs->getType() == Node::TYPE_DOUBLE || rhs->getType() == Node::TYPE_DOUBLE) 
+        {
             this->setType(Node::TYPE_DOUBLE);
         }
     }
