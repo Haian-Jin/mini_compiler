@@ -24,10 +24,7 @@ using std::string;
 int main(){
     csLineCnt++;
     Node *treeRoot = makeParseTree();
-
-
     auto root = treeRoot->jsonGen();
-
 
     string jsonFile = "./A_tree.json";
     string objectFile = "output.o";
@@ -45,13 +42,7 @@ int main(){
     TheModule->print(outs(), aaw);
     e.flush();
 
-    //aaw->printInfoComment()
-    //errs()<<"foo\n";
-    //TheModule->dump();=-
-//    printf("print finished\n");
-//    if(treeRoot->semanticCheck());
-
-
+    // generate object file
 
     InitializeAllTargetInfos();
     InitializeAllTargets();

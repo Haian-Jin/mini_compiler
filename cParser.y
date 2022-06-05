@@ -307,7 +307,6 @@ paramTypeName :
     |   */
         type variable {      // 这一条是要正常实现的，定义函数用的 
             $$ = new VariableDeclarationNode(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($2));
-
         }
     ;
 
