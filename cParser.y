@@ -117,6 +117,9 @@ declaration :
             StructDeclarationNode * structDecTemp = new StructDeclarationNode(dynamic_cast<IdentifierNode *>($2), dynamic_cast<StatementNodesBlock *>($4));
             $$->addStatementNode(dynamic_cast<StatementNode *>(structDecTemp));
         }
+    |   type initializations error  {
+            error_missingSemicolon();
+        } 
     ;
 
 type :
@@ -799,11 +802,10 @@ atomicExpression :
 %%
 int yyerror(std::string s){
     noError = false;
-    printf("syntax error at line %d, column %d.\n", csLineCnt, csColumnCnt);
+    // printf("syntax error at line %d, column %d.\n", csLineCnt, csColumnCnt);
 }
 static void error_missingSemicolon(){
-    std::cout<<"[ERROR] ";
-    printf("Missing \';\' at line %d, after column %d\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    LogErrorV("Missing \';\' at line" +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));
 }
 static void error_wrongStatement(){
     std::cout<<"[ERROR] ";
