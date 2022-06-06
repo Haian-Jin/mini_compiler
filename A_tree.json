@@ -1,0 +1,93 @@
+{
+	"children" : 
+	[
+		{
+			"children" : 
+			[
+				{
+					"children" : 
+					[
+						{
+							"name" : "TypeNode: int"
+						}
+					],
+					"name" : "ReturnType"
+				},
+				{
+					"children" : 
+					[
+						{
+							"name" : "IdentifierNode: main"
+						}
+					],
+					"name" : "FuncName"
+				},
+				{
+					"name" : "Paras"
+				},
+				{
+					"children" : 
+					[
+						{
+							"children" : 
+							[
+								{
+									"children" : 
+									[
+										{
+											"name" : "TypeNode: int"
+										},
+										{
+											"name" : "IdentifierNode: j"
+										}
+									],
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: j"
+												},
+												{
+													"name" : "IntNode:1"
+												}
+											],
+											"name" : "AssignmentNode ="
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "IdentifierNode: i"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "IdentifierNode: j"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								}
+							],
+							"name" : "StatementsBlock"
+						}
+					],
+					"name" : "Body"
+				}
+			],
+			"name" : "FunctionDeclarationNode"
+		}
+	],
+	"name" : "CentralBlock"
+}

@@ -30,10 +30,7 @@ using std::string;
 int main(){
     csLineCnt++;
     Node *treeRoot = makeParseTree();
-
-
     auto root = treeRoot->jsonGen();
-
 
     string jsonFile = "./A_tree.json";
     string objectFile = "output.o";
