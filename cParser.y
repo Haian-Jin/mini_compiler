@@ -257,6 +257,8 @@ variableName :
         IDENTIFIER { /* 一个普通的变量 */
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setKind(Node::KIND_VARIABLE);
+            $$->setPosition(csLineCnt, csColumnCnt);
+
         }
     |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
