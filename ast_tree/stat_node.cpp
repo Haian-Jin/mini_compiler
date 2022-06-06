@@ -7,6 +7,7 @@
 #include "include/func_node.hpp"
 #include "include/ctrl_node.hpp"
 #include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 // ------------------------------StatementNode----------------------------------------
 StatementNode::StatementNode() : Node() {}
@@ -55,6 +56,20 @@ llvm::Value *VariableDeclarationNode::codeGen() {
                          "This type is not supported");
     }
     std::string ty = type->getSymbolName();
+    std::string name = id->getSymbolName();
+    if(tableStack.empty()) {
+        if(variableTable.find(name)!=variableTable.end()) {
+            return LogErrorV(std::to_string(id->getLineNumber()) + ":" +
+                             std::to_string(id->getColumnNumber()) + " " +
+                             "Redefinition of" + "\'"+ name + "\'");
+        }
+    } else {
+        if(tableStack.top()->find(name)!=tableStack.top()->end()) {
+            return LogErrorV(std::to_string(id->getLineNumber()) + ":" +
+                             std::to_string(id->getColumnNumber()) + " " +
+                             "Redefinition of" + "\'" + name + "\'");
+        }
+    }
     //std::cout<<"typeName: "<<ty<<std::endl;
     Value *res;
     llvm::Type::TypeID tor;
@@ -73,9 +88,15 @@ llvm::Value *VariableDeclarationNode::codeGen() {
                                                llvm::GlobalValue::PrivateLinkage, con_0(), id->getSymbolName());
                 tor = llvm::Type::IntegerTyID;
             } else {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                                 std::to_string(this->getColumnNumber()) + " " +
-                                 "This type is not supported");
+                if (structTable.find(ty)!=structTable.end()) {
+                    return LogErrorV(std::to_string(id->getLineNumber()) + ":" +
+                                     std::to_string(id->getColumnNumber()) + " " +
+                                     "Global structure is not supported");
+                } else {
+                    return LogErrorV(std::to_string(id->getLineNumber()) + ":" +
+                                     std::to_string(id->getColumnNumber()) + " " +
+                                     "This type is not supported");
+                }
             }
             Type_and_Address ret = {tor, res};
             variableTable[this->id->getSymbolName()] = ret;
@@ -90,9 +111,50 @@ llvm::Value *VariableDeclarationNode::codeGen() {
                 res = Builder.CreateAlloca(llvm::Type::getInt8Ty(TheContext));
                 tor = llvm::Type::IntegerTyID;
             } else {
-                return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                                 std::to_string(this->getColumnNumber()) + " " +
-                                 "This type is not supported");
+                if (structTable.find(ty)!=structTable.end()) {
+                    res = Builder.CreateAlloca(structTable[ty]);
+                    tor = llvm::Type::StructTyID;
+
+                    for (auto & item: *(structMap[ty])) {
+                        if (item.second.isPtr) {
+                            return LogErrorV(std::to_string(id->getLineNumber()) + ":" +
+                                             std::to_string(id->getColumnNumber()) + " " +
+                                             "This type is not supported");
+//                            llvm::Value* addr = nullptr;
+//                            auto dimSize = item.second.arraySizes;
+//                            int array_size = 1;
+//                            for (int a: dimSize) {
+//                                array_size *= a;
+//                            }
+//                            Value *ArraySize = ConstantInt::get(llvm::Type::getInt32Ty(TheContext), array_size, false);
+//                            if (item.second.type == llvm::Type::IntegerTyID) {
+//                                auto arrayType = llvm::ArrayType::get(llvm::Type::getInt32Ty(TheContext), array_size);
+//                                addr = Builder.CreateAlloca(arrayType,
+//                                                           ArraySize, id->getSymbolName()+"."+item.first);
+//                            } else if (item.second.type == llvm::Type::DoubleTyID) {
+//                                auto arrayType = llvm::ArrayType::get(llvm::Type::getDoubleTy(TheContext), array_size);
+//                                addr = Builder.CreateAlloca(arrayType,
+//                                                            ArraySize, id->getSymbolName()+"."+item.first);
+//                            } else if (item.second.type == llvm::Type::LabelTyID) {
+//                                auto arrayType = llvm::ArrayType::get(llvm::Type::getInt8Ty(TheContext), array_size);
+//                                addr = Builder.CreateAlloca(arrayType,
+//                                                            ArraySize, id->getSymbolName()+"."+item.first);
+//
+//                            }
+//
+//                          Builder.CreateStore(addr, )
+                        }
+                        Type_and_Address ret = {tor, res};
+                        ret.isStruct = true;
+                        ret.stName = ty;
+                        (*tableStack.top())[this->id->getSymbolName()] = ret;
+                    }
+
+                } else {
+                    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                                     std::to_string(this->getColumnNumber()) + " " +
+                                     "This type is not supported");
+                }
             }
             Type_and_Address ret = {tor, res};
             (*(tableStack.top()))[this->id->getSymbolName()] = ret;

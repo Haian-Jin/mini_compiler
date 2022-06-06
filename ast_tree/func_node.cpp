@@ -7,6 +7,7 @@
 #include "include/stat_node.hpp"
 #include "include/array_node.hpp"
 #include "include/func_node.hpp"
+#include "include/struct_node.hpp"
 
 //-----------------------FunctionDeclarationNode------------------------------------------------------
 
@@ -252,9 +253,11 @@ llvm::Value *FunctionCallNode::codeGen() {
         Function *CalleeF =
                 TheModule->getFunction(mFunctionName->getSymbolName());
         if (!CalleeF)
-            return LogErrorV(mFunctionName->getSymbolName() + "not declared");
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +"function: " + mFunctionName->getSymbolName() + " not defined");
         if (CalleeF->arg_size() != (*mArguments).size()) {
-            return LogErrorV("Incorrect # arguments passed");
+            return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
+                             std::to_string(this->getColumnNumber()) + " " +"Incorrect arguments passed");
         }
 
         std::vector<Value *> ArgsV;

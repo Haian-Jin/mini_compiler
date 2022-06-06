@@ -8,6 +8,7 @@
 #include "include/func_node.hpp"
 #include "include/ctrl_node.hpp"
 #include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 //--------------------------GlobalDeclarationNode--------------------------------
 
