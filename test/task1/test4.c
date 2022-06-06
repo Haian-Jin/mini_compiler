@@ -1,4 +1,6 @@
 int main(){
     int j;
-    j = 1;
+    int j;
+    return 0;
 }
+

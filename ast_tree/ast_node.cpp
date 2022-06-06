@@ -479,6 +479,7 @@ Value *LogErrorV(std::string str) { return LogErrorV(str.c_str()); }
 
 Value *LogErrorV(const char *Str) {
     LogError(Str);
+    exit(1);
     return nullptr;
 }
 

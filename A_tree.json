@@ -47,37 +47,22 @@
 									"children" : 
 									[
 										{
-											"children" : 
-											[
-												{
-													"name" : "IdentifierNode: j"
-												},
-												{
-													"name" : "IntNode:1"
-												}
-											],
-											"name" : "AssignmentNode ="
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
-										{
-											"name" : "IdentifierNode: i"
-										}
-									],
-									"name" : "ExpressionStatementNode"
-								},
-								{
-									"children" : 
-									[
+											"name" : "TypeNode: int"
+										},
 										{
 											"name" : "IdentifierNode: j"
 										}
 									],
-									"name" : "ExpressionStatementNode"
+									"name" : "VariableDeclarationNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "IntNode:0"
+										}
+									],
+									"name" : "ReturnStatement"
 								}
 							],
 							"name" : "StatementsBlock"

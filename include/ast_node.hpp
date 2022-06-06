@@ -38,6 +38,8 @@ struct Type_and_Address {
     llvm::Value *address;
     bool isPtr = false;
     std::vector<int> arraySizes;
+    bool isStruct = false;
+    std::string stName;
 };
 
 extern llvm::LLVMContext TheContext;

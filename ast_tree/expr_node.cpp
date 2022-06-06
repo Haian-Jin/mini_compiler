@@ -8,6 +8,7 @@
 #include "include/ctrl_node.hpp"
 #include "include/func_node.hpp"
 #include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 // -----------------------ExpressionNode-----------------------------
 ExpressionNode::ExpressionNode(std::string _symbolName, int childrenNumber, ...)
@@ -164,8 +165,8 @@ llvm::Value *AssignmentNode::codeGen() {
     Value *dst = res.address;
     if (!dst)
         return LogErrorV(std::to_string(mLeftHandSide->getLineNumber()) + ":" +
-                         std::to_string(mLeftHandSide->getColumnNumber()) + " " +
-                         "undeclared variable");
+                         std::to_string(mLeftHandSide->getColumnNumber()) + " "+ " undeclared variable: " +
+                                                                                 mLeftHandSide->getSymbolName());
     Value *R = mRightHandSide->codeGen();
     auto type_l = res.type;
     auto type_r = R->getType()->getTypeID();

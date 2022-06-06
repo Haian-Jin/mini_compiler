@@ -7,6 +7,7 @@
 #include "include/func_node.hpp"
 #include "include/ctrl_node.hpp"
 #include "include/stat_node.hpp"
+#include "include/struct_node.hpp"
 
 llvm::Value *calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionNode *> mArrayIndexs) {
     ExpressionNode *expression = *(mArrayIndexs.begin());
@@ -133,7 +134,7 @@ llvm::Value *ArrayIndexNode::addrGen(int ind) {
         auto ptr = Builder.CreateInBoundsGEP(value, indexs, "elementPtr");
         return ptr;
     } else {
-        return LogErrorV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+        return LogErrorV(std::to_string(mArrayName->getLineNumber()) + ":" + std::to_string(mArrayName->getColumnNumber()) +
                          " variable " + std::string(name) + " is not an array!");
     }
 }
@@ -180,12 +181,12 @@ llvm::Value *ArrayAssignmentNode::codeGen() {
     std::vector<int> arraySizes = ta.arraySizes;
 
     if (!value) {
-        res = LogErrorV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
+        res = LogErrorV(std::to_string(mLeftHandSide->mArrayName->getLineNumber()) + ":" + std::to_string(mLeftHandSide->mArrayName->getColumnNumber()) +
                         " array " + std::string(name) + " is not declared");
 
     } else if (!isArray) {
-        res = LogErrorV(std::to_string(this->getLineNumber()) + ":" + std::to_string(this->getColumnNumber()) +
-                        " array " + std::string(name) + " is not an array");
+        res = LogErrorV(std::to_string(mLeftHandSide->mArrayName->getLineNumber()) + ":" + std::to_string(mLeftHandSide->mArrayName->getColumnNumber()) +
+                        " variable " + std::string(name) + " is not an array");
 
     } else {
         auto arrayPointer = Builder.CreateLoad(value, "arrayPointer");

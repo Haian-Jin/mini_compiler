@@ -38,7 +38,7 @@ int main(){
     if( astJson.is_open() ){
         astJson << root;
         astJson.close();
-        std::cout << "json write to " << jsonFile << std::endl;
+//        std::cout << "json write to " << jsonFile << std::endl;
     }
 
     treeRoot->codeGen();
