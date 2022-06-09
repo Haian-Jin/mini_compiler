@@ -18,7 +18,7 @@ ExpressionNode::ExpressionNode(std::string _symbolName, int childrenNumber, ...)
     for (int i = 0; i < childrenNumber; i++) {
         mChildren.push_back(va_arg(vl, Node *));
     }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mSymbolName = (_symbolName),
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
 }
 
@@ -262,7 +262,7 @@ UnaryOperatorNode::UnaryOperatorNode(std::string _symbolName, int childrenNumber
     for (int i = 0; i < childrenNumber; i++) {
         mChildren.push_back(va_arg(vl, Node *));
     }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mSymbolName = (_symbolName),
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     mHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
     op = _symbolName;
@@ -505,7 +505,7 @@ TenaryOperatorNode::TenaryOperatorNode(std::string _symbolName, int childrenNumb
     for (int i = 0; i < childrenNumber; i++) {
         mChildren.push_back(va_arg(vl, Node *));
     }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mSymbolName = (_symbolName),
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
     mMidHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);

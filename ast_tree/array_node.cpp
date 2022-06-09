@@ -33,7 +33,7 @@ ArrayIndexNode::ArrayIndexNode(std::string _symbolName, int childrenNumber, ...)
     for (int i = 0; i < childrenNumber; i++) {
         mChildren.push_back(va_arg(vl, Node *));
     }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mSymbolName = (_symbolName),
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
     op = _symbolName;
 }
