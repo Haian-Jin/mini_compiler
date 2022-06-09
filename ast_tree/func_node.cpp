@@ -143,7 +143,7 @@ FunctionCallNode::FunctionCallNode(std::string _symbolName, int childrenNumber, 
     }
     mFunctionName = dynamic_cast<IdentifierNode *>(mChildren[0]);
     mArguments = new std::vector<ExpressionNode *>();
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+    mSymbolName = (_symbolName),
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
 }
 

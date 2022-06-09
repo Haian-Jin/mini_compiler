@@ -261,8 +261,7 @@ Value *VarDeclarationList::codeGen() {
 void StatementNodesBlock::createMultiVarDeclaration(IdentifierNode *type, IdentifierNodeList *nameList) {
     assert(type != nullptr && nameList != nullptr);
     assert(type->isType());
-    std::vector<IdentifierNode *> idenNameList =
-            nameList->mIdentifierNodeList; // vector of identifiers, store the
+    std::vector<IdentifierNode *> idenNameList = nameList->mIdentifierNodeList; // vector of identifiers, store the
     // name of the variables
     for (auto it = idenNameList.begin(); it != idenNameList.end(); it++) {
         // create a variable declaration
