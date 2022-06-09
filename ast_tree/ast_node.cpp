@@ -91,17 +91,10 @@ std::string Node::getTokenValue() const {
 
 
 
-void Node::setArgList(std::vector<Node::Type> _argList) {
-    mTokenArgList.assign(_argList.begin(), _argList.end());
-}
-
 std::vector<Node::Type> Node::getArgList() {
     return this->mTokenArgList;
 }
 
-void Node::setArgListStructName(std::vector<std::string> _structName) {
-    mTokenArgListStructTypeName.assign(_structName.begin(), _structName.end());
-}
 
 void Node::setArraySizes(std::vector<int> _sizes) {
     mArraySizes.assign(_sizes.begin(), _sizes.end());
@@ -366,17 +359,7 @@ bool typeMatch(symAttribute *a, Node *b) {
     return false;
 }
 
-void Node::setAttribute(void *p) {
-    auto c = (symAttribute *) p;
-    this->setType(c->type);
-    this->setKind(c->kind);
-    this->setArgList(c->argList);
-    this->setArgListStructName(c->argListStructName);
-    this->setArraySizes(c->arraySizes);
-    this->setStructTypeName(c->structTypeName);
-    this->setVariableName(c->name);
-    this->setPosition(c->lineNumber, c->columnNumber);
-}
+
 
 
 
