@@ -135,7 +135,7 @@ llvm::Value *FunctionDeclarationNode::codeGen() {
 
 //-----------------------FunctionCallNode------------------------------------------------------
 
-FunctionCallNode::FunctionCallNode(std::string _symbolName, int childrenNumber, ...) : ExpressionNode(_symbolName, 0) {
+FunctionCallNode::FunctionCallNode(std::string _symbolName, int childrenNumber, ...) : ExpressionNode() {
     va_list vl;
     va_start(vl, childrenNumber);
     for (int i = 0; i < childrenNumber; i++) {
@@ -163,8 +163,7 @@ Json::Value FunctionCallNode::jsonGen() const {
 }
 
 FunctionCallNode::FunctionCallNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible),
-          mArguments(new std::vector<ExpressionNode *>()) {}
+        : ExpressionNode(),mArguments(new std::vector<ExpressionNode *>()) {}
 
 std::vector<ExpressionNode *> FunctionCallNode::getArguments() const { return *mArguments; }
 

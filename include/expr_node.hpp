@@ -10,9 +10,6 @@ public:
 
     ExpressionNode() = default;;
 
-    ExpressionNode(std::string _symbolName, int childrenNumber, ...);
-
-    ExpressionNode(std::string _tokenValue, bool negligible = false);
 
     std::string getNodeTypeName() const override;
 
@@ -84,7 +81,7 @@ public:
 
     std::vector<IdentifierNode *> mIdentifierNodeList;
 
-    IdentifierNodeList() : ExpressionNode("IdentifierNodeList", 0) {}
+    IdentifierNodeList() : ExpressionNode() {}
 
     void addIdentifierNode(IdentifierNode *identifierNode);
 
@@ -176,9 +173,7 @@ public:
 class UnaryOperatorNode : public ExpressionNode {
     //Unary Operator such as "++", "-", "!"
 public:
-    UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...);
-
-    UnaryOperatorNode(std::string _tokenValue, bool negligible = false);
+    UnaryOperatorNode(std::string type, ExpressionNode * operand);
 
     std::string getNodeTypeName() const override;
 
@@ -195,7 +190,6 @@ private:
 class BinaryOperatorNode : public ExpressionNode {
     //binary Operator such as "+", "-", "&&"
 public:
-    BinaryOperatorNode(std::string _tokenValue, bool negligible = false);;
 
     BinaryOperatorNode(std::string opType, ExpressionNode *lhs,
                        ExpressionNode *rhs, bool isArithmetic = true);
@@ -222,9 +216,9 @@ private:
 class TenaryOperatorNode : public ExpressionNode {
     //binary Operator such as "...?...:..."
 public:
-    TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...);
+    TenaryOperatorNode(std::string op,ExpressionNode * LeftHandSide, 
+        ExpressionNode * MidHandSide, ExpressionNode * RightHandSide);
 
-    TenaryOperatorNode(std::string _tokenValue, bool negligible = false);
 
     std::string getNodeTypeName();
 
