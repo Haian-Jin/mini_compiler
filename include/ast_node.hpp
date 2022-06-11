@@ -163,14 +163,8 @@ public:
     // 取得节点的类别。
     virtual Node::Kind getKind();
 
-    // 设定节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和
-    virtual void setArgList(std::vector<Node::Type> _argList);
-
     // 取得节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
     virtual std::vector<Node::Type> getArgList();
-
-    // 设定节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和setArgList/getArgList 配合使用，以确定结构体的名字。 
-    virtual void setArgListStructName(std::vector<std::string> _structName);
 
     // 取得节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和setArgList/getArgList 配合使用，以确定结构体的名字。 
     virtual std::vector<std::string> getArgListStructName();
@@ -209,9 +203,6 @@ public:
 
     // 取得列位置
     virtual int getColumnNumber();
-
-    // 将给定的属性复制给这个节点。（包括位置）
-    virtual void setAttribute(void *p);
 
     virtual std::string getNodeTypeName() const { return "!!!"; };
 

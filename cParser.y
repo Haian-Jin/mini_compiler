@@ -58,7 +58,6 @@ static void error_illegalArraySize(Node *);
 
 %start cCode0
 
-
 %%
 
 /* Always start from declaration of a variable or a function */
@@ -97,7 +96,6 @@ declaration :
         type initializations ';' { /* 定义变量 */
             $$ = new StatementNodesBlock();
             $$->createMultiVarDeclaration(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNodeList *>($2));
-
         }
     |   STRUCT IDENTIFIER '{' structMemberDeclarations '}' ';' { // 定义结构体
             $2->setType(Node::TYPE_STRUCT);
@@ -246,7 +244,6 @@ variableName :
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setKind(Node::KIND_VARIABLE);
             $$->setPosition(csLineCnt, csColumnCnt);
-
         }
     |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
@@ -261,7 +258,7 @@ variableName :
             }
         }
     |   '(' variable ')' { /* 这一条弃之不用，太复杂了 */}
-    |   variableName '(' ')' {           /* 函数定义 */
+    |   variableName '(' ')' {   /* 函数定义 */
            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
         }
     |   variableName '(' paramTypes ')' {    /* 函数定义 */
@@ -464,13 +461,12 @@ assignmentExpression :
             if(dynamic_cast<IdentifierNode*>($1)!=NULL)
                 $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
             else if(dynamic_cast<ArrayIndexNode*>($1)!=NULL){
-                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));// here??
+                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));
             }else if(dynamic_cast<StructMemberNode*>($1)!=NULL){
                 $$ = new StructMemberAssignmentNode(dynamic_cast<StructMemberNode*>($1), dynamic_cast<ExpressionNode*>($3));
             }else{
                 std::cout<<"Some thing wrong at line "<<csLineCnt<<std::endl;
             }
-
         }
     /* 暂时未实现, TODO
     |   unaryExpression ADD_ASSIGN assignmentExpression {}
@@ -485,10 +481,8 @@ tenaryConditionExpression :
             $$ = $1;
         }
     |   logicalOrExpression '?' expression ':' tenaryConditionExpression {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
-            $$ = new TenaryOperatorNode({"?:"}, 3, $1, $3, $5);
-            $$->setType(Node::TYPE_INT);
-            if($3->getType()==Node::TYPE_DOUBLE||$5->getType()==Node::TYPE_DOUBLE)$$->setType(Node::TYPE_DOUBLE);
-            $$->setKind(Node::KIND_CONSTANT);
+            $$ = new TenaryOperatorNode(std::string("?:"), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), dynamic_cast<ExpressionNode *>($5));
+            $$->setPosition($1);
         }
     ;
 
@@ -656,19 +650,19 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     ;
 
@@ -677,10 +671,10 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), dynamic_cast<ExpressionNode*>($1));
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), dynamic_cast<ExpressionNode*>($1));
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
             if(dynamic_cast<IdentifierNode*>($1)!=NULL){
