@@ -27,16 +27,7 @@ llvm::Value *calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionN
 }
 
 //--------------------------ArrayIndexNode----------------------------------
-ArrayIndexNode::ArrayIndexNode(std::string _symbolName, int childrenNumber, ...)  : ExpressionNode(_symbolName, 0) {
-    va_list vl;
-    va_start(vl, childrenNumber);
-    for (int i = 0; i < childrenNumber; i++) {
-        mChildren.push_back(va_arg(vl, Node *));
-    }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
-    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-    op = _symbolName;
-}
+
 
 ArrayIndexNode::ArrayIndexNode(std::string opType, ExpressionNode *lhs, std::vector<ExpressionNode *> rhs,
                                bool isArithmetic)
@@ -73,8 +64,6 @@ Json::Value ArrayIndexNode::jsonGen() const {
     return root;
 }
 
-ArrayIndexNode::ArrayIndexNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible) {}
 
 std::string ArrayIndexNode::getNodeTypeName() const { return op; }
 
@@ -150,7 +139,7 @@ llvm::Value *ArrayIndexNode::codeGen() {
 }
 
 //----------------------------ArrayAssignmentNode------------------------------
-ArrayAssignmentNode::ArrayAssignmentNode(ArrayIndexNode *lhs, ExpressionNode *rhs) : ExpressionNode("=", 0) {
+ArrayAssignmentNode::ArrayAssignmentNode(ArrayIndexNode *lhs, ExpressionNode *rhs) : ExpressionNode() {
     assert(lhs != nullptr);
     assert(rhs != nullptr);
     mLeftHandSide = lhs;

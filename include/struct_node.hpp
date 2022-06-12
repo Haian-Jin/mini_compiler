@@ -30,7 +30,6 @@ public:
         mMembers = members;
     }
 
-
     std::string getNodeTypeName() const override;
 
     Json::Value jsonGen() const override;
@@ -40,8 +39,6 @@ public:
 
 class StructMemberNode : public ExpressionNode {
 public:
-    StructMemberNode(std::string _tokenValue, bool negligible = false);
-
     StructMemberNode(std::string opType, IdentifierNode *lhs,
                      IdentifierNode *rhs, bool isArithmetic = false);
 

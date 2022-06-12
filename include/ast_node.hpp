@@ -106,16 +106,11 @@ public:
     };
 
 protected:
-    std::string
-            mSymbolName; // 非终结符的名字，实际使用时会使用 NameCounter
-    // 编号，比如“expressionStatement[0]”、“functionDeclaration[3]”等等。
-    std::string
-            mTokenValue; // 终结符对应的字符串。这个是不编号的，输入什么就是什么。
+    std::string mSymbolName; // 非终结符的名字，实际使用时会使用 NameCounter编号，比如“expressionStatement[0]”、“functionDeclaration[3]”等等。
+    std::string  mTokenValue; // 终结符对应的字符串。这个是不编号的，输入什么就是什么。
     bool mIsTerminal; // 是否是终结符
-    bool
-            mIsNegligible; // 是否可以删掉。比如在规则 expressions : expression ','
+
     // expression
-    // （举个例子）中，中间的逗号对语义分析是无效的，可以直接把他删了，不影响语法分析树的关键结构。
     std::vector<Node *> mChildren; // 树结点的孩子。只有非终结符才有孩子。
     Node::Type NodeType; // 节点的数据类型
     Node::Kind NodeKind; // 节点的类别
@@ -123,15 +118,10 @@ protected:
     /* 暂时保存 begin */
 
     std::vector<Node::Type> mTokenArgList; // 参数列表的类型，只有函数能用到
-    std::vector<std::string>
-            mTokenArgListStructTypeName; // 和参数列表配合使用，提供参数的结构体名字（如果是结构体的话）
-    std::vector<int>
-            mArraySizes; // 数组的各个维度的大小，只有数组能用到。如果不是数组，则这个容器的维度是
-    // 0。
-    std::string
-            mStructTypeName; // 结构体名字，只有当类型是结构体的时候能用到。注：若类别是
-    // symAttribute
-    // 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
+    std::vector<std::string> mTokenArgListStructTypeName; // 和参数列表配合使用，提供参数的结构体名字（如果是结构体的话）
+    std::vector<int> mArraySizes; // 数组的各个维度的大小，只有数组能用到。如果不是数组，则这个容器的维度是0。
+    std::string mStructTypeName; // 结构体名字，只有当类型是结构体的时候能用到。注：若类别是
+                                // symAttribute 但数据类型是结构体，则说明这个节点正在定义一个结构体，此时这个变量就是定义的结构体的名字。
     std::string mVariableName; // 变量的名字。
     int mLineNumber;           // 位置（行）
     int mColumnNumber;         // 位置（列）
@@ -145,20 +135,8 @@ public:
 
     // 建立一个终结符结点，用在 scanner 里面。
     Node(std::string _tokenValue, bool negligible = false)
-            : mIsNegligible(negligible),
-              mSymbolName("I am a terminal, valued " + _tokenValue),
+            : mSymbolName("I am a terminal, valued " + _tokenValue),
               mIsTerminal(true), mTokenValue(_tokenValue) {}
-
-    virtual void print(std::string prefix) const {}
-
-    // 添加一个孩子
-    void addChild(Node *newChild);
-
-    // 取得第 i 个孩子
-    Node *getChildrenById(int i);
-
-    // 取得孩子的个数
-    int getChildrenNumber();
 
     // 是否是终结符，是 true 否 false
     bool isTerminal() const;
@@ -166,142 +144,74 @@ public:
     // 返回名字，终结符就返回终结符对应的字符串，非终结符就返回非终结符的名字。
     std::string getName() const;
 
-    // 打印出以这个节点为根节点的语法分析树。
-    void printTree(int depth = 0);
-
     // 设定节点的数据类型，不能自适应地一同取得结构体名。
-    // virtual void setType(Node::Type _type){}
     virtual void setType(Node::Type _type);
 
-    // 将节点的数据类型设定成和 c 一样。而且如果 c
-    // 是结构体，也能一同设定结构体名。 virtual void setType(Node * c){}
+    // 将节点的数据类型设定成和 c 一样。而且如果 c 是结构体，也能一同设定结构体名。
     virtual void setType(Node *c);
 
     // 取得节点的数据类型
-    // virtual Node::Type getType(){}
     virtual Node::Type getType();
 
-    // 取得节点的数据类型的字符串版本，用于输出的时候好看。
-    // virtual std::string getTypeString(){}
-    virtual std::string getTypeString();
+    std::string getTokenValue() const;
+    // 返回非终结符的名字
+    std::string getSymbolName() const;
 
     // 设定节点的类别。
-    // virtual void setKind(Node::Kind _kind){}
     virtual void setKind(Node::Kind _kind);
 
     // 取得节点的类别。
-    // virtual Node::Kind getKind(){}
     virtual Node::Kind getKind();
 
-    // 设定节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和
-    // setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    // virtual void setArgList(std::vector<Node::Type> _argList){}
-    virtual void setArgList(std::vector<Node::Type> _argList);
-
-    // 取得节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和
-    // setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
-    // virtual std::vector<Node::Type> getArgList(){}
+    // 取得节点的参数列表。只有函数类型的节点才有可能用到。如果某个参数是结构体的话，需要和setArgListStructName/getArgListStructName 配合使用，以取得结构体名。
     virtual std::vector<Node::Type> getArgList();
 
-    // 设定节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和
-    // setArgList/getArgList 配合使用，以确定结构体的名字。 virtual void
-    // setArgListStructName(std::vector<std::string> _structName){}
-    virtual void setArgListStructName(std::vector<std::string> _structName);
-
-    // 取得节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和
-    // setArgList/getArgList 配合使用，以确定结构体的名字。 virtual
-    // std::vector<std::string> getArgListStructName(){}
+    // 取得节点的参数列表的结构体名。只有函数类型的节点才有可能用到。和setArgList/getArgList 配合使用，以确定结构体的名字。 
     virtual std::vector<std::string> getArgListStructName();
 
     // 设定数组的维度和各个维度的大小。只有数组类型的节点才可能用到。
-    // virtual void setArraySizes(std::vector<int> _sizes){}
     virtual void setArraySizes(std::vector<int> _sizes);
 
     // 取得数组的维度和各个维度的大小。
-    // virtual std::vector<int> getArraySizes(){} // jha
-    virtual std::vector<int> getArraySizes(); // jha
+    virtual std::vector<int> getArraySizes(); 
 
     // 判定该节点是不是数组，是 true 否 false
-    // virtual bool isArray(){} //jha
-    virtual bool isArray() const; // jha
+    virtual bool isArray() const; 
 
     // 判断改节点是不是double, float等type
     virtual bool isType() const {
         return Node::NodeKind == Node::KIND_ATTRIBUTE;
     }
 
-    // 获得数组的维数（几维数组）。
-    // virtual int getArrayDimension(){}
-    virtual int getArrayDimension();
-
     // 设定结构体的名字。只有当数据类型为结构体时才会用到这个。
-    // virtual void setStructTypeName(std::string _name){}
     virtual void setStructTypeName(std::string _name);
 
     // 获得结构体的名字。只有当数据类型为结构体时才会用到这个。
-    // virtual std::string getStructTypeName(){}
     virtual std::string getStructTypeName();
 
     // 取得变量的名字，只有变量和函数这样的节点才会用到这个。
-    // virtual void setVariableName(std::string _name){}
     virtual void setVariableName(std::string _name);
 
-    // 设定变量的名字，只有变量和函数这样的节点才会用到这个。
-    // virtual std::string getSymbolName(){}
-//    virtual std::string getSymbolName() const{return getSymbolName();};
-
     // 设定位置，是这个词语/变量/定义/声明出现在文件中的为止。
-    // virtual void setPosition(int l,int c){}
     virtual void setPosition(int l, int c);
 
     // 把位置设定成和给定节点 c 一样。
-    // virtual void setPosition(Node *){}
     virtual void setPosition(Node *);
 
     // 取得行位置
-    // virtual int getLineNumber(){}
     virtual int getLineNumber();
 
     // 取得列位置
-    // virtual int getColumnNumber(){}
     virtual int getColumnNumber();
 
-    // 将给定的属性复制给这个节点。（包括位置）
-    virtual void setAttribute(void *p);
-
-    // 从第一个孩子那里复制来所有的属性。（位置除外）
-    virtual void copyFromChild();
-
-    // 从给定的结点那里复制来所有的属性。（位置除外）
-    virtual void copyFrom(Node *c);
-
-    // 将给定的属性复制给这个节点。（包括位置）我承认这个是我写代码写到一半忘记了，又把
-    // setAttribute 拿来重写了一遍...
-    virtual void copyFrom(symAttribute *c);
-
-    // 返回非终结符的名字。已弃置不用。
-    std::string getSymbolName() const;
-
-    // 返回终结符的名字。已弃置不用。
-    std::string getTokenValue() const;
-
-    /* defined by jha begins */
     virtual std::string getNodeTypeName() const { return "!!!"; };
 
     virtual llvm::Value *codeGen() { return (llvm::Value *) 0; }
 
     virtual Json::Value jsonGen() const { return Json::Value(); }
 
-    /* defined by jha ends */
+
 };
-
-
-
-// store all statements nodes of the same block
-
-
-// central global Node
-
 
 
 
@@ -330,7 +240,7 @@ struct symAttribute {
     symAttribute() {}
 
     symAttribute(Node *p)
-            : name(p->getSymbolName()), type(p->getType()), kind(p->getKind()),
+            : name(), type(p->getType()), kind(p->getKind()),
               argList(p->getArgList()), arraySizes(p->getArraySizes()),
               structTypeName(p->getStructTypeName()),
               lineNumber(p->getLineNumber()), columnNumber(p->getColumnNumber()),
@@ -343,9 +253,7 @@ struct symAttribute {
 // 符号表。一般不用单个的符号表，而是直接使用符号表栈。
 class SymbolTable {
 private:
-    std::string
-            mSymbolTableName; // 表名。表明就是这个表对应的函数名/结构体名等。对匿名作用域来说，表名是用
-    // NameCounter 自动生成的不重复的名字。
+    std::string mSymbolTableName; // 表名。表明就是这个表对应的函数名/结构体名等。对匿名作用域来说，表名是用 NameCounter 自动生成的不重复的名字。
     std::map<std::string, symAttribute *> map;       // 符号表本体
     static std::map<std::string, SymbolTable *> set; // 所有的符号表
 public:
@@ -355,9 +263,7 @@ public:
 
     std::string getName();
 
-    // 向符号表中插入一个符号（符号的名字直接由 t->name
-    // 取得）。如果表中原本没有这个符号，则插入成功，返回 true；否则返回 false
-    // 并且不插入。
+    // 向符号表中插入一个符号（符号的名字直接由 t->name 取得）。如果表中原本没有这个符号，则插入成功，返回 true；否则返回 false并且不插入。
     bool insert(symAttribute *t);
 
     // 查表。依据给定的 name 从表中取得对应的属性。没查到的话返回 NULL
@@ -376,8 +282,7 @@ public:
 // 符号表栈。用于维护变量生命周期。
 class SymbolTableStack {
 private:
-    std::vector<SymbolTable *>
-            stack; // 栈本体，因为要查表，所以只能做成容器的形式。
+    std::vector<SymbolTable *> stack; // 栈本体，因为要查表，所以只能做成容器的形式。
 public:
     SymbolTableStack(SymbolTable *globalSymbolTable);
 

@@ -11,17 +11,6 @@
 #include "include/struct_node.hpp"
 
 // -----------------------ExpressionNode-----------------------------
-ExpressionNode::ExpressionNode(std::string _symbolName, int childrenNumber, ...)
-        : Node(_symbolName, 0) {
-    va_list vl;
-    va_start(vl, childrenNumber);
-    for (int i = 0; i < childrenNumber; i++) {
-        mChildren.push_back(va_arg(vl, Node *));
-    }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
-    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-}
-
 Type_and_Address ExpressionNode::getTypeAddress() {
     return {llvm::Type::TypeID::VoidTyID, nullptr};
 }
@@ -37,13 +26,12 @@ Json::Value ExpressionNode::jsonGen() const {
     return r;
 }
 
-ExpressionNode::ExpressionNode(std::string _tokenValue, bool negligible) {}
 
 std::string ExpressionNode::getNodeTypeName() const { return "ExpressionNode"; }
 
 // -----------------------IdentifierNode-----------------------------
 IdentifierNode::IdentifierNode(std::string name, bool isType)
-        : ExpressionNode(name) {
+        : ExpressionNode() {
     assert(name.length() > 0);
 
     this->mSymbolName = name;
@@ -145,7 +133,7 @@ std::string AssignmentNode::getNodeTypeName() const {
 }
 
 AssignmentNode::AssignmentNode(IdentifierNode *lhs, ExpressionNode *rhs)
-        : ExpressionNode("=", 0) {
+        : ExpressionNode() {
     assert(lhs != nullptr);
     assert(rhs != nullptr);
     mLeftHandSide = lhs;
@@ -206,7 +194,7 @@ llvm::Value *IdentifierNodeList::codeGen() {
 }
 
 // -----------------------DoubleNode-----------------------------
-DoubleNode::DoubleNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
+DoubleNode::DoubleNode(std::string _tokenValue) : ExpressionNode() {
     sscanf(_tokenValue.c_str(), "%lf", &this->value);
 }
 
@@ -225,7 +213,7 @@ llvm::Value *DoubleNode::codeGen() {
 }
 
 // -----------------------IntNode-----------------------------
-IntNode::IntNode(std::string _tokenValue) : ExpressionNode(_tokenValue) {
+IntNode::IntNode(std::string _tokenValue) : ExpressionNode() {
     sscanf(_tokenValue.c_str(), "%d", &this->value);
 }
 
@@ -255,23 +243,12 @@ FuncNameAndArgsNode::FuncNameAndArgsNode(IdentifierNode *nameIdentifier, VarDecl
 }
 
 // -----------------------UnaryOperatorNode-----------------------------
-UnaryOperatorNode::UnaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
-        : ExpressionNode(_symbolName, 0) {
-    va_list vl;
-    va_start(vl, childrenNumber);
-    for (int i = 0; i < childrenNumber; i++) {
-        mChildren.push_back(va_arg(vl, Node *));
-    }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
-    mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-    mHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-    op = _symbolName;
-    if (mHandSide == NULL)
-        throw ("castfail");
-}
+UnaryOperatorNode::UnaryOperatorNode(std::string type, ExpressionNode * operand): ExpressionNode() {
 
-UnaryOperatorNode::UnaryOperatorNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible) {}
+    assert (operand != nullptr);
+    mHandSide = operand;
+    op = type;
+}
 
 std::string UnaryOperatorNode::getNodeTypeName() const {
     return std::string("UnaryOperatorNode  ") + (getSymbolName());
@@ -340,8 +317,6 @@ llvm::Value *UnaryOperatorNode::codeGen() {
 }
 
 // -----------------------BinaryOperatorNode-----------------------------
-BinaryOperatorNode::BinaryOperatorNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible) {}
 
 BinaryOperatorNode::BinaryOperatorNode(std::string opType, ExpressionNode *lhs, ExpressionNode *rhs, bool isArithmetic)
         : ExpressionNode() {
@@ -498,26 +473,21 @@ llvm::Value *BinaryOperatorNode::codeGen() {
 }
 
 // -----------------------TenaryOperatorNode-----------------------------
-TenaryOperatorNode::TenaryOperatorNode(std::string _symbolName, int childrenNumber, ...)
-        : ExpressionNode(_symbolName, 0) {
-    va_list vl;
-    va_start(vl, childrenNumber);
-    for (int i = 0; i < childrenNumber; i++) {
-        mChildren.push_back(va_arg(vl, Node *));
-    }
-    mIsNegligible = (false), mSymbolName = (_symbolName),
+TenaryOperatorNode::TenaryOperatorNode(std::string op, ExpressionNode * LeftHandSide, ExpressionNode * MidHandSide, ExpressionNode * RightHandSide)
+        : ExpressionNode() {
+    assert(LeftHandSide && MidHandSide && RightHandSide);
+    mSymbolName = op,
     mIsTerminal = (false), mTokenValue = ("I am not a terminal.");
-    mLeftHandSide = dynamic_cast<ExpressionNode *>(mChildren[0]);
-    mMidHandSide = dynamic_cast<ExpressionNode *>(mChildren[1]);
-    mRightHandSide = dynamic_cast<ExpressionNode *>(mChildren[2]);
-    op = _symbolName;
-    if (mLeftHandSide == NULL || mRightHandSide == NULL ||
-        mMidHandSide == NULL)
-        throw ("castfail");
+    mLeftHandSide = LeftHandSide;
+    mMidHandSide = MidHandSide;
+    mRightHandSide = RightHandSide;
+    op = op;
+    this->setType(Node::TYPE_INT);
+    if(MidHandSide->getType()==Node::TYPE_DOUBLE||RightHandSide->getType()==Node::TYPE_DOUBLE)
+        this->setType(Node::TYPE_DOUBLE);
+    this->setKind(Node::KIND_CONSTANT);
 }
 
-TenaryOperatorNode::TenaryOperatorNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible) {}
 
 std::string TenaryOperatorNode::getNodeTypeName() {
     return std::string("TenaryOperatorNode  ") + (getSymbolName());
@@ -526,5 +496,5 @@ std::string TenaryOperatorNode::getNodeTypeName() {
 llvm::Value *TenaryOperatorNode::codeGen() {
     return LogErrorV(std::to_string(mMidHandSide->getLineNumber()) + ":" +
                      std::to_string(mMidHandSide->getColumnNumber()-1) + " " +
-                     "? ... : is not supported");
+                     "? ... : is not supported now");
 }

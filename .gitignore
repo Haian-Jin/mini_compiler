@@ -21,3 +21,4 @@ tester
 tester/*
 output.exe
 output.o
+tester/*

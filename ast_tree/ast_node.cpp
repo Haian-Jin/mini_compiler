@@ -15,9 +15,7 @@ llvm::IRBuilder<> Builder(TheContext);
 Module *TheModule = new Module(llvm::StringRef(), TheContext);
 std::unordered_map<std::string, Type_and_Address> variableTable;
 std::unordered_map<std::string, StructType *> structTable;
-std::unordered_map<std::string,
-        std::unordered_map<std::string, Type_and_Address> *>
-        variableTables;
+std::unordered_map<std::string,std::unordered_map<std::string, Type_and_Address> *> variableTables;
 std::stack<std::unordered_map<std::string, Type_and_Address> *> tableStack;
 
 // 用于记录所有的符号表。按照 <表名字, 表> 存储；表名字就是当前的函数名/结构体名。
@@ -33,7 +31,7 @@ std::string NameCounter::getNumberedName(std::string name) {
     return name + "[" + std::to_string(map[name]++) + "]";
 }
 
-Node::Node(std::string _symbolName, int childrenNumber, ...) : mIsNegligible(false), mSymbolName(_symbolName),
+Node::Node(std::string _symbolName, int childrenNumber, ...) : mSymbolName(_symbolName),
                                                                mIsTerminal(false), mTokenValue("I am not a terminal.") {
     va_list vl;
     va_start(vl, childrenNumber);
@@ -42,17 +40,6 @@ Node::Node(std::string _symbolName, int childrenNumber, ...) : mIsNegligible(fal
     }
 }
 
-void Node::addChild(Node *newChild) {
-    mChildren.push_back(newChild);
-}
-
-Node *Node::getChildrenById(int i) {
-    return mChildren[i];
-}
-
-int Node::getChildrenNumber() {
-    return mChildren.size();
-}
 
 bool Node::isTerminal() const {
     return mIsTerminal;
@@ -63,37 +50,7 @@ std::string Node::getName() const {
     return mIsTerminal ? mTokenValue : mSymbolName;
 }
 
-void Node::printTree(int depth/*=0*/) {
-    for (int i = 0; i < depth; i++) {
-        std::cout << "\t";
-    }
-    std::cout << this->getName() << std::endl;
-    for (int i = 0; i < mChildren.size(); i++) {
-        mChildren[i]->printTree(depth + 1);
-    }
-}
 
-void Node::copyFromChild() {
-    this->setType(mChildren[0]->getType());
-    this->setKind(mChildren[0]->getKind());
-    this->setArgList(mChildren[0]->getArgList());
-    this->setArgListStructName(mChildren[0]->getArgListStructName());
-    this->setArraySizes(mChildren[0]->getArraySizes());
-    this->setStructTypeName(mChildren[0]->getStructTypeName());
-    this->setVariableName(mChildren[0]->getSymbolName());
-    this->setPosition(mChildren[0]->getLineNumber(), mChildren[0]->getColumnNumber());
-}
-
-void Node::copyFrom(Node *c) {
-    this->setType(c); // setType() has been overloaded early. here is fine
-    this->setKind(c->getKind());
-    this->setArgList(c->getArgList());
-    this->setArgListStructName(c->getArgListStructName());
-    this->setArraySizes(c->getArraySizes());
-    this->setStructTypeName(c->getStructTypeName());
-    this->setVariableName(c->getSymbolName());
-    this->setPosition(c->getLineNumber(), c->getColumnNumber());
-}
 
 Node::Type Node::getType() {
     return this->NodeType;
@@ -121,39 +78,23 @@ void Node::setKind(Node::Kind _kind) {
     this->NodeKind = _kind;
 }
 
-std::string Node::getTypeString() {
-    std::string string;
-    switch (this->NodeType) {
-        case (Node::TYPE_DOUBLE):
-            string += {"double"};
-            break;
-        case (Node::TYPE_INT):
-            string += {"int"};
-            break;
-        case (Node::TYPE_STRUCT):
-            string += (std::string("struct ") + this->mStructTypeName);
-            break;
-        default :
-            string += std::to_string(this->NodeType);
+std::string Node::getSymbolName() const {
+    return this->mSymbolName;
+}
+
+std::string Node::getTokenValue() const {
+    if (!(this->mIsTerminal)) {
+        return this->getSymbolName();
     }
-    for (int i = 0; i < this->mArraySizes.size(); i++) {
-        string += "[]";
-    }
-    return string;
+    return this->mTokenValue;
 }
 
 
-void Node::setArgList(std::vector<Node::Type> _argList) {
-    mTokenArgList.assign(_argList.begin(), _argList.end());
-}
 
 std::vector<Node::Type> Node::getArgList() {
     return this->mTokenArgList;
 }
 
-void Node::setArgListStructName(std::vector<std::string> _structName) {
-    mTokenArgListStructTypeName.assign(_structName.begin(), _structName.end());
-}
 
 void Node::setArraySizes(std::vector<int> _sizes) {
     mArraySizes.assign(_sizes.begin(), _sizes.end());
@@ -171,9 +112,6 @@ bool Node::isArray() const {
     return mArraySizes.size() > 0;
 }
 
-int Node::getArrayDimension() {
-    return mArraySizes.size();
-}
 
 void Node::setStructTypeName(std::string _name) {
     mStructTypeName = _name;
@@ -185,10 +123,8 @@ std::string Node::getStructTypeName() {
 
 void Node::setVariableName(std::string _name) {
     this->mVariableName = _name;
-}/*
-std::string Node::getSymbolName() const{
-    return mVariableName;
-}*/
+}
+
 void Node::setPosition(int l, int c) {
     mLineNumber = l;
     mColumnNumber = c;
@@ -423,28 +359,9 @@ bool typeMatch(symAttribute *a, Node *b) {
     return false;
 }
 
-void Node::setAttribute(void *p) {
-    auto c = (symAttribute *) p;
-    this->setType(c->type);
-    this->setKind(c->kind);
-    this->setArgList(c->argList);
-    this->setArgListStructName(c->argListStructName);
-    this->setArraySizes(c->arraySizes);
-    this->setStructTypeName(c->structTypeName);
-    this->setVariableName(c->name);
-    this->setPosition(c->lineNumber, c->columnNumber);
-}
 
-void Node::copyFrom(symAttribute *c) {
-    if (!c) return;
-    this->setType(c->type);
-    this->setKind(c->kind);
-    this->setArgList(c->argList);
-    this->setArraySizes(c->arraySizes);
-    this->setStructTypeName(c->structTypeName);
-    this->setVariableName(c->name);
-    this->setPosition(c->lineNumber, c->columnNumber);
-}
+
+
 
 std::string type_to_string(symAttribute *t) {
     switch (t->type) {
@@ -459,16 +376,6 @@ std::string type_to_string(symAttribute *t) {
     }
 }
 
-std::string Node::getSymbolName() const {
-    return this->mSymbolName;
-}
-
-std::string Node::getTokenValue() const {
-    if (!(this->mIsTerminal)) {
-        return getSymbolName();
-    }
-    return this->mTokenValue;
-}
 
 std::unique_ptr<ExpressionNode> LogError(const char *str) {
     fprintf(stderr, "LogError: %s\n", str);

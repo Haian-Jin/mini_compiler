@@ -38,7 +38,7 @@
 											"name" : "TypeNode: int"
 										},
 										{
-											"name" : "IdentifierNode: j"
+											"name" : "IdentifierNode: a"
 										}
 									],
 									"name" : "VariableDeclarationNode"
@@ -50,10 +50,10 @@
 											"children" : 
 											[
 												{
-													"name" : "IdentifierNode: j"
+													"name" : "IdentifierNode: a"
 												},
 												{
-													"name" : "IntNode:1"
+													"name" : "IntNode:0"
 												}
 											],
 											"name" : "AssignmentNode ="
@@ -65,7 +65,16 @@
 									"children" : 
 									[
 										{
-											"name" : "IdentifierNode: i"
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: \"%d\\n\""
+												},
+												{
+													"name" : "IdentifierNode: a"
+												}
+											],
+											"name" : "FunctionNode: printf"
 										}
 									],
 									"name" : "ExpressionStatementNode"
@@ -74,10 +83,64 @@
 									"children" : 
 									[
 										{
-											"name" : "IdentifierNode: j"
+											"name" : "UnaryOperatorNode  "
 										}
 									],
 									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: \"%d\\n\""
+												},
+												{
+													"name" : "IdentifierNode: a"
+												}
+											],
+											"name" : "FunctionNode: printf"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "UnaryOperatorNode  "
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"children" : 
+											[
+												{
+													"name" : "IdentifierNode: \"%d\\n\""
+												},
+												{
+													"name" : "IdentifierNode: a"
+												}
+											],
+											"name" : "FunctionNode: printf"
+										}
+									],
+									"name" : "ExpressionStatementNode"
+								},
+								{
+									"children" : 
+									[
+										{
+											"name" : "IntNode:0"
+										}
+									],
+									"name" : "ReturnStatement"
 								}
 							],
 							"name" : "StatementsBlock"

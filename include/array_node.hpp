@@ -13,9 +13,6 @@ llvm::Value *calcArrayIndex(std::vector<int> arraySizes, std::vector<ExpressionN
 
 class ArrayIndexNode : public ExpressionNode {
 public:
-    ArrayIndexNode(std::string _symbolName, int childrenNumber, ...);
-
-    ArrayIndexNode(std::string _tokenValue, bool negligible = false);
 
     ArrayIndexNode(std::string opType, ExpressionNode *lhs,
                    std::vector<ExpressionNode *> rhs, bool isArithmetic = false);

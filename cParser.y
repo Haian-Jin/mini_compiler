@@ -7,17 +7,11 @@ static Node *treeRoot;
 static NameCounter nameCounter;
 int yyerror(std::string);
 static void error_missingSemicolon();
-static void error_wrongStatement();
 static void error_wrongExpression();
 static void error_missingRightBrancket();
 static void error_missingRightBrancket2();
 static void error_elseWithNoIf();
 static void error_illegalArraySize(Node *);
-static void error_argumentTypeNotMatch(std::vector<Node::Type>&,Node *,std::vector<std::string>&);
-static void error_notArray(Node *);
-static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give);
-static void error_returnValueTypeMismatch(symAttribute* need, Node * give);
-static void error_functionReturnsArray();
 %}
 %code requires {
 #include "./include/ast_node.hpp"
@@ -47,7 +41,6 @@ static void error_functionReturnsArray();
 %token STRUCT INT DOUBLE CHAR PTR CONST DEFAULT FLOAT STATIC UNSIGNED VOID 
 
 
-
 %type<identifierNodeListPtr> initializations structMembers
 %type<identifierNodePtr> initialization IDENTIFIER typeName type
 %type<varDeclarationListPtr> paramTypes 
@@ -63,9 +56,7 @@ static void error_functionReturnsArray();
 %type<nodePtr> '+' '-' '(' ')' '[' ']' '{' '}' '~' '%' '^' '&' '*' '=' ';' '<' '>' ',' '?' '/' ':' '!' '|' '.'
 %type<ExpressionNodeListPtr> paramList 
 
-
 %start cCode0
-
 
 %%
 
@@ -101,12 +92,10 @@ globalDeclaration :
         }
     ;
 
-
 declaration :
         type initializations ';' { /* 定义变量 */
             $$ = new StatementNodesBlock();
             $$->createMultiVarDeclaration(dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNodeList *>($2));
-
         }
     |   STRUCT IDENTIFIER '{' structMemberDeclarations '}' ';' { // 定义结构体
             $2->setType(Node::TYPE_STRUCT);
@@ -199,9 +188,6 @@ structMemberDeclarations :
 structMemberDeclaration :
         type structMembers ';' {
             $$ = new StatementNodesBlock();
-            for(int i=0; i<$2->getChildrenNumber();i++){
-                $2->getChildrenById(i)->setType($1);
-            }
             $$->createMultiVarDeclaration($1, $2);
         }
     ;
@@ -257,6 +243,7 @@ variableName :
         IDENTIFIER { /* 一个普通的变量 */
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setKind(Node::KIND_VARIABLE);
+            $$->setPosition(csLineCnt, csColumnCnt);
         }
     |   variableName '[' INT_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
             if(!(checkType($3,Node::TYPE_INT) && checkKind($3,Node::KIND_CONSTANT))){
@@ -268,11 +255,10 @@ variableName :
                 arraySizes.push_back(newSize);
                 $$->setArraySizes(arraySizes);
                 auto a = $$->getArraySizes();
-
             }
         }
     |   '(' variable ')' { /* 这一条弃之不用，太复杂了 */}
-    |   variableName '(' ')' {           /* 函数定义 */
+    |   variableName '(' ')' {   /* 函数定义 */
            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
         }
     |   variableName '(' paramTypes ')' {    /* 函数定义 */
@@ -320,24 +306,14 @@ variableWithNoNameCore :    /* !! read this along with 'variableName' !!*/
 
 /* 初始值，如果要在定义的时候初始化的话，initialValue 就是跟在 = 后面的部分。有时间的话就实现一下初始值，没时间就算了。 */
 initialValue :
-        '{' initialValues '}' {          /* int a[10]={1}; 初始化列表 */
-            $$ = new Node(nameCounter.getNumberedName("initialValue"), 3, $1, $2, $3);
-        }
-    |   assignmentExpression {          /* int a=5+6; int b=a=3; 普通的初始值 */
-            $$ = new Node(nameCounter.getNumberedName("initialValue"), 1, $1);
-    }
+        '{' initialValues '}' { /* int a[10]={1}; 初始化列表 */}
+    |   assignmentExpression { /* int a=5+6; int b=a=3; 普通的初始值 */}
     ;
 
 /* 初始化列表 */
 initialValues :
-        initialValue {
-            $$ = new Node(nameCounter.getNumberedName("initialValues"), 1, $1);
-        }
-    |   initialValues ',' initialValue { /* int a[10]={1,2,3} */
-            $$ = $1;
-            $$->addChild($2);
-            $$->addChild($3);
-        }
+        initialValue {} // TODO
+    |   initialValues ',' initialValue { /* int a[10]={1,2,3}  TODO  */}
     ;
 
 /* 函数定义 */
@@ -357,7 +333,6 @@ statementBlock :
             $$ = $2;
         }
     ;
-
 
 statements :    /* 一串语句 */
         statement {
@@ -417,11 +392,8 @@ loopStatement : /* for, while, do-while */
         }
     // do-while暂不实现
     |   DO statement WHILE '(' expression ')' ';' {}
-    
     |   WHILE '(' expression error { error_missingRightBrancket(); } ')' statement /* error recovery */
-    |   WHILE '(' error { error_wrongExpression; } ')' statement { 
-
-        }
+    |   WHILE '(' error { error_wrongExpression; } ')' statement {}
     ;
 
 /* 分支跳转语句 */
@@ -471,7 +443,6 @@ jumpStatement :
 /* 表达式，有十六个优先级（大大小小加起来大概有十九个） */
 
 /* PRIORITY 15: "," */
-
 expression : 
         assignmentExpression {
             $$ = $1;
@@ -482,7 +453,6 @@ expression :
     ;
 
 /* PRIORITY 14: "=, +=, -=, ..." assignment */
-
 assignmentExpression :
         tenaryConditionExpression {
             $$ = $1;
@@ -491,13 +461,12 @@ assignmentExpression :
             if(dynamic_cast<IdentifierNode*>($1)!=NULL)
                 $$ = new AssignmentNode(dynamic_cast<IdentifierNode*>($1), dynamic_cast<ExpressionNode*>($3));
             else if(dynamic_cast<ArrayIndexNode*>($1)!=NULL){
-                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));// here??
+                $$ = new ArrayAssignmentNode(dynamic_cast<ArrayIndexNode*>($1), dynamic_cast<ExpressionNode*>($3));
             }else if(dynamic_cast<StructMemberNode*>($1)!=NULL){
                 $$ = new StructMemberAssignmentNode(dynamic_cast<StructMemberNode*>($1), dynamic_cast<ExpressionNode*>($3));
             }else{
                 std::cout<<"Some thing wrong at line "<<csLineCnt<<std::endl;
             }
-
         }
     /* 暂时未实现, TODO
     |   unaryExpression ADD_ASSIGN assignmentExpression {}
@@ -507,22 +476,17 @@ assignmentExpression :
     ;
 
 /* PRIORITY 13: "?:" tenary conditional operator */
-
 tenaryConditionExpression :
         logicalOrExpression {
             $$ = $1;
         }
     |   logicalOrExpression '?' expression ':' tenaryConditionExpression {/* Hint: right hand of ':' cannot be expression because no '=' should appear at the right hand of ':'. */
-            $$ = new TenaryOperatorNode({"?:"}, 3, $1, $3, $5);
-            $$->copyFromChild();
-            $$->setType(Node::TYPE_INT);
-            if($3->getType()==Node::TYPE_DOUBLE||$5->getType()==Node::TYPE_DOUBLE)$$->setType(Node::TYPE_DOUBLE);
-            $$->setKind(Node::KIND_CONSTANT);
+            $$ = new TenaryOperatorNode(std::string("?:"), dynamic_cast<ExpressionNode *>($1), dynamic_cast<ExpressionNode *>($3), dynamic_cast<ExpressionNode *>($5));
+            $$->setPosition($1);
         }
     ;
 
 /* PRIORITY 12: "||" logical OR */
-
 logicalOrExpression :
         logicalAndExpression {
             $$ = $1;
@@ -534,7 +498,6 @@ logicalOrExpression :
     ;
 
 /* PRIORITY 11: "&&" logical AND */
-
 logicalAndExpression :
         bitwiseOrExpression {
             $$ = $1;
@@ -546,7 +509,6 @@ logicalAndExpression :
     ;
 
 /* PRIORITY 10: "|" bitwise OR */
-
 bitwiseOrExpression :
         bitwiseExclusiveOrExpression {
             $$ = $1;
@@ -558,7 +520,6 @@ bitwiseOrExpression :
     ;
 
 /* PRIORITY 9: "^" bitwise EXCLUSIVE OR */
-
 bitwiseExclusiveOrExpression :
         bitwiseAndExpression {
             $$ = $1;
@@ -570,7 +531,6 @@ bitwiseExclusiveOrExpression :
     ;
 
 /* PRIORITY 8: "&" bitwise AND */
-
 bitwiseAndExpression :
         equalityComparisonExpression {
             $$ = $1;
@@ -582,7 +542,6 @@ bitwiseAndExpression :
     ;
 
 /* PRIORITY 7: "==, !=" compare equality */
-
 equalityComparisonExpression :
         relationComparisonExpression {
             $$ = $1;
@@ -599,7 +558,6 @@ equalityComparisonExpression :
     ;
 
 /* PRIORITY 6: "<, >, <=, >=" compare relation */
-
 relationComparisonExpression :
         shiftExpression {
             $$ = $1;
@@ -623,7 +581,6 @@ relationComparisonExpression :
     ;
 
 /* PRIORITY 5: ">>, <<" shift operator */
-
 shiftExpression :
         arithmeticAddExpression {
             $$ = $1;
@@ -639,7 +596,6 @@ shiftExpression :
     ;
 
 /* PRIORITY 4: "+, -" arithmetic add */
-
 arithmeticAddExpression :
         arithmeticMulExpression {
             $$ = $1;
@@ -655,7 +611,6 @@ arithmeticAddExpression :
     ;
 
 /* PRIORITY 3: "*, /, %" arithmetic mul */
-
 arithmeticMulExpression :
         unaryExpression {
             $$ = $1;
@@ -684,7 +639,6 @@ castedExpression :
 
 /* PRIORITY 1: "++, --, !, ~" unary operator, and ". ->" */
 /* 前++比后++优先的。原因是 ++a[i] 的意思是 ++(a[i]) 而不是 (++a)[i] */
-
 unaryExpression :
         prefixUnaryExpression {
             $$ = $1;
@@ -696,24 +650,19 @@ unaryExpression :
 
 prefixUnaryExpression :
         INC postfixUnaryExpression {/* ++a, especially ++a[i] is ++(a[i]) but not (++a)[i] */
-            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   DEC postfixUnaryExpression {/* --a, the same as ++a[i] */
-            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), 1, $2);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode(std::string("pre")+$1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '!' postfixUnaryExpression {/* logical NOT */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '~' postfixUnaryExpression {/* bitwise NOT */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     |   '-' postfixUnaryExpression {/* negative */
-            $$ = new UnaryOperatorNode($1->getName(), 1, $2);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode($1->getName(), dynamic_cast<ExpressionNode*>($2));
         }
     ;
 
@@ -722,12 +671,10 @@ postfixUnaryExpression :
             $$ = $1;
         }
     |   postfixUnaryExpression INC {/* a++, espetially a[i]++ is allowed, (a[i])++ is not necessary */
-            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), dynamic_cast<ExpressionNode*>($1));
         }
     |   postfixUnaryExpression DEC {/* a-- */
-            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), 1, $1);
-            $$->copyFromChild();
+            $$ = new UnaryOperatorNode(std::string("post")+$2->getName(), dynamic_cast<ExpressionNode*>($1));
         }
     |   postfixUnaryExpression '[' assignmentExpression ']' {/* array a[10], corresponding to prefix ++ */
             if(dynamic_cast<IdentifierNode*>($1)!=NULL){
@@ -742,14 +689,12 @@ postfixUnaryExpression :
         }
     |   postfixUnaryExpression '(' paramList ')' {/* function, f()[i], f[i](), f[i]()[j] are all allowed，但我们不=实现它。 */
             $$ = new FunctionCallNode({"()"}, 2, $1, $3);
-            $$->copyFromChild();
-            for(auto i : *$3){
+            for(auto i : *$3) {
                 dynamic_cast<FunctionCallNode *>($$)->addArgument(i);
             }
         }
     |   postfixUnaryExpression '(' ')'           {/* function with no params. */
             $$ = new FunctionCallNode({"()"}, 1, $1);
-            $$->copyFromChild();
         }
     |   postfixUnaryExpression '.' IDENTIFIER    {/* struct's member (a.val) */
             $$ = new StructMemberNode($2->getTokenValue(), dynamic_cast<IdentifierNode *>($1), dynamic_cast<IdentifierNode *>($3));
@@ -772,13 +717,10 @@ paramList :
     ;
 
 /* PRIORITY 0: branckets */
-
 atomicExpression :
         IDENTIFIER {
-            $$ = $1;
             $$ = new IdentifierNode($1->getTokenValue(), false);
             $$->setPosition(csLineCnt, csColumnCnt);
-
         }
     |   DOUBLE_NUMBER {
             $$ = $1;
@@ -807,11 +749,7 @@ int yyerror(std::string s){
 static void error_missingSemicolon(){
     LogErrorV("Missing \';\' at line" +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));
 }
-static void error_wrongStatement(){
-    std::cout<<"[ERROR] ";
-    printf("a statement near line %d is illeagal. ", csLineCnt);
-    printf("maybe you\'re putting a declaration after a statement.\n");//'
-}
+
 static void error_wrongExpression(){
     std::cout<<"[ERROR] ";
     printf("an expression near line %d is illeagal.\n", csLineCnt);
@@ -828,69 +766,11 @@ static void error_elseWithNoIf(){
     std::cout<<"[ERROR] ";
     printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
 }
-
-
 static void error_illegalArraySize(Node * c){
     std::cout<<"[ERROR] ";
     std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
 }
 
-
-
-static void error_notArray(Node *c){
-    std::cout<<"[ERROR] \""<<c->getSymbolName()<<"\" at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" is not an array.\n";
-    std::cout<<" Hint: are you using too many \"[]\"\'s to access an array?\n";//'
-}
-static void error_returnValueTypeMismatch(symAttribute* need, Node::Type give){
-    std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
-    std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave nothing\n"; 
-}
-static void error_returnValueTypeMismatch(symAttribute* need, Node * give){
-    std::cout<<"[ERROR] return value type mismatch at line "<<csLineCnt<<std::endl;
-    std::cout<<" Hint: the function returns "<<type_to_string(need)<<" but you gave "<<give->getTypeString()<<std::endl;
-}
-static void error_functionReturnsArray(){
-    std::cout<<"[ERROR] at line "<<csLineCnt<<": function cannot return an array\n";
-}
-static void error_argumentTypeNotMatch(std::vector<Node::Type>& userGave,Node *function,std::vector<std::string>& structTypeName){
-    std::cout<<"[ERROR] function's argument type not match at line "<<function->getLineNumber()<<" near column "<<function->getColumnNumber()<<"\n";//'
-    std::cout<<" Hint: function \""<<function->getSymbolName()<<"\" needs parameters of (";
-    auto fa = function->getArgList();
-    for(int i=0;i<fa.size();i++){
-        switch(fa[i]){
-            case Node::TYPE_INT:
-                std::cout<<"int";
-                break;
-            case Node::TYPE_DOUBLE:
-                std::cout<<"double";
-                break;
-            case Node::TYPE_STRUCT:
-                std::cout<<"struct "<<function->getArgListStructName()[i];
-                break;
-            default:
-                std::cout<<userGave[i]<<' ';
-        }
-        if(i<fa.size()-1)std::cout<<",";
-    }
-    std::cout<<") but you gave (";
-    for(int i=0;i<userGave.size();i++){
-        switch(userGave[i]){
-            case Node::TYPE_INT:
-                std::cout<<"int";
-                break;
-            case Node::TYPE_DOUBLE:
-                std::cout<<"double";
-                break;
-            case Node::TYPE_STRUCT:
-                std::cout<<"struct "<<structTypeName[i];
-                break;
-            default:
-                std::cout<<userGave[i]<<' ';
-        }
-        if(i<userGave.size()-1)std::cout<<",";
-    }
-    std::cout<<")\n";
-}
 
 Node *makeParseTree(){
     yyparse();
@@ -900,5 +780,3 @@ Node *makeParseTree(){
     }
     return treeRoot;
 }
-
-

@@ -89,8 +89,6 @@ Value *StructDeclarationNode::codeGen() {
     return nullptr;
 }
 
-StructMemberNode::StructMemberNode(std::string _tokenValue, bool negligible)
-        : ExpressionNode(_tokenValue, negligible) {}
 
 StructMemberNode::StructMemberNode(std::string opType, IdentifierNode *lhs, IdentifierNode *rhs, bool isArithmetic)
         : ExpressionNode() {
@@ -169,7 +167,7 @@ std::string StructMemberAssignmentNode::getNodeTypeName() const {
 }
 
 StructMemberAssignmentNode::StructMemberAssignmentNode(StructMemberNode *lhs, ExpressionNode *rhs)
-        : ExpressionNode("=", 0) {
+        : ExpressionNode() {
     assert(lhs != nullptr);
     assert(rhs != nullptr);
     mLeftHandSide = lhs;
