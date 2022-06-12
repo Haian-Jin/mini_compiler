@@ -124,16 +124,40 @@ Json::Value StructMemberNode::jsonGen() const {
 }
 
 llvm::Value *StructMemberNode::addrGen(int ind) {
-    return ExpressionNode::addrGen(ind);
+    std::string name = mVariableName->getSymbolName();
+    if(tableStack.top()->find(name) == tableStack.top()->end()) {
+        return LogErrorV(std::to_string(mVariableName->getLineNumber()) + ":" +
+                         std::to_string(mVariableName->getColumnNumber()) + " struct \'" + name +
+                         "\' not declared");
+    }
+    Type_and_Address st = (*tableStack.top())[name];
+    if (!st.isStruct) {
+        if (tableStack.top()->find(name) == tableStack.top()->end()) {
+            return LogErrorV(std::to_string(mVariableName->getLineNumber()) + ":" +
+                             std::to_string(mVariableName->getColumnNumber()) + " variable \'" + name +
+                             "\' is not a struct");
+        }
+    }
+    std::string stName = st.stName;
+    std::string rName = mMemberName->getSymbolName();
+    auto map = structMap[stName];
+    if(map->find(rName) == map->end()) {
+        return LogErrorV(std::to_string(mVariableName->getLineNumber()) + ":" +
+                         std::to_string(mVariableName->getColumnNumber()) + " \'" + rName +
+                         "\' is not a member of \'" + stName + "\'");
+    }
+    auto stInd = (*map)[rName];
+    std::vector<Value*> idx;
+    idx.push_back(ConstantInt::get(llvm::Type::getInt32Ty(TheContext), 0, false));
+    idx.push_back(ConstantInt::get(llvm::Type::getInt32Ty(TheContext), stInd.index, false));
+
+    auto res = Builder.CreateInBoundsGEP(st.address, idx, "memberAddr");
+    return res;
 }
 
 llvm::Value *StructMemberNode::codeGen() {
-    /*
-    TODO:
-    */
-    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                     std::to_string(this->getColumnNumber()) + " " +
-                     "Not supported yet");
+    auto ptr = this->addrGen();
+    return Builder.CreateLoad(ptr, "memberValue");
 }
 
 ExpressionNode *StructMemberNode::getL() { return mVariableName; }
@@ -161,10 +185,7 @@ Json::Value StructMemberAssignmentNode::jsonGen() const {
 }
 
 llvm::Value *StructMemberAssignmentNode::codeGen() {
-    /*
-    TODO:
-    */
-    return LogErrorV(std::to_string(this->getLineNumber()) + ":" +
-                     std::to_string(this->getColumnNumber()) + " " +
-                     "Not supported yet");
+    auto ptr = mLeftHandSide->addrGen();
+    auto rValue = mRightHandSide->codeGen();
+    return Builder.CreateStore(rValue, ptr);
 }
