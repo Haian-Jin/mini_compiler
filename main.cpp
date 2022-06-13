@@ -32,8 +32,10 @@ int main(){
     Node *treeRoot = makeParseTree();
     auto root = treeRoot->jsonGen();
 
-    string jsonFile = "./A_tree.json";
+    string jsonFile = "./ast_tree.json";
     string objectFile = "output.o";
+    string IR_File = "output.ll";
+    std::ofstream outIR_File(jsonFile);
     std::ofstream astJson(jsonFile);
     if( astJson.is_open() ){
         astJson << root;
@@ -46,6 +48,7 @@ int main(){
     llvm::AssemblyAnnotationWriter *aaw = new llvm::AssemblyAnnotationWriter();
     llvm::raw_ostream &e=errs();
     TheModule->print(outs(), aaw);
+
     e.flush();
 
 
