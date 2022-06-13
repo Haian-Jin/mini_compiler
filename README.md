@@ -19,7 +19,7 @@ We build a complier named `zjucmm` ( short for ZJU C minus minus) from scratch. 
 sudo apt-get install flex bison
 sudo apt-get install llvm-dev 
 sudo apt-get install libjsoncpp-dev
-ln -s /usr/include/jsoncpp/json/ /usr/include/json
+sudo ln -s /usr/include/jsoncpp/json/ /usr/include/json
 sudo apt-get install clang
 
 ```
@@ -48,9 +48,9 @@ You can also run the script `./build.sh` to build the compiler.
 * visualization the AST in a HTML file
 
   ```shell
-  pytm-cli -i A_tree.json -o demo.html
+  pytm-cli -i ast_tree.json -o demo.html
   ```
-* generate object file
+* generate executable file
   
     ```shell
       OjectFile=output.exe

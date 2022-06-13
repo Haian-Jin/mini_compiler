@@ -1,0 +1,13 @@
+; ModuleID = 'test'
+source_filename = "test"
+
+define i32 @Main() {
+main:
+  %0 = alloca i32
+  store i32 1, i32* %0
+  %1 = load i32, i32* %0
+  %addop = add i32 %1, 1
+  store i32 %addop, i32* %0
+  ret i32 0
+}
+Object code wrote to output.o

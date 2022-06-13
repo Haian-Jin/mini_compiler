@@ -257,6 +257,9 @@ variableName :
                 auto a = $$->getArraySizes();
             }
         }
+    |   variableName '[' DOUBLE_NUMBER ']' {    /* 数组，可以是多维度的。其中 NUMBER 必须是整数。 */
+            error_illegalArraySize($3);
+        }
     |   '(' variable ')' { /* 这一条弃之不用，太复杂了 */}
     |   variableName '(' ')' {   /* 函数定义 */
            $$ = new FuncNameAndArgsNode(dynamic_cast<IdentifierNode *>($1), nullptr);
@@ -747,28 +750,23 @@ int yyerror(std::string s){
     // printf("syntax error at line %d, column %d.\n", csLineCnt, csColumnCnt);
 }
 static void error_missingSemicolon(){
-    LogErrorV("Missing \';\' at line" +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));
+    LogErrorV("Missing \';\' at line " +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));
 }
 
 static void error_wrongExpression(){
-    std::cout<<"[ERROR] ";
-    printf("an expression near line %d is illeagal.\n", csLineCnt);
+    LogErrorV("an expression near line " + std::to_string(csLineCnt) +" is illeagal.\n");
 }
 static void error_missingRightBrancket(){
-    std::cout<<"[ERROR] ";
-    printf("expect \')\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    LogErrorV("expect \')\' at line " +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));    
 }
 static void error_missingRightBrancket2(){
-    std::cout<<"[ERROR] ";
-    printf("expect \']\' at line %d, after column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    LogErrorV("expect \']\' at line " +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));  
 }
 static void error_elseWithNoIf(){
-    std::cout<<"[ERROR] ";
-    printf("expect \"if\" for the \"else\", at line %d, near column %d .\n", csLineCnt, csColumnCnt-(int)strlen(yytext));
+    LogErrorV("expect \"if\" for the \"else\", at line " +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));  
 }
 static void error_illegalArraySize(Node * c){
-    std::cout<<"[ERROR] ";
-    std::cout<<"Size of array at line "<<c->getLineNumber()<<" near column "<<c->getColumnNumber()<<" must be a integer and must be a constant.\n";
+    LogErrorV("Size of array at line " +  std::to_string(csLineCnt) + ", after column" + std::to_string(csColumnCnt-(int)strlen(yytext)));  
 }
 
 
