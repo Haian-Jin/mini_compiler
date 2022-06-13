@@ -24,3 +24,4 @@ output.o
 tester/*
 A_tree.json
 ast_tree.json
+.viscode
