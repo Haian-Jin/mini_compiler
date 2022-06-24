@@ -15,7 +15,7 @@ For ZJU students who are suffering from this project, do not refer to this repos
 * Ubuntu 20.04
 * llvm 10.0.0
 * flex 2.6.4
-* 3.5.1
+* bison 3.5.1
 * libjsoncpp-dev 1.7.4-3.1ubuntu2
 * pkg-config
 
